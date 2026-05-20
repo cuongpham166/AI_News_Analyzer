@@ -7,6 +7,7 @@ from ai.responses.ner_response import NerResult
 class InferenceResult(BaseModel):
     link: str
     publish_date: int
+    language: str
     title: str
     source: str
     sentiment: SentimentResult

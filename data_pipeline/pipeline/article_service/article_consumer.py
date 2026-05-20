@@ -15,7 +15,7 @@ class ArticleConsumer:
         self.conn_params = conn_params
         self.db_processor = ArticleProcessor(self.conn_params)
         self.db_processor.connect()
-        self.db_processor.create_init_tables()
+        self.db_processor.run_init_configs()
 
     def check_connection(self):
         self.db_processor.check_connection()
@@ -105,3 +105,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

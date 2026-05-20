@@ -123,12 +123,12 @@ A scalable, event-driven AI platform that collects news from RSS feeds, enriches
 
 The project utilizes a custom inference approach using Hugging face Transformers (for PyTorch models) and ONNX Runtime (for ONNX models) for high performance model execution. The PyTorch model can be converted to ONNX by the written script. Rather than relying on high level pipeline and abstractions, the preprocessing (tokenization) and post-processing (logits transformation) are implemented manually to ensure the control over the inference lifecycle
 
-| Task                     | Model                         | Format         | Task                                                                                      |
-|:-------------------------|:------------------------------|:---------------| :---------------------------------------------------------------------------------------- |
-| Topic Classification     | Fine-tuned DistilBERT         | ONNX INT8      | Categorizing news into 8 topics (Politics, Economy, Tech, etc.)                           |
-| Sentiment Analysis       | distilbert-base-uncased-sst-2 | ONNX INT8      | Binary classification (Positive/Negative) to calculate "Global Temperature" metrics.      |
-| Named Entity Recognition | gliner-bi-base-v2             | PyTorch FP32   | Identifying and categorize 9 entity types including People, Location, Events, and Titles. |
-| Summarization            | distilbart-cnn-12-6           | PyTorch FP32   | Generating summary from long-form article text                                            |
+| Task                     | Model                         | Format         | Task                                                                                           |
+|:-------------------------|:------------------------------|:---------------|:-----------------------------------------------------------------------------------------------|
+| Topic Classification     | Fine-tuned DistilBERT         | ONNX INT8      | Categorizing news into 8 topics (Politics, Economy, Tech, etc.)                                |
+| Sentiment Analysis       | distilbert-base-uncased-sst-2 | ONNX INT8      | Binary classification (Positive/Negative) to calculate "Global Temperature" metrics.           |
+| Named Entity Recognition | gliner-bi-base-v2             | PyTorch FP32   | Identifying and categorize 4 entity types including Person, Location, Event, and Organization. |
+| Summarization            | distilbart-cnn-12-6           | PyTorch FP32   | Generating summary from long-form article text                                                 |
 
 #### DistilBERT Fine-Tuning Results
 - The model was fine-tuned on a balanced multi-class news classification dataset containing 8 categories.

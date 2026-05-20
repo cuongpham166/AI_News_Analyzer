@@ -1,0 +1,3 @@
+CREATE CONSTRAINT person_name_unique IF NOT EXISTS
+FOR (p:Person)
+REQUIRE p.name IS UNIQUE;

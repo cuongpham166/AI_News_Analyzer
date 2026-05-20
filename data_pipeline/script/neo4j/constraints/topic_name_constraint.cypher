@@ -1,0 +1,3 @@
+CREATE CONSTRAINT topic_name_unique IF NOT EXISTS
+FOR (t:Topic)
+REQUIRE t.name IS UNIQUE;

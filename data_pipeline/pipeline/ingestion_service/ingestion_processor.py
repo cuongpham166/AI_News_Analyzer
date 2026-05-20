@@ -1,7 +1,7 @@
 import feedparser
 import asyncio
 import aiohttp
-from data_pipeline.responses.raw_data_response import RawDataResponse
+from data_pipeline.models.raw_article import RawArticle
 
 class IngestionProcessor:
     def __init__(self, rss_urls):
@@ -18,9 +18,9 @@ class IngestionProcessor:
             print(f"Error fetching {url}: {e}")
             return None
 
-    async def scrape(self) -> list[RawDataResponse]:
+    async def scrape(self) -> list[RawArticle]:
         self.seen_links.clear()
-        results: list[RawDataResponse] = []
+        results: list[RawArticle] = []
 
         async with aiohttp.ClientSession() as session:
             tasks = [self.fetch_feed(session, url) for url in self.rss_urls]
@@ -39,7 +39,7 @@ class IngestionProcessor:
                     continue
                 self.seen_links.add(link)
                 results.append(
-                    RawDataResponse(
+                    RawArticle(
                         title=getattr(entry, "title", ""),
                         link=link,
                         summary=getattr(entry, "summary", ""),

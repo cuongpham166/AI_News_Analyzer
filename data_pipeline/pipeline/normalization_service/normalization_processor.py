@@ -4,7 +4,7 @@ import tldextract
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 
-from data_pipeline.responses.processed_data_response import ProcessedDataResponse
+from data_pipeline.models.processed_article import ProcessedArticle
 import json
 import asyncio
 
@@ -16,7 +16,7 @@ class NormalizationProcessor:
     def is_duplicate(self, link):
         return link in self.enriched_links
 
-    async def process_message(self, msg: dict) -> ProcessedDataResponse | None:
+    async def process_message(self, msg: dict) -> ProcessedArticle | None:
         raw_data = json.loads(msg.data.decode())
         link = raw_data.get("link")
         rss_date_str = raw_data.get("rss_pub_date")
@@ -46,7 +46,7 @@ class NormalizationProcessor:
 
         self.enriched_links.add(link)
 
-        return ProcessedDataResponse(
+        return ProcessedArticle(
             title=article_obj.title,
             publish_date=timestamp,
             source=domain_name,

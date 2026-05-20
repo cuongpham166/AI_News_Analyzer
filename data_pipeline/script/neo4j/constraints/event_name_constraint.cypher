@@ -1,0 +1,3 @@
+CREATE CONSTRAINT event_name_unique IF NOT EXISTS
+FOR (e:Event)
+REQUIRE e.name IS UNIQUE;

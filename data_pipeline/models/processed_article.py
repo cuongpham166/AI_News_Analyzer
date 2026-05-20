@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class ProcessedDataResponse(BaseModel):
+class ProcessedArticle(BaseModel):
     title: str
     publish_date: int
     source: str

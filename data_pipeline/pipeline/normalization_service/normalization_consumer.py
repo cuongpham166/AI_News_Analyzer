@@ -4,7 +4,7 @@ import json
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, RAW_SUBJECT, ENRICHED_SUBJECT
 from data_pipeline.pipeline.normalization_service.normalization_processor import NormalizationProcessor
-from data_pipeline.responses.processed_data_response import ProcessedDataResponse
+from data_pipeline.models.processed_article import ProcessedArticle
 
 
 class NormalizationConsumer:
@@ -15,7 +15,7 @@ class NormalizationConsumer:
     async def handle(self, msg):
         try:
             raw_data = json.loads(msg.data.decode())
-            processed_result: ProcessedDataResponse = await self.processor.process(raw_data)
+            processed_result: ProcessedArticle = await self.processor.process(raw_data)
             processed_msg = processed_result.model_dump_json().encode()
             if processed_msg:
                 await self.js.publish(

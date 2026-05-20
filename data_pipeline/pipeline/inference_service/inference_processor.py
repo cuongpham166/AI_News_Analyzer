@@ -59,8 +59,11 @@ class InferenceProcessor:
                     sentiment=sentiment.results[i],
                     classification=classification.results[i],
                     ner=ner.results[i],
-                    summarization=summaries.results[i]
+                    summarization=summaries.results[i],
+                    language=articles[i]["language"]
                 )
             )
 
         return InferenceResponse(results=results)
+
+

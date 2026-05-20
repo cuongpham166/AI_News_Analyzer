@@ -1,0 +1,3 @@
+CREATE CONSTRAINT source_name_unique IF NOT EXISTS
+FOR (s:Source)
+REQUIRE s.name IS UNIQUE;

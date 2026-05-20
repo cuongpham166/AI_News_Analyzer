@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class RawDataResponse(BaseModel):
+class RawArticle(BaseModel):
     title: str
     link: str
     summary: str

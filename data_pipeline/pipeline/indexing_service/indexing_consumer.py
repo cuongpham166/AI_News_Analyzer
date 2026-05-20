@@ -5,7 +5,7 @@ from data_pipeline.pipeline.indexing_service.indexing_processor import IndexingP
 
 
 from data_pipeline.nats.client import create_js
-from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, SAVED_SUBJECT
+from data_pipeline.nats.streams import ensure_stream, AI_SUBJECT
 from data_pipeline.config.indexing_config import get_elasticsearch_config
 
 class IndexingConsumer:

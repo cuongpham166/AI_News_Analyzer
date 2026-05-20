@@ -1,12 +1,12 @@
 import psycopg
 import os
 from dotenv import load_dotenv
+from data_pipeline.config.article_config import get_topics,get_entity_types,get_postgres_config
 
 load_dotenv()
 query_folder_path = os.getenv("SQL_QUERY_FOLDER_PATH")
 
 root_folder = query_folder_path
-
 
 class ArticleProcessor:
     def __init__(self, config):
@@ -33,12 +33,19 @@ class ArticleProcessor:
             print("Unable to connect to the database")
             print("Error:", e)
 
-    def create_init_tables(self):
+    def run_init_configs(self):
+        topic_labels = get_topics()
+        entity_types = get_entity_types()
+
         self.create_source_table()
         self.create_topic_table()
         self.create_entity_type_table()
         self.create_news_table()
+        self.create_entity_table()
         self.create_news_entity_table()
+
+        self.insert_topic_data(topic_labels)
+        self.insert_entity_type_data(entity_types)
 
     def create_entity_type_table(self):
         try:
@@ -248,3 +255,9 @@ class ArticleProcessor:
         with self.conn.cursor() as cur:
             cur.execute(sql)
             return cur.fetchall()
+
+if __name__ == "__main__":
+    config = get_postgres_config()
+    article_processor = ArticleProcessor(config)
+    article_processor.connect()
+    article_processor.run_init_configs()

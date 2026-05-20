@@ -1,7 +1,7 @@
 import asyncio
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, RAW_SUBJECT
-from data_pipeline.responses.raw_data_response import RawDataResponse
+from data_pipeline.models.raw_article import RawArticle
 from data_pipeline.pipeline.ingestion_service.ingestion_processor import IngestionProcessor
 from data_pipeline.config.ingestion_config import get_rss_urls
 
@@ -11,7 +11,7 @@ class IngestionProducer:
         self.poll_interval = poll_interval
         self.scraper = scraper
 
-    async def publish_article(self, article: RawDataResponse):
+    async def publish_article(self, article: RawArticle):
         try:
             ack = await asyncio.wait_for(
                 self.js.publish(
@@ -27,7 +27,7 @@ class IngestionProducer:
     async def run(self):
         while True:
             try:
-                new_articles: list[RawDataResponse] = await self.scraper.scrape()
+                new_articles: list[RawArticle] = await self.scraper.scrape()
                 print(f"Scraped {len(new_articles)} new articles")
                 if new_articles:
                     await asyncio.gather(

@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.2
     container_name: elasticsearch
+    restart: unless-stopped
     environment:
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - xpack.security.enabled=false   # for local dev
     ports:
       - 9200:9200
@@ -15,9 +14,11 @@ services:
       - es_data:/usr/share/elasticsearch/data
     networks:
       - esnet
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.2
     container_name: kibana
+    restart: unless-stopped
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
@@ -26,9 +27,11 @@ services:
       - elasticsearch
     networks:
       - esnet
+
   nginx:
     image: nginx:latest
     container_name: nginx
+    restart: unless-stopped
     ports:
       - 8080:80
     volumes:
@@ -38,8 +41,11 @@ services:
       - kibana
     networks:
       - esnet
+
   nats:
     image: nats:latest
+    container_name: nats
+    restart: unless-stopped
     command: [
       "-js",
       "-sd", "/data"
@@ -49,9 +55,13 @@ services:
       - "8222:8222"
     volumes:
       - nats-data:/data
+    networks:
+      - esnet
+
   postgres:
     image: postgres:16
     container_name: postgres-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -60,9 +70,13 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks:
+      - esnet
+
   neo4j:
     image: neo4j:5
     container_name: neo4j
+    restart: unless-stopped
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -71,6 +85,9 @@ services:
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
+    networks:
+      - esnet
+
 volumes:
   nats-data:
   es_data:
