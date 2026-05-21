@@ -1,10 +1,11 @@
 from pathlib import Path
 from neo4j import GraphDatabase
+import ollama
 from datetime import datetime, timezone
 from ai.responses.inference_response import InferenceResult
 from ai.responses.ner_response import NerEntity, NerResult
-from data_pipeline.models.inference_article import InferenceArticle, Topic, Source, News, Entities, Person, Organization, Location, Event
-from data_pipeline.utils.create_neo4j_entity_id import create_entity_id
+from data_pipeline.models.inference_article import InferenceArticle, Topic, Source, News
+from data_pipeline.utils.graph_processor_utils import build_metablock_for_embedding,map_ner_to_entities
 
 class GraphProcessor:
     def __init__(self,graph_config=None):
@@ -33,19 +34,16 @@ class GraphProcessor:
         for file_path in cypher_files:
             self.execute_cypher_file(file_path)
 
-    def map_ner_to_entities(ner_response:NerResult) -> Entities:
-        entities = Entities()
-        for ent in ner_response.entities:
-            entity_type = ent.type.lower()
-            if entity_type == "person":
-                entities.persons.append(Person(id=create_entity_id(entity_type, ent.value), name=ent.value))
-            elif entity_type == "organization":
-                entities.organizations.append(Organization(id=create_entity_id(entity_type, ent.value), name=ent.value))
-            elif entity_type == "location":
-                entities.locations.append(Location(id=create_entity_id(entity_type, ent.value), name=ent.value))
-            elif entity_type == "event":
-                entities.events.append(Event(id=create_entity_id(entity_type, ent.value), name=ent.value))
-        return entities
+    def generate_boosted_summary_embedding(self,title_text: str, summary_text: str, ner_response:NerResult):
+        metadata_block = build_metablock_for_embedding(ner_response)
+        boosted_text = (
+            f"search_document: \n"
+            f"TITLE: {title_text.strip()}\n"
+            f"SUMMARY: {summary_text.strip()}\n"
+            f"METADATA: {metadata_block}"
+        )
+        response = ollama.embeddings(model="nomic-embed-text", prompt=boosted_text)
+        return response["embedding"]
 
     def process_article(self, inference_result:InferenceResult):
         source = Source(name=inference_result.source)
@@ -60,16 +58,22 @@ class GraphProcessor:
             language=inference_result.language,
             summary=inference_result.summarization
         )
-        entities = self.map_ner_to_entities(inference_result.ner)
+        news_embedding = self.generate_boosted_summary_embedding(
+            title_text=inference_result.title,
+            summary_text=inference_result.summarization,
+            ner_response=inference_result.ner
+        )
+        entities = map_ner_to_entities(inference_result.ner)
+
         article_data = InferenceArticle(
             source=source,
             topic=topic,
             news=news,
             entities=entities
         )
-        self.save_articles(article_data)
+        self.save_articles(article_data,news_embedding)
 
-    def save_articles(self, article_data: InferenceArticle):
+    def save_articles(self, article_data: InferenceArticle,news_embedding):
         cypher_file = Path("data_pipeline/script/neo4j/ingestion_data.cypher")
         cypher_query = cypher_file.read_text()
 
@@ -83,6 +87,7 @@ class GraphProcessor:
             "news_sentiment": data_dict["news"]["sentiment"],
             "news_summary": data_dict["news"]["summary"],
             "news_language": data_dict["news"]["language"],
+            "news_embedding": news_embedding,
             "entities": data_dict["entities"]
         }
 

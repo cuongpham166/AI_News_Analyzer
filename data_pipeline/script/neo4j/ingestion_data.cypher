@@ -6,13 +6,15 @@ MERGE (n:News {link: $news_link})
   n.publish_date = datetime($news_publish_date),
   n.sentiment = $news_sentiment,
   n.language = $news_language,
-  n.summary = $news_summary
+  n.summary = $news_summary,
+  n.summary_embedding = $news_embedding
   ON MATCH SET
   n.title = $news_title,
   n.publish_date = datetime($news_publish_date),
   n.sentiment = $news_sentiment,
   n.language = $news_language,
-  n.summary = $news_summary
+  n.summary = $news_summary,
+  n.summary_embedding = $news_embedding
 
 MERGE (s)-[:PUBLISHED]->(n)
 MERGE (n)-[:COVERS]->(t)

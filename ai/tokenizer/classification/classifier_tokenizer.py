@@ -18,5 +18,5 @@ class ClassifierTokenizer:
             return_tensors="pt"
         )
 
-    def save(self, local_dir: str = "ai/models/news_classifier_cpu"):
+    def save(self, local_dir: str = "ai/models/topic_classifier"):
         return self.classifier_tokenizer.save_pretrained(local_dir)
