@@ -9,9 +9,9 @@ from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJE
 semaphore = asyncio.Semaphore(4)
 
 class InferenceConsumer:
-    def __init__(self, js=None):
+    def __init__(self, js,inference_processor):
         self.js = js
-        self.inference_processor = InferenceProcessor()
+        self.inference_processor = inference_processor
 
     async def publish_article(self, article: InferenceResult):
         await self.js.publish(
@@ -53,7 +53,8 @@ class InferenceConsumer:
 async def main():
     js = await create_js()
     await ensure_stream(js)
-    inference_consumer = InferenceConsumer(js)
+    inference_processor = InferenceProcessor()
+    inference_consumer = InferenceConsumer(js,inference_processor)
     await inference_consumer.run()
 
 

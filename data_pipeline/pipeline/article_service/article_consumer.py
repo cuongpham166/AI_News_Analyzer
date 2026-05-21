@@ -1,29 +1,26 @@
 import json
 import asyncio
 import tldextract
-
-from data_pipeline.pipeline.article_service.article_processor import ArticleProcessor
+import psycopg
 
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT
 from data_pipeline.config.article_config import get_postgres_config
-
+from data_pipeline.pipeline.article_service.article_processor import ArticleProcessor
+from data_pipeline.pipeline.article_service.article_repository import ArticleRepository
 
 class ArticleConsumer:
-    def __init__(self, js=None, conn_params=None):
+    def __init__(self, js, article_processor):
         self.js = js
-        self.conn_params = conn_params
-        self.db_processor = ArticleProcessor(self.conn_params)
-        self.db_processor.connect()
-        self.db_processor.run_init_configs()
+        self.article_processor = article_processor
 
     def check_connection(self):
-        self.db_processor.check_connection()
+        self.article_processor.check_connection()
 
     async def process_enriched_message(self, msg):
         enriched_article = json.loads(msg.data.decode())
         try:
-            self.db_processor.insert_news_data(enriched_article)
+            self.article_processor.insert_news_data(enriched_article)
             await msg.ack()
         except Exception as e:
             print(f"Error processing enriched article: {e}")
@@ -32,7 +29,7 @@ class ArticleConsumer:
     async def process_ai_message(self, msg):
         ai_article = json.loads(msg.data.decode())
         try:
-            self.db_processor.update_news_data(ai_article)
+            self.article_processor.update_news_data(ai_article)
             await msg.ack()
         except Exception as e:
             print(f"Error processing ai article: {e}")
@@ -72,7 +69,7 @@ class ArticleConsumer:
 
     async def recover_missing_data(self):
         print("recover_missing_data")
-        missing_news = self.db_processor.fetch_missing_data()
+        missing_news = self.article_processor.fetch_missing_data()
         for row in missing_news:
             sql_timestamp = row[1]
             epoch_seconds = int(sql_timestamp.timestamp())
@@ -94,14 +91,19 @@ class ArticleConsumer:
 async def main():
     js = await create_js()
     await ensure_stream(js)
-    conn_params = get_postgres_config()
-    postgres_consumer = ArticleConsumer(js, conn_params)
-    await asyncio.gather(
-        postgres_consumer.retrieve_enriched_articles(),
-        postgres_consumer.retrieve_ai_articles(),
-        postgres_consumer.recover_missing_data()
-    )
-
+    config = get_postgres_config()
+    conn = psycopg.connect(**config)
+    try:
+        article_repo = ArticleRepository(conn)
+        article_processor = ArticleProcessor(article_repo)
+        article_consumer = ArticleConsumer(js, article_processor)
+        await asyncio.gather(
+            article_consumer.retrieve_enriched_articles(),
+            article_consumer.retrieve_ai_articles(),
+            article_consumer.recover_missing_data()
+        )
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
