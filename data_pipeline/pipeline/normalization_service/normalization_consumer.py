@@ -14,8 +14,7 @@ class NormalizationConsumer:
 
     async def handle(self, msg):
         try:
-            raw_data = json.loads(msg.data.decode())
-            processed_result: ProcessedArticle = await self.processor.process(raw_data)
+            processed_result: ProcessedArticle = await self.processor.process_message(msg)
             processed_msg = processed_result.model_dump_json().encode()
             if processed_msg:
                 await self.js.publish(
@@ -32,8 +31,6 @@ class NormalizationConsumer:
             RAW_SUBJECT,
             durable="normalization-consumer",
             deliver_policy="all",
-            ack_wait=30,
-            max_deliver=5,
             manual_ack=True,
         )
 

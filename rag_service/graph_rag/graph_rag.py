@@ -3,17 +3,12 @@ from pathlib import Path
 import ollama
 from neo4j import GraphDatabase,Query
 from data_pipeline.config.graph_config import get_neo4j_config
+from sentence_transformers import CrossEncoder
 
 class GrapRAG:
-    def __init__(self):
-        self.driver = None
-
-    def connect(self):
-        graph_config = get_neo4j_config()
-        uri = graph_config.uri
-        username = graph_config.username
-        password = graph_config.password
-        self.driver = GraphDatabase(uri,auth=(username,password))
+    def __init__(self, driver,reranker):
+        self.driver = driver
+        self.reranker = reranker
 
     def close(self):
         if self.driver:
@@ -23,56 +18,85 @@ class GrapRAG:
         response = ollama.embeddings(model="nomic-embed-text", prompt=text)
         return response["embedding"]
 
+    def create_vector_index_if_missing(self):
+        """Ensures the 768-dimension Nomic vector index exists in Neo4j."""
+        index_query = """
+        CREATE VECTOR INDEX news_summary_embeddings IF NOT EXISTS
+        FOR (n:News) ON (n.summary_embedding)
+        OPTIONS {
+          indexConfig: {
+            `vector.dimensions`: 768,
+            `vector.similarity_function`: 'cosine'
+          }
+        }
+        """
+        with self.driver.session() as session:
+            session.run(index_query)
+            print("✅ Vector index validation complete.")
+
     def retrieval_query(self)-> Query:
         cypher_file = Path("data_pipeline/script/neo4j/vector_search.cypher")
         cypher_text = cypher_file.read_text()
         return Query(cypher_text)
 
+    def create_fulltext_index(self):
+        index_query = """
+            CREATE FULLTEXT INDEX news_keywords_index IF NOT EXISTS
+            FOR (n:News) ON EACH [n.title, n.summary]
+        """
+        with self.driver.session() as session:
+            session.run(index_query)
+            print("Fulltext index validation complete.")
+
     def run_graph_rag(self, user_query: str, limit: int = 3):
+        # 1. Generate local vector
         query_vector = self.get_local_embedding(user_query)
         cypher_query = self.retrieval_query()
-        graph_data=[]
 
+        # 2. Run the hybrid query against Neo4j
+        graph_data = []
         with self.driver.session() as session:
-            result = session.run(cypher_query, vector=query_vector, limit=limit)
+            # Note: We pass user_query as a separate parameter now for BM25 matching
+            result = session.run(cypher_query, vector=query_vector, user_query=user_query, limit=limit)
             for record in result:
                 graph_data.append(record.data())
 
-        if len(graph_data) == 0:
-            return "No relevant news or connections found in the offline database."
+        if not graph_data:
+            return "No relevant intelligence found."
 
-        context_blocks = []
-        for i, item in enumerate(graph_data, 1):
-            title = item['n']['title']
-            summary = item['n']['summary']
-            source = item['s']['name']
-            topic = item['t']['name']
-            score = item['score']
+        # 3. Create the list of text strings that the reranker will evaluate
+        candidate_blocks = []
+        for item in graph_data:
+            # Build a comprehensive string representing the full data point
+            text_to_evaluate = (
+                f"Title: {item['title']} | Summary: {item['summary']} | "
+                f"Entities: {', '.join(item['people'] + item['organizations'] + item['locations'])}"
+            )
+            candidate_blocks.append((item, text_to_evaluate))
 
-            block = f"--- INTEL DOSSIER {i} (Match Relevance: {score:.2f}) ---\n"
-            block += f"ARTICLE: {title}\n"
-            block += f"SOURCE: {source} | MAIN TOPIC: {topic}\n"
-            block += f"SUMMARY: {summary}\n"
+        # 4. Use the CrossEncoder to compute strict alignment scores
+        # We pass pairs of (User Query, Candidate Text)
+        pairs = [[user_query, block[1]] for block in candidate_blocks]
+        rerank_scores = self.reranker.predict(pairs)
 
-            if item['people']:
-                people_names = [p['name'] for p in item['people']]
-                block += f"CONNECTED PEOPLE: {', '.join(people_names)}\n"
+        # Attach scores and sort candidates from highest to lowest exact relevance
+        for idx, score in enumerate(rerank_scores):
+            candidate_blocks[idx][0]['rerank_score'] = float(score)
 
-            if item['organizations']:
-                org_names = [o['name'] for o in item['organizations']]
-                block += f"CONNECTED ORGANIZATIONS: {', '.join(org_names)}\n"
+        candidate_blocks.sort(key=lambda x: x[0]['rerank_score'], reverse=True)
 
-            if item['locations']:
-                loc_names = [l['name'] for l in item['locations']]
-                block += f"CONNECTED LOCATIONS: {', '.join(loc_names)}\n"
+        # 5. Take only the top entries defined by your 'limit' to format your final Intel Dossiers
+        final_context_blocks = []
+        for i, (item, _) in enumerate(candidate_blocks[:limit], 1):
+            block = f"--- INTEL DOSSIER {i} (Rerank Relevance: {item['rerank_score']:.4f}) ---\n"
+            block += f"ARTICLE: {item['title']}\n"
+            block += f"SUMMARY: {item['summary']}\n"
+            if item.get('people'): block += f"CONNECTED PEOPLE: {', '.join(item['people'])}\n"
+            if item.get('organizations'): block += f"CONNECTED ORGANIZATIONS: {', '.join(item['organizations'])}\n"
+            if item.get('locations'): block += f"CONNECTED LOCATIONS: {', '.join(item['locations'])}\n"
+            final_context_blocks.append(block)
 
-            if item['events']:
-                event_names = [e['name'] for e in item['events']]
-                block += f"CONNECTED EVENTS: {', '.join(event_names)}\n"
-
-            context_blocks.append(block)
-
-        fused_context = "\n".join(context_blocks)
+        fused_context = "\n".join(final_context_blocks)
 
         system_prompt = (
             "You are an offline intelligence analyst. Review the provided Intel Dossiers extracted "

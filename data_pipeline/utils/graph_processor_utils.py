@@ -22,6 +22,8 @@ def map_ner_to_entities(ner_response:NerResult) -> Entities:
             entities.locations.append(Location(id=create_entity_id(entity_type, ent.value), name=ent.value))
         elif entity_type == "event":
             entities.events.append(Event(id=create_entity_id(entity_type, ent.value), name=ent.value))
+        else:
+            print(f"[NER WARNING] Unknown entity type: {ent.type} -> {ent.value}")
     return entities
 
 def build_metablock_for_embedding(ner_response:NerResult)->str:

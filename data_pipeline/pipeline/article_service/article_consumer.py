@@ -2,6 +2,7 @@ import json
 import asyncio
 import tldextract
 import psycopg
+from nats.aio.msg import Msg
 
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT
@@ -17,7 +18,7 @@ class ArticleConsumer:
     def check_connection(self):
         self.article_processor.check_connection()
 
-    async def process_enriched_message(self, msg):
+    async def process_enriched_message(self, msg:Msg):
         enriched_article = json.loads(msg.data.decode())
         try:
             self.article_processor.insert_news_data(enriched_article)
@@ -32,7 +33,7 @@ class ArticleConsumer:
             self.article_processor.update_news_data(ai_article)
             await msg.ack()
         except Exception as e:
-            print(f"Error processing ai article: {e}")
+            print(f"Error[ArticleConsumer]processing ai article: {e}")
             await msg.nak(delay=5)
 
     async def retrieve_enriched_articles(self):
@@ -40,8 +41,6 @@ class ArticleConsumer:
             ENRICHED_SUBJECT,
             durable="article-consumer-enriched",
             deliver_policy="all",
-            ack_wait=30,
-            max_deliver=5,
             manual_ack=True,
         )
         print(f"Subscribed to {ENRICHED_SUBJECT}. Waiting for messages...")
@@ -53,8 +52,6 @@ class ArticleConsumer:
             AI_SUBJECT,
             durable="article-consumer-ai",
             deliver_policy="all",
-            ack_wait=30,
-            max_deliver=5,
             manual_ack=True,
         )
         print(f"Subscribed to {AI_SUBJECT}. Waiting for messages...")
@@ -67,6 +64,7 @@ class ArticleConsumer:
             json.dumps(article).encode()
         )
 
+    """
     async def recover_missing_data(self):
         print("recover_missing_data")
         missing_news = self.article_processor.fetch_missing_data()
@@ -86,7 +84,7 @@ class ArticleConsumer:
                 "text": row[4]
             }
             await self.publish_article(enriched_article)
-
+    """
 
 async def main():
     js = await create_js()
@@ -99,8 +97,7 @@ async def main():
         article_consumer = ArticleConsumer(js, article_processor)
         await asyncio.gather(
             article_consumer.retrieve_enriched_articles(),
-            article_consumer.retrieve_ai_articles(),
-            article_consumer.recover_missing_data()
+            article_consumer.retrieve_ai_articles()
         )
     finally:
         conn.close()

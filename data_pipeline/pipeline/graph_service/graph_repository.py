@@ -1,12 +1,15 @@
+import asyncio
 from pathlib import Path
 from neo4j import GraphDatabase
 import ollama
 from datetime import datetime, timezone
 from ai.responses.inference_response import InferenceResult
 from ai.responses.ner_response import NerEntity, NerResult
+from data_pipeline.config.graph_config import get_neo4j_config
 from data_pipeline.models.inference_article import InferenceArticle, Topic, Source, News
 from data_pipeline.utils.graph_processor_utils import build_metablock_for_embedding,map_ner_to_entities
-
+from concurrent.futures import ProcessPoolExecutor
+GRAPH_EXECUTOR = ProcessPoolExecutor(max_workers=2)
 class GraphRepository:
     def __init__(self, driver):
         self.driver = driver
@@ -38,25 +41,28 @@ class GraphRepository:
         response = ollama.embeddings(model="nomic-embed-text", prompt=boosted_text)
         return response["embedding"]
 
-    def process_article(self, inference_result:InferenceResult):
-        source = Source(name=inference_result.source)
-        topic = Topic(name=inference_result.classification.topic)
-        publish_date = datetime.fromtimestamp(inference_result.publish_date, tz=timezone.utc)
+
+    def process_article(self, inference_result:dict):
+        print("process_article_graph_repo: ",inference_result)
+        result_obj = InferenceResult(**inference_result)
+        source = Source(name=result_obj.source)
+        topic = Topic(name=result_obj.classification.topic)
+        publish_date = datetime.fromtimestamp(result_obj.publish_date, tz=timezone.utc)
 
         news = News(
-            link=inference_result.link,
-            title=inference_result.title,
+            link=result_obj.link,
+            title=result_obj.title,
             publish_date=publish_date,
-            sentiment=inference_result.sentiment.score if inference_result.sentiment else 0.0,
-            language=inference_result.language,
-            summary=inference_result.summarization
+            sentiment=result_obj.sentiment.score if result_obj.sentiment else 0.0,
+            language=result_obj.language,
+            summary=result_obj.summarization
         )
         news_embedding = self.generate_boosted_summary_embedding(
-            title_text=inference_result.title,
-            summary_text=inference_result.summarization,
-            ner_response=inference_result.ner
+            title_text=result_obj.title,
+            summary_text=result_obj.summarization,
+            ner_response=result_obj.ner
         )
-        entities = map_ner_to_entities(inference_result.ner)
+        entities = map_ner_to_entities(result_obj.ner)
 
         article_data = InferenceArticle(
             source=source,
@@ -64,28 +70,59 @@ class GraphRepository:
             news=news,
             entities=entities
         )
+
         return self.save_articles(article_data,news_embedding)
 
     def save_articles(self, article_data: InferenceArticle,news_embedding):
         cypher_file = Path("data_pipeline/script/neo4j/ingestion_data.cypher")
         cypher_query = cypher_file.read_text()
-
         data_dict = article_data.model_dump()
+        data_dict["entities"] = article_data.entities.model_dump()
+        publish_date = data_dict["news"]["publish_date"]
+        if hasattr(publish_date, "strftime"):
+            news_publish_date = publish_date.strftime("%Y-%m-%dT%H:%M:%S")
+        else:
+            news_publish_date = str(publish_date)
         flat_article_data = {
             "source_name": data_dict["source"]["name"],
             "topic_name": data_dict["topic"]["name"],
             "news_link": data_dict["news"]["link"],
             "news_title": data_dict["news"]["title"],
-            "news_publish_date": data_dict["news"]["publish_date"].isoformat(),
+            "news_publish_date": news_publish_date,
             "news_sentiment": data_dict["news"]["sentiment"],
             "news_summary": data_dict["news"]["summary"],
             "news_language": data_dict["news"]["language"],
             "news_embedding": news_embedding,
             "entities": data_dict["entities"]
         }
-        return flat_article_data
 
-        #with self.driver.session() as session:
-        #    session.execute_write(
-        #        lambda tx: tx.run(cypher_query, **flat_article_data)
-        #    )
+        print("Saving article to Neo4j:")
+        print(flat_article_data["news_link"])
+        print("Entities:", flat_article_data["entities"])
+
+        def write(tx):
+            result = tx.run(cypher_query, **flat_article_data)
+            summary = result.consume()
+
+            print("Neo4j write counters:", summary.counters)
+
+            return summary.counters
+
+        try:
+            with self.driver.session() as session:
+                counters = session.execute_write(write)
+
+            return flat_article_data
+
+        except Exception as e:
+            print("Neo4j write failed:", str(e))
+            raise
+
+if __name__ == "__main__":
+    graph_config = get_neo4j_config()
+    driver = GraphDatabase.driver(
+        graph_config["uri"],
+        auth=(graph_config["username"], graph_config["password"])
+    )
+    graph_repo = GraphRepository(driver)
+    graph_repo.create_constraints()

@@ -120,15 +120,16 @@ class ArticleRepository:
             print("Error", e)
             self.conn.rollback()
 
-    def insert_entity_data(self, entities):
+    def insert_entity_data(self, news_entities):
         try:
-            sql_file = f"{root_folder}insert_entity_table.sql"
-            with open(sql_file, "r") as f:
-                sql = f.read()
-            with self.conn.cursor() as cur:
-                for entity in entities:
-                    cur.execute(sql, (entity["value"], entity["type"]))
-                self.conn.commit()
+            if len(news_entities) > 0:
+                sql_file = f"{root_folder}insert_entity_table.sql"
+                with open(sql_file, "r") as f:
+                    sql = f.read()
+                with self.conn.cursor() as cur:
+                    for entity in news_entities:
+                        cur.execute(sql, (entity["value"], entity["type"]))
+                    self.conn.commit()
         except psycopg.Error as e:
             print("Error", e)
             self.conn.rollback()
@@ -161,13 +162,12 @@ class ArticleRepository:
         try:
             self.insert_source_data([news["source"]])
             sql_file = f"{root_folder}insert_news_table.sql"
-            publish_date = news["publish_date"]
-
+            #publish_date = news["publish_date"]
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
                 cur.execute(sql,
-                            (news["title"], publish_date, news["link"], news["language"], news["text"], news["source"]))
+                            (news["title"], news["publish_date"], news["link"], news["language"], news["text"], news["source"]))
                 row = cur.fetchone()
                 if row is not None:
                     new_id = row[0]
@@ -192,13 +192,11 @@ class ArticleRepository:
             self.conn.rollback()
 
     # insert entity_type => insert entity => update_news with AI results => insert_news_entity
+    # insert entity => update news => insert_news_entity
     def update_news_data(self, updated_data):
         try:
-            if len(updated_data["entities"]) > 0:
-                entity_types = [entity["type"] for entity in updated_data["entities"]]
-                entities = updated_data["entities"]
-                self.insert_entity_type_data(entity_types)
-                self.insert_entity_data(entities)
+            news_entities = updated_data["ner"]["entities"]
+            self.insert_entity_data(news_entities)
 
             sql_file = f"{root_folder}update_news_table.sql"
             with open(sql_file, "r") as f:
@@ -206,14 +204,14 @@ class ArticleRepository:
             with self.conn.cursor() as cur:
                 cur.execute(sql, (
                     updated_data["link"],
-                    updated_data["summary"],
-                    updated_data["sentiment_label"],
-                    updated_data["sentiment"],
-                    updated_data["topic"]
+                    updated_data["summarization"],
+                    updated_data["sentiment"]["label"],
+                    updated_data["sentiment"]["score"],
+                    updated_data["classification"]["topic"]
                 ))
             self.conn.commit()
 
-            entities_list = [entity["value"] for entity in updated_data["entities"]]
+            entities_list = [entity["value"] for entity in updated_data["ner"]["entities"]]
 
             for entity_element in entities_list:
                 self.insert_news_entity_data(updated_data["link"], entity_element)

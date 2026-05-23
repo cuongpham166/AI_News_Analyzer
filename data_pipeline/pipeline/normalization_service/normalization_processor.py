@@ -1,4 +1,5 @@
 from langdetect import detect
+from nats.aio.msg import Msg
 from newspaper import Article
 import tldextract
 from datetime import datetime
@@ -16,7 +17,7 @@ class NormalizationProcessor:
     def is_duplicate(self, link):
         return link in self.enriched_links
 
-    async def process_message(self, msg: dict) -> ProcessedArticle | None:
+    async def process_message(self, msg:Msg) -> ProcessedArticle | None:
         raw_data = json.loads(msg.data.decode())
         link = raw_data.get("link")
         rss_date_str = raw_data.get("rss_pub_date")

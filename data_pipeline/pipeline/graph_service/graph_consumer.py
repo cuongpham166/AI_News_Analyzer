@@ -1,5 +1,7 @@
 import json
 import asyncio
+
+from nats.aio.msg import Msg
 from neo4j import GraphDatabase
 
 from ai.responses.inference_response import InferenceResult
@@ -14,13 +16,16 @@ class GraphConsumer:
         self.js = js
         self.graph_processor = graph_processor
 
-    async def process_ai_message(self, msg):
-        ai_article:InferenceResult = json.loads(msg.data.decode())
+    async def process_ai_message(self, msg:Msg):
+        print("1 - received msg")
+        ai_article = json.loads(msg.data.decode())
+        print("2 - decoded msg")
         try:
             self.graph_processor.process_article(ai_article)
+            print("3 - process_article called")
             await msg.ack()
         except Exception as e:
-            print(f"Error processing ai article: {e}")
+            print(f"Error[GraphConsumer]processing ai article: {e}")
             await msg.nak(delay=5)
 
     async def run(self):
@@ -28,8 +33,6 @@ class GraphConsumer:
             AI_SUBJECT,
             durable="graph-consumer",
             deliver_policy="all",
-            ack_wait=30,
-            max_deliver=5,
             manual_ack=True,
         )
         print(f"Subscribed to {AI_SUBJECT}. Waiting for messages...")
@@ -41,8 +44,8 @@ async def main():
     await ensure_stream(js)
     graph_config = get_neo4j_config()
     driver = GraphDatabase.driver(
-        graph_config.uri,
-        auth=(graph_config.username, graph_config.password)
+        graph_config["uri"],
+        auth=(graph_config["username"], graph_config["password"])
     )
     try:
         graph_repo = GraphRepository(driver)

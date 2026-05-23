@@ -1,6 +1,8 @@
 import json
 import asyncio
 
+from nats.aio.msg import Msg
+
 from ai.responses.inference_response import InferenceResponse, InferenceResult
 from data_pipeline.pipeline.inference_service.inference_processor import InferenceProcessor
 from data_pipeline.nats.client import create_js
@@ -19,26 +21,22 @@ class InferenceConsumer:
             article.model_dump_json().encode()
         )
 
-    async def process_message(self, msg):
-        processed_article = json.loads(msg.data.decode())
-        try:
-            inference_data:InferenceResponse = self.inference_processor.analyze([processed_article])
-            inference_results = inference_data.results
+    async def process_message(self, msg:Msg):
+        async with semaphore:
+            processed_article = json.loads(msg.data.decode())
+            try:
+                inference_data:InferenceResponse = self.inference_processor.analyze([processed_article])
+                inference_results = inference_data.results
 
-            for result in inference_results:
-                await self.publish_article(result)
+                for result in inference_results:
+                    await self.publish_article(result)
                 await msg.ack()
 
-        except Exception as e:
-            print(f"Error processing article: {e}")
-            await msg.term()
+            except Exception as e:
+                print(f"Error processing article: {e}")
+                await msg.term()
 
     async def run(self):
-        try:
-            await self.js.delete_consumer(STREAM_NAME, "enriched-articles-consumer-1")
-        except Exception:
-            pass
-
         sub = await self.js.subscribe(
             ENRICHED_SUBJECT,
             durable="enriched-articles-consumer-1",

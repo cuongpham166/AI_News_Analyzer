@@ -21,22 +21,26 @@ MERGE (n)-[:COVERS]->(t)
 
 WITH n, $entities AS entities
 
-UNWIND entities.persons AS p
-MERGE (person:Person {id: p.id})
-SET person.name = p.name
-MERGE (n)-[:MENTIONS_PERSON]->(person)
+FOREACH (p IN entities.persons |
+  MERGE (person:Person {id: p.id})
+  SET person.name = p.name
+  MERGE (n)-[:MENTIONS_PERSON]->(person)
+)
 
-UNWIND entities.organizations AS o
-MERGE (org:Organization {id: o.id})
-SET org.name = o.name
-MERGE (n)-[:MENTIONS_ORGANIZATION]->(org)
+FOREACH (o IN entities.organizations |
+  MERGE (org:Organization {id: o.id})
+  SET org.name = o.name
+  MERGE (n)-[:MENTIONS_ORGANIZATION]->(org)
+)
 
-UNWIND entities.locations AS l
-MERGE (loc:Location {id: l.id})
-SET loc.name = l.name
-MERGE (n)-[:MENTIONS_LOCATION]->(loc)
+FOREACH (l IN entities.locations |
+  MERGE (loc:Location {id: l.id})
+  SET loc.name = l.name
+  MERGE (n)-[:MENTIONS_LOCATION]->(loc)
+)
 
-UNWIND entities.events AS e
-MERGE (event:Event {id: e.id})
-SET event.name = e.name
-MERGE (n)-[:MENTIONS_EVENT]->(event)
+FOREACH (e IN entities.events |
+  MERGE (event:Event {id: e.id})
+  SET event.name = e.name
+  MERGE (n)-[:MENTIONS_EVENT]->(event)
+)

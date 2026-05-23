@@ -2,6 +2,7 @@ import json
 import asyncio
 from datetime import datetime, timezone
 from elasticsearch import Elasticsearch
+from nats.aio.msg import Msg
 
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, AI_SUBJECT
@@ -16,16 +17,15 @@ class IndexingConsumer:
         self.js = js
         self.indexing_processor = processor
 
-    async def process_ai_message(self, msg):
+    async def process_ai_message(self, msg:Msg):
         ai_article = json.loads(msg.data.decode())
-        print("Elastic Bridge:process_ai_message: ", ai_article)
         try:
             index_time = datetime.now(timezone.utc).isoformat()
             ai_article["@timestamp"] = index_time
             self.indexing_processor.index_news_document(ai_article)
             await msg.ack()
         except Exception as e:
-            print(f"Error processing ai article: {e}")
+            print(f"Error[IndexingConsumer]processing ai article: {e}")
             await msg.nak(delay=5)
 
     async def run(self):
@@ -33,8 +33,6 @@ class IndexingConsumer:
             AI_SUBJECT,
             durable="indexing-consumer",
             deliver_policy="all",
-            ack_wait=30,
-            max_deliver=5,
             manual_ack=True,
         )
         print(f"Subscribed to {AI_SUBJECT}. Waiting for messages...")
@@ -46,7 +44,7 @@ async def main():
     js = await create_js()
     await ensure_stream(js)
     elastic_config = get_elasticsearch_config()
-    es_client = Elasticsearch(elastic_config.elastic_url)
+    es_client = Elasticsearch(elastic_config["elastic_url"])
     try:
         indexing_repo = IndexingRepository(es_client)
         index_processor =IndexingProcessor(indexing_repo)

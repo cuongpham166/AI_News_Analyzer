@@ -17,7 +17,8 @@ def main():
     inference_service = InferenceProcessor()
     inference_result = inference_service.analyze(test_texts).results
     print("Load: ", inference_result)
-
+    news_entities = inference_result[0].model_dump()
+    print("Load_entities: ", news_entities["ner"])
 
 if __name__ == '__main__':
     main()
