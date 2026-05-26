@@ -248,3 +248,16 @@ class ArticleRepository:
         with self.conn.cursor() as cur:
             cur.execute(sql)
             return cur.fetchall()
+
+    def get_fulltext_by_link(self, link):
+        try:
+            sql_file = f"{root_folder}get_full_text.sql"
+            with open(sql_file, "r") as f:
+                sql = f.read()
+            with self.conn.cursor() as cur:
+                cur.execute(sql,(link,))
+                row = cur.fetchone()
+                return row[0]
+        except psycopg.Error as e:
+            print("Error", e)
+            self.conn.rollback()

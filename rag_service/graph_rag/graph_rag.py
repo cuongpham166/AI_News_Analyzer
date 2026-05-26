@@ -117,3 +117,40 @@ class GrapRAG:
             }
         )
         return response['message']['content']
+
+    def search_neo4j(self, user_query: str, limit: int = 3):
+        # 1. Generate local vector embedding
+        query_vector = self.get_local_embedding(user_query)
+        cypher_query = self.retrieval_query()
+
+        graph_results = []
+
+        # 2. Query the Graph Database
+        with self.driver.session() as session:
+            # Note: We over-sample slightly (limit * 2) so the global Reranker has
+            # a healthy candidate pool to evaluate alongside the Elasticsearch pool
+            result = session.run(
+                cypher_query,
+                vector=query_vector,
+                user_query=user_query,
+                limit=limit * 2
+            )
+
+            for record in result:
+                item = record.data()
+
+                # 3. Standardize and normalize dictionary keys
+                graph_results.append({
+                    "title": item.get("title"),
+                    "summary": item.get("summary"),
+                    "source": item.get("source", "Unknown"),
+                    "topic": item.get("topic", "General"),
+                    # Fallback to empty lists if your graph paths didn't find specific entities
+                    "people": item.get("people", []),
+                    "organizations": item.get("organizations", []),
+                    "locations": item.get("locations", []),
+                    # If your Cypher query doesn't match events node yet, supply empty list
+                    "events": item.get("events", [])
+                })
+
+        return graph_results

@@ -1,0 +1,1 @@
+Select full_text from news where link=%s;
