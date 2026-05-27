@@ -1,9 +1,7 @@
 from pathlib import Path
 
 import ollama
-from neo4j import GraphDatabase,Query
-from data_pipeline.config.graph_config import get_neo4j_config
-from sentence_transformers import CrossEncoder
+from neo4j import Query
 
 class GrapRAG:
     def __init__(self, driver,reranker):
@@ -56,7 +54,6 @@ class GrapRAG:
         # 2. Run the hybrid query against Neo4j
         graph_data = []
         with self.driver.session() as session:
-            # Note: We pass user_query as a separate parameter now for BM25 matching
             result = session.run(cypher_query, vector=query_vector, user_query=user_query, limit=limit)
             for record in result:
                 graph_data.append(record.data())
@@ -67,19 +64,15 @@ class GrapRAG:
         # 3. Create the list of text strings that the reranker will evaluate
         candidate_blocks = []
         for item in graph_data:
-            # Build a comprehensive string representing the full data point
             text_to_evaluate = (
                 f"Title: {item['title']} | Summary: {item['summary']} | "
                 f"Entities: {', '.join(item['people'] + item['organizations'] + item['locations'])}"
             )
             candidate_blocks.append((item, text_to_evaluate))
 
-        # 4. Use the CrossEncoder to compute strict alignment scores
-        # We pass pairs of (User Query, Candidate Text)
         pairs = [[user_query, block[1]] for block in candidate_blocks]
         rerank_scores = self.reranker.predict(pairs)
 
-        # Attach scores and sort candidates from highest to lowest exact relevance
         for idx, score in enumerate(rerank_scores):
             candidate_blocks[idx][0]['rerank_score'] = float(score)
 
@@ -127,8 +120,6 @@ class GrapRAG:
 
         # 2. Query the Graph Database
         with self.driver.session() as session:
-            # Note: We over-sample slightly (limit * 2) so the global Reranker has
-            # a healthy candidate pool to evaluate alongside the Elasticsearch pool
             result = session.run(
                 cypher_query,
                 vector=query_vector,
@@ -145,11 +136,9 @@ class GrapRAG:
                     "summary": item.get("summary"),
                     "source": item.get("source", "Unknown"),
                     "topic": item.get("topic", "General"),
-                    # Fallback to empty lists if your graph paths didn't find specific entities
                     "people": item.get("people", []),
                     "organizations": item.get("organizations", []),
                     "locations": item.get("locations", []),
-                    # If your Cypher query doesn't match events node yet, supply empty list
                     "events": item.get("events", [])
                 })
 

@@ -28,7 +28,6 @@ class SearchRAG:
                     "filter": [
                         {
                             "range": {
-                                # Match against your epoch_second numeric field using the computed integer
                                 "publish_date": {
                                     "gte": start_epoch
                                 }
