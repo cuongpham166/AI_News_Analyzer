@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A scalable, event-driven AI platform that collects news from RSS feeds, enriches and analyzes articles in real-time using NLP models, and delivers fast, searchable insights.
+A scalable, event-driven AI platform that collects news from RSS feeds, enriches and analyzes articles using NLP models, and delivers fast, searchable insights.
 
 By leveraging a sophisticated dual-engine Hybrid RAG system, the platform shifts dynamically from macro-trend statistical visualizations down to hyper-focused, network-aware structural intelligence briefs.
 
