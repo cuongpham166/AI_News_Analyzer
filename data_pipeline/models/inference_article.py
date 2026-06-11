@@ -24,6 +24,9 @@ class Source(BaseModel):
 class Topic(BaseModel):
     name: str
 
+class Keyphrase(BaseModel):
+    name: str
+
 class News(BaseModel):
     link: str
     title: str
@@ -49,6 +52,7 @@ class InferenceArticle(BaseModel):
     topic: Topic
     news: News
     entities: Entities
+    keyphrases: list[str] = []
 
 article_data = {
     "source": {

@@ -1,15 +1,19 @@
-import asyncio
 from pathlib import Path
 from neo4j import GraphDatabase
 import ollama
 from datetime import datetime, timezone
+
 from ai.responses.inference_response import InferenceResult
 from ai.responses.ner_response import NerEntity, NerResult
+
 from data_pipeline.config.graph_config import get_neo4j_config
 from data_pipeline.models.inference_article import InferenceArticle, Topic, Source, News
 from data_pipeline.utils.graph_processor_utils import build_metablock_for_embedding,map_ner_to_entities
+
 from concurrent.futures import ProcessPoolExecutor
+
 GRAPH_EXECUTOR = ProcessPoolExecutor(max_workers=2)
+
 class GraphRepository:
     def __init__(self, driver):
         self.driver = driver
@@ -68,7 +72,9 @@ class GraphRepository:
             source=source,
             topic=topic,
             news=news,
-            entities=entities
+            entities=entities,
+            keyphrases=result_obj.keyphrases.results
+
         )
 
         return self.save_articles(article_data,news_embedding)
@@ -93,7 +99,8 @@ class GraphRepository:
             "news_summary": data_dict["news"]["summary"],
             "news_language": data_dict["news"]["language"],
             "news_embedding": news_embedding,
-            "entities": data_dict["entities"]
+            "entities": data_dict["entities"],
+            "keyphrases":data_dict["keyphrases"]
         }
 
         print("Saving article to Neo4j:")
@@ -116,7 +123,7 @@ class GraphRepository:
 
         except Exception as e:
             print("Neo4j write failed:", str(e))
-            raise
+
 
 if __name__ == "__main__":
     graph_config = get_neo4j_config()
@@ -125,4 +132,3 @@ if __name__ == "__main__":
         auth=(graph_config["username"], graph_config["password"])
     )
     graph_repo = GraphRepository(driver)
-    graph_repo.create_constraints()

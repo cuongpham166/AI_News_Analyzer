@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+
+from ai.responses.keyword_response import KeyphraseResponse
 from ai.responses.sentiment_response import SentimentResult
 from ai.responses.classification_response import ClassificationResult
 from ai.responses.ner_response import NerResult
@@ -14,6 +16,7 @@ class InferenceResult(BaseModel):
     classification: ClassificationResult
     ner: NerResult
     summarization: str
+    keyphrases:KeyphraseResponse
 
 
 class InferenceResponse(BaseModel):

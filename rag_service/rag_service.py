@@ -39,22 +39,18 @@ class RAGService:
                 "rrf_score": 1 / (60 + rank)
             }
 
-        # Process Neo4j Rankings and Fuse Overlaps
         for rank, doc in enumerate(neo4j_candidates, start=1):
             title = doc['title']
             if title in fused_dossiers:
-                # High-Signal Match! Both engines found it, so combine their weights
                 fused_dossiers[title]["rrf_score"] += 1 / (60 + rank)
 
                 existing_data = fused_dossiers[title]["data"]
 
-                # Merge structural graph data into the Elastic profile if missing
                 fused_dossiers[title]["data"]["people"] = list(set(existing_data.get("people", []) + doc.get("people", [])))
                 fused_dossiers[title]["data"]["organizations"] = list(set(existing_data.get("organizations", []) + doc.get("organizations", [])))
                 fused_dossiers[title]["data"]["locations"] = list(set(existing_data.get("locations", []) + doc.get("locations", [])))
                 fused_dossiers[title]["data"]["events"] = list(set(existing_data.get("events", []) + doc.get("events", [])))
 
-                # If the existing profile only has a summary, upgrade it to full_text from the other engine
                 if not fused_dossiers[title]["data"].get("full_text") and doc.get("full_text"):
                     fused_dossiers[title]["data"]["full_text"] = doc["full_text"]
             else:
@@ -73,7 +69,6 @@ class RAGService:
                     "rrf_score": 1 / (60 + rank)
                 }
 
-        # 3. Prepare Text Blocks for the Cross-Encoder Reranker
         fused_items = list(fused_dossiers.values())
         if not fused_items:
             return "No relevant intelligence found across database clusters within the requested time frame."
@@ -81,7 +76,6 @@ class RAGService:
         rerank_pairs = []
         for item in fused_items:
             doc = item["data"]
-            # Build a comprehensive dossier string for the cross-encoder to evaluate
             dossier_text = (
                 f"Title: {doc['title']} | Topic: {doc['topic']} | Source: {doc['source']} | "
                 f"Summary: {doc['summary']} | Full Text: {doc.get('full_text', '')} | "
@@ -89,21 +83,16 @@ class RAGService:
             )
             rerank_pairs.append([user_query, dossier_text])
 
-        # 4. Run Reranker Filter
-        print(f"⚖️ Reranking {len(rerank_pairs)} integrated candidates...")
+        print(f"Reranking {len(rerank_pairs)} integrated candidates...")
         rerank_scores = self.reranker.predict(rerank_pairs)
 
-        # Attach rerank scores back to data items
         for idx, score in enumerate(rerank_scores):
             fused_items[idx]["rerank_score"] = float(score)
 
-        # Sort completely by rerank score (highest to lowest)
         fused_items.sort(key=lambda x: x["rerank_score"], reverse=True)
 
-        # Truncate pool precisely to your user-requested limit
         final_top_dossiers = fused_items[:limit]
 
-        # 5. Build Grounded LLM Context Window Prompt
         fused_context_blocks = []
         for idx, item in enumerate(final_top_dossiers, start=1):
             doc = item["data"]
@@ -136,12 +125,12 @@ class RAGService:
         user_prompt = f"CONTEXT DOSSIERS:\n{fused_context_string}\n\nUSER ANALYSIS REQUEST: {user_query}"
 
         # 6. Run Inference locally via Ollama
-        print(f"🤖 Generating final analysis using Llama 3.2 3B...")
+        print(f"Generating final analysis using Llama 3.2 3B...")
         response = ollama.generate(
-            model="llama3.2:3b", # or your exact local model tag
+            model="llama3.2:3b",
             prompt=user_prompt,
             system=system_instruction,
-            options={"temperature": 0.15} # Keep it highly deterministic to limit hallucinations
+            options={"temperature": 0.15}
         )
 
         return response['response']

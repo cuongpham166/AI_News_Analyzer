@@ -1,10 +1,19 @@
+import spacy
 import torch
 from typing import List
+
+from keybert import KeyBERT
+
 from ai.analyzer.sentiment_classifier.sentiment_classifier import SentimentClassifier
 from ai.analyzer.topic_classifier.topic_classifier import TopicClassifier
 from ai.analyzer.news_summarizer.news_summarizer import NewsSummarizer
 from ai.analyzer.entity_classifier.entity_classifier import EntityClassifier
+from ai.analyzer.keyword_extractor.keyword_extractor import KeywordExtractor
+
 from ai.responses.inference_response import InferenceResponse, InferenceResult
+from ai.utils.keyword_extractor.entity_deduplicator import EntityDeduplicator
+from ai.utils.keyword_extractor.entity_extractor import EntityExtractor
+from ai.utils.keyword_extractor.text_normalizer import TextNormalizer
 
 
 class InferenceProcessor:
@@ -13,6 +22,19 @@ class InferenceProcessor:
         self.topic_classifier = TopicClassifier()
         self.sentiment_classifier = SentimentClassifier()
         self.news_summarizer = NewsSummarizer()
+
+        self.spacy = spacy.load("en_core_web_sm")
+        self.kw_model = KeyBERT(model="all-MiniLM-L6-v2")
+        self.text_normalizer = TextNormalizer()
+        self.entity_extractor = EntityExtractor(self.text_normalizer)
+        self.entity_deduplicator = EntityDeduplicator()
+        self.keyword_extractor = KeywordExtractor(
+            spacy=self.spacy,
+            kw_model=self.kw_model,
+            text_normalizer=self.text_normalizer,
+            entity_extractor=self.entity_extractor,
+            entity_deduplicator=self.entity_deduplicator
+        )
 
         self.device = torch.device("cpu")
         torch.set_num_threads(4)
@@ -40,6 +62,8 @@ class InferenceProcessor:
 
         classification = self.topic_classifier.classify_onnx(titles)
 
+        keyphrases = [self.keyword_extractor.extract_keywords(text=a["title"]+" "+a["text"]) for a in articles]
+
         ner_inputs = [
             texts[i] + " " + self.get_summary_text(summaries.results[i])
             for i in range(len(texts))
@@ -60,7 +84,9 @@ class InferenceProcessor:
                     classification=classification.results[i],
                     ner=ner.results[i],
                     summarization=summaries.results[i],
-                    language=articles[i]["language"]
+                    language=articles[i]["language"],
+                    keyphrases=keyphrases[i]
+
                 )
             )
 
