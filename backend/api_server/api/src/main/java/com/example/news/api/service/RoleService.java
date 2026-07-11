@@ -1,6 +1,8 @@
 package com.example.news.api.service;
 
 import com.example.news.api.shared.KeycloakContext;
+import com.example.news.api.shared.UserRoleRequest;
+import com.example.news.api.shared.UserSearchRequest;
 import jakarta.ws.rs.NotFoundException;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -16,6 +18,7 @@ public class RoleService {
     public RoleService(KeycloakContext context){
         this.context = context;
     }
+
     public List<String> getRealmRoles() {
         return context.getRealm()
                 .roles()
@@ -36,7 +39,10 @@ public class RoleService {
                 .toList();
     }
 
-    public void assignUserRealmRole(String userId, String[] assignedRealmRoles){
+    public void assignUserRealmRole(UserRoleRequest userRoleRequest){
+        String userId = userRoleRequest.getUserId();
+        String[] assignedRealmRoles = userRoleRequest.getRoles();
+
         UserResource userResource  = context.getUserResourceById(userId);
         List<RoleRepresentation> roles = new ArrayList<>();
 
@@ -59,7 +65,10 @@ public class RoleService {
                 .add(roles);
     }
 
-    public void removeUserRealmRole(String userId, String[] removedRoles){
+    public void removeUserRealmRole(UserRoleRequest userRoleRequest){
+        String userId = userRoleRequest.getUserId();
+        String[] removedRoles = userRoleRequest.getRoles();
+
         UserResource userResource  =  context.getUserResourceById(userId);
         List<RoleRepresentation> roles = new ArrayList<>();
 

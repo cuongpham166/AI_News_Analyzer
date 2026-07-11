@@ -3,6 +3,7 @@ package com.example.news.api.service;
 import com.example.news.api.dto.jpa.UserDTO;
 import com.example.news.api.mapper.KeycloakMapper;
 import com.example.news.api.shared.KeycloakContext;
+import com.example.news.api.shared.UserSearchRequest;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -46,7 +47,10 @@ public class UserService {
 
     }
 
-    public List<UserDTO> searchByUsername (String username, boolean exact){
+    public List<UserDTO> searchByUsername (UserSearchRequest userSearchRequest){
+        String username = userSearchRequest.getValue();
+        boolean exact = userSearchRequest.isExact();
+
         List<UserRepresentation> users = this.context.getRealm()
                 .users()
                 .searchByUsername(username,exact);
@@ -56,7 +60,10 @@ public class UserService {
                 .toList();
     }
 
-    public List<UserDTO> searchByEmail(String email, boolean exact){
+    public List<UserDTO> searchByEmail(UserSearchRequest userSearchRequest){
+        String email = userSearchRequest.getValue();
+        boolean exact = userSearchRequest.isExact();
+
         List<UserRepresentation> users = this.context.getRealm()
                 .users()
                 .searchByEmail(email,exact);
@@ -66,7 +73,9 @@ public class UserService {
                 .toList();
     }
 
-    public List<UserDTO> searchByRole(String roleName){
+    public List<UserDTO> searchByRole(UserSearchRequest userSearchRequest){
+        String roleName = userSearchRequest.getValue();
+
         List<UserRepresentation> users = this.context.getRealm()
                 .roles()
                 .get(roleName)
