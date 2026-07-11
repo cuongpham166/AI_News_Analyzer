@@ -141,12 +141,12 @@ public class Source extends TableImpl<SourceRecord> {
 
     @Override
     public UniqueKey<SourceRecord> getPrimaryKey() {
-        return Keys.NEWS_SOURCE_PKEY;
+        return Keys.SOURCE_PKEY;
     }
 
     @Override
     public List<UniqueKey<SourceRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.NEWS_SOURCE_SOURCE_KEY);
+        return Arrays.asList(Keys.SOURCE_NAME_KEY);
     }
 
     private transient NewsPath _news;

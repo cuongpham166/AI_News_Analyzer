@@ -141,12 +141,12 @@ public class Topic extends TableImpl<TopicRecord> {
 
     @Override
     public UniqueKey<TopicRecord> getPrimaryKey() {
-        return Keys.NEWS_CLASSIFICATION_PKEY;
+        return Keys.TOPIC_PKEY;
     }
 
     @Override
     public List<UniqueKey<TopicRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.NEWS_CLASSIFICATION_CLASSIFICATION_KEY);
+        return Arrays.asList(Keys.TOPIC_NAME_KEY);
     }
 
     private transient NewsPath _news;

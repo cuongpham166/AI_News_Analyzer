@@ -1,0 +1,27 @@
+package com.example.news.api.controller;
+
+import com.example.news.api.dto.jpa.UserProfileDTO;
+import com.example.news.api.service.ProfileService;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/profile")
+public class ProfileController {
+    private final ProfileService profileService;
+
+    public ProfileController(ProfileService profileService){
+        this.profileService = profileService;
+    }
+
+    @GetMapping("/me")
+    public UserProfileDTO getProfile(JwtAuthenticationToken authentication){
+        return profileService.getProfile(authentication);
+    }
+
+
+}

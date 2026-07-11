@@ -5,7 +5,6 @@ package com.example.news.api.jooq;
 
 
 import com.example.news.api.jooq.tables.Entity;
-import com.example.news.api.jooq.tables.EntityEntity;
 import com.example.news.api.jooq.tables.EntityType;
 import com.example.news.api.jooq.tables.News;
 import com.example.news.api.jooq.tables.NewsEntity;
@@ -23,11 +22,6 @@ public class Tables {
      * The table <code>public.entity</code>.
      */
     public static final Entity ENTITY = Entity.ENTITY;
-
-    /**
-     * The table <code>public.entity_entity</code>.
-     */
-    public static final EntityEntity ENTITY_ENTITY = EntityEntity.ENTITY_ENTITY;
 
     /**
      * The table <code>public.entity_type</code>.

@@ -5,7 +5,6 @@ package com.example.news.api.jooq;
 
 
 import com.example.news.api.jooq.tables.Entity;
-import com.example.news.api.jooq.tables.EntityEntity;
 import com.example.news.api.jooq.tables.EntityType;
 import com.example.news.api.jooq.tables.News;
 import com.example.news.api.jooq.tables.NewsEntity;
@@ -16,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jooq.Catalog;
-import org.jooq.Sequence;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
@@ -38,11 +36,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.entity</code>.
      */
     public final Entity ENTITY = Entity.ENTITY;
-
-    /**
-     * The table <code>public.entity_entity</code>.
-     */
-    public final EntityEntity ENTITY_ENTITY = EntityEntity.ENTITY_ENTITY;
 
     /**
      * The table <code>public.entity_type</code>.
@@ -83,18 +76,9 @@ public class Public extends SchemaImpl {
     }
 
     @Override
-    public final List<Sequence<?>> getSequences() {
-        return Arrays.asList(
-            Sequences.NEWS_CLASSIFICATION_ID_SEQ,
-            Sequences.NEWS_SOURCE_ID_SEQ
-        );
-    }
-
-    @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             Entity.ENTITY,
-            EntityEntity.ENTITY_ENTITY,
             EntityType.ENTITY_TYPE,
             News.NEWS,
             NewsEntity.NEWS_ENTITY,

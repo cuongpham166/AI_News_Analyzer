@@ -65,7 +65,7 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     /**
      * The column <code>public.entity_type.name</code>.
      */
-    public final TableField<EntityTypeRecord, String> NAME = createField(DSL.name("name"), SQLDataType.CLOB, this, "");
+    public final TableField<EntityTypeRecord, String> NAME = createField(DSL.name("name"), SQLDataType.CLOB.nullable(false), this, "");
 
     private EntityType(Name alias, Table<EntityTypeRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -146,7 +146,7 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
 
     @Override
     public List<UniqueKey<EntityTypeRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.ENTITY_TYPE_UNIQUE_TYPE);
+        return Arrays.asList(Keys.ENTITY_TYPE_NAME_KEY);
     }
 
     private transient EntityPath _entity;

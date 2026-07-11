@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.example.news.api.dto.analytics.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.news.api.service.AnalysisService;
@@ -16,6 +17,16 @@ public class AnalysisController {
 
     public AnalysisController(AnalysisService analysisService ) {
         this.analysisService = analysisService;
+    }
+
+    @GetMapping("/public")
+    public String publicApi() {
+        return "Public";
+    }
+
+    @GetMapping("/private")
+    public String privateApi(Authentication authentication) {
+        return "Hello " + authentication.getName();
     }
 
     @GetMapping("/global_trends")
