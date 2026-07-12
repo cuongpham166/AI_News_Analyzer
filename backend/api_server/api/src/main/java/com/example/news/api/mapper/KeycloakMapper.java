@@ -6,7 +6,9 @@ import com.example.news.api.dto.jpa.UserEventDTO;
 import org.keycloak.representations.idm.AdminEventRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.stereotype.Component;
 
+@Component
 public class KeycloakMapper {
     public UserDTO mapToUserDTO(UserRepresentation user) {
         UserDTO dto = new UserDTO();
