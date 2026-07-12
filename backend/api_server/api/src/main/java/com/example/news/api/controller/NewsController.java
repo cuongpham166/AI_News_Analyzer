@@ -9,7 +9,6 @@ import com.example.news.api.dto.jpa.NewsDTO;
 import com.example.news.api.service.MetaDataService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/news")
 public class NewsController {
     private final MetaDataService metadataService;

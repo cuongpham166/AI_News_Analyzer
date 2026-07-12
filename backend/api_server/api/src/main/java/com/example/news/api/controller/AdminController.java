@@ -9,13 +9,13 @@ import com.example.news.api.service.RoleService;
 import com.example.news.api.service.UserService;
 import com.example.news.api.shared.UserRoleRequest;
 import com.example.news.api.shared.UserSearchRequest;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/admin")
 public class AdminController {
 
@@ -83,13 +83,13 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/email")
-    public List<UserDTO> searchByEmail (@RequestBody UserSearchRequest userSearchRequest){
+    public List<UserDTO> searchByEmail (@Valid @RequestBody UserSearchRequest userSearchRequest){
         return userService.searchByEmail(userSearchRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/role")
-    public List<UserDTO> searchByRole (@RequestBody UserSearchRequest userSearchRequest){
+    public List<UserDTO> searchByRole (@Valid @RequestBody UserSearchRequest userSearchRequest){
         return userService.searchByRole(userSearchRequest);
     }
 
@@ -107,13 +107,13 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/realm-roles/assign")
-    public void assignUserRealmRole(@RequestBody UserRoleRequest userRoleRequest){
+    public void assignUserRealmRole(@Valid @RequestBody UserRoleRequest userRoleRequest){
         roleService.assignUserRealmRole(userRoleRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/realm-roles/remove")
-    public void removeUserRealmRole(@RequestBody UserRoleRequest userRoleRequest){
+    public void removeUserRealmRole(@Valid @RequestBody UserRoleRequest userRoleRequest){
         roleService.removeUserRealmRole(userRoleRequest);
     }
 
