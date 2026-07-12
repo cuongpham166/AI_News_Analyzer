@@ -87,6 +87,10 @@
             <artifactId>keycloak-admin-client</artifactId>
             <version>26.0.8</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

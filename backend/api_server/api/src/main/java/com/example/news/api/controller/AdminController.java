@@ -4,7 +4,7 @@ package com.example.news.api.controller;
 import com.example.news.api.dto.jpa.AdminEventDTO;
 import com.example.news.api.dto.jpa.UserDTO;
 import com.example.news.api.dto.jpa.UserEventDTO;
-import com.example.news.api.service.AuditService;
+import com.example.news.api.service.EventService;
 import com.example.news.api.service.RoleService;
 import com.example.news.api.service.UserService;
 import com.example.news.api.shared.UserRoleRequest;
@@ -21,15 +21,15 @@ public class AdminController {
 
     private final UserService userService;
     private final RoleService roleService;
-    private final AuditService auditService;
+    private final EventService eventService;
 
     public AdminController(
             UserService userService,
             RoleService roleService,
-            AuditService auditService){
+            EventService eventService){
         this.userService = userService;
         this.roleService = roleService;
-        this.auditService = auditService;
+        this.eventService = eventService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -60,13 +60,13 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/events/users")
     public List<UserEventDTO> getUserEvents(){
-        return auditService.getUserEvents();
+        return eventService.getUserEvents();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/events/admin")
     public List<AdminEventDTO> getAdminEvents(){
-        return auditService.getAdminEvents();
+        return eventService.getAdminEvents();
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -1,11 +1,14 @@
 package com.example.news.api.shared;
 
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class KeycloakContext {
     private final Keycloak keycloak;
@@ -17,6 +20,7 @@ public class KeycloakContext {
     ){
         this.keycloak = keycloak;
         this.keycloakRealm = keycloakRealm;
+        log.info("KeycloakContext created with realm {}", keycloakRealm);
     }
 
     public UserResource getUserResourceById (String userId){
@@ -26,6 +30,7 @@ public class KeycloakContext {
     }
 
     public RealmResource getRealm(){
+        log.info("getRealm called");
         return keycloak.realm(keycloakRealm);
     }
 }

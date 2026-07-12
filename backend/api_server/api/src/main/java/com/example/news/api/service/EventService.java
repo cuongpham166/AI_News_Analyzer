@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class AuditService {
+public class EventService {
     private final KeycloakContext context;
     private final KeycloakMapper keycloakMapper;
 
-    public AuditService(KeycloakContext context, KeycloakMapper keycloakMapper){
+    public EventService(KeycloakContext context, KeycloakMapper keycloakMapper){
         this.context = context;
         this.keycloakMapper = keycloakMapper;
     }
