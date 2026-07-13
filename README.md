@@ -9,6 +9,8 @@ By leveraging a sophisticated dual-engine Hybrid RAG system, the platform shifts
 ## Key Capabilities
 
 * **Event-Driven Architecture:** Decoupled microservices communicating via a ultra-fast **NATS** messaging backbone for robust, scalable ingestion and asynchronous load balancing.
+* **Zero-Trust Edge Security & IAM:** Externalized authentication managed via a stateless **Keycloak Identity Server** (OAuth2/OIDC), with an **NGINX** perimeter reverse proxy handling secure SSL/TLS termination and masking internal port boundaries from the public web.
+* **Multi-Tier Protection & App-Level Rate Limiting**: Volumetric DDoS and connection spikes are mitigated at the network edge via **NGINX** connection pools, while resource-intensive API routes are fortified using a **Spring Boot + Bucket4j** multi-tenant Token Bucket configuration.
 * **Intelligent Ingestion & Cleaning:** Language detection, cross-source deduplication, text normalization, and structural metadata parsing.
 * **Local AI Inference:** Multi-stage text processing powered by **Hugging Face Transformers** and **ONNX Runtime** for low-latency sentiment profiling, Named Entity Recognition (NER), zero-shot classification, and deterministic summarization.
 * **Triple-Engine Storage Topography:**
@@ -27,12 +29,17 @@ Efficiently orchestrates high-frequency polling across various global RSS stream
 ### 2. Lexical & Phrase Searching
 Driven by an optimized **Elasticsearch** cluster. Users can currently perform high-speed keyword queries across raw document indices. Version 2.0 roadmaps deep metadata facet routing (e.g., isolating searches strictly by pre-classified multi-layered topics or targeted spatial constraints).
 
-### 3. Multi-Dimensional Density Analysis
+### 3. AI-Powered Personalized Recommendation Engine (Vector ANN)
+The platform generates tailor-made user feeds by executing native vector math.
+- Dense vector coordinates are calculated using nomic-embed-text over combined fields (title + summary + entities).
+- When requested, a Spring background task calculates a user's running "Taste Profile Vector" from their liked/bookmarked history and passes it to Neo4j’s native Approximate Nearest Neighbor (ANN) vector index, matching semantic intent while filtering out previously seen or disliked content.
+
+### 4. Multi-Dimensional Density Analysis
 The user experience is built around moving an analyst from broad, global patterns down to granular, concrete evidence through four progressively dense operational layers:
 * **The Pulse Layer (The "What happened?"):** The macro statistical dashboard. High-level charts monitor volume anomalies and rolling sentiment indexes ("world mood") to instantly catch breaking news spikes exactly when a geopolitical event starts.
 * **The Character Layer (The "Who is involved?"):** The high-density visualization layer. Utilizes dynamic, real-time Treemaps where entity bounding sizes immediately pinpoint the "main characters" (People, Organizations, Locations) dominating current text cycles.
 * **The Evidence Layer (The "Why is it happening?"):** The micro factual archive. Provides instant reading access to targeted articles alongside compact, grounded AI summaries. This lets analysts consume verified, extracted facts across hundreds of source documents without manual reading fatigue.
-* **The Connection Layer (The Relational Matrix):** The network-graph environment powered by **Neo4j**. Visualizes hidden multi-hop lines connecting diverse real-world nodes, exposing non-obvious, cross-document intelligence vectors (e.g., establishing that *Person A* and *Person B* are structurally linked across 5 independent news threads, even if they have never appeared in the same headline).
+* **The Connection Layer (The Relational Matrix):** The network-graph environment powered by **Neo4j**. Visualizes hidden multi-hop lines connecting diverse real-world nodes, exposing non-obvious, cross-document intelligence vectors.
 
 ### 4. Dynamic Time Intervals
 Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-30d`). This enables users to seamlessly pivot their analytical viewpoint between rapid "Breaking News Tactical Tracking" and comprehensive "Historical Geopolitical Macro-Trending."
@@ -41,6 +48,7 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
 ![Spring Boot](https://img.shields.io/badge/springboot-6DB33F?logo=springboot&logoColor=white&style=for-the-badge)
 ![Python](https://img.shields.io/badge/python-3776AB?logo=python&logoColor=white&style=for-the-badge)
 ![NATS](https://img.shields.io/badge/natsdotio-27AAE1?logo=natsdotio&logoColor=white&style=for-the-badge)
+![Keycloak](https://img.shields.io/badge/keycloak-005571?logo=keycloak&logoColor=white&style=for-the-badge)
 ![PostgresSQL](https://img.shields.io/badge/postgresql-4169E1?logo=postgresql&logoColor=white&style=for-the-badge)
 ![ElasticSearch](https://img.shields.io/badge/elasticsearch-005571?logo=elasticsearch&logoColor=white&style=for-the-badge)
 ![Neo4j](https://img.shields.io/badge/neo4j-005571?logo=neo4j&logoColor=white&style=for-the-badge)
@@ -94,7 +102,7 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
 - **Use Cases:** 
   - This is our Knowledge Graph. Instead of rows and columns, it stores data as "Nodes" (People, Topics, etc) and "Lines" (Connections).
   - Mapping the "Discovery Layer." It finds hidden links between different people or organizations by tracking how often they appear together in the same news stories.
-- **Nodes:** News, Event, Location, Organization, Person, Source, Topic
+- **Nodes:** News, Event, Location, Organization, Person, Source, Topic, Keyphrase
 - **Relationships:**
   - **(:News)-[:COVERS]->(:Topic)**
   - **(:News)-[:MENTIONS_EVENT]->(:Event)**
@@ -102,7 +110,7 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
   - **(:News)-[:MENTIONS_ORGANIZATION]->(:Organization)**
   - **(:News)-[:MENTIONS_PERSON]->(:Person)**
   - **(:Source)-[:PUBLISHED]->(:News)**
-
+  - **(:News)-[:TAGGED_WITH]->(:Key Phrase)**
 
 ### Inference Overview
 
