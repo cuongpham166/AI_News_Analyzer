@@ -1,4 +1,4 @@
-package com.example.news.api.service;
+package com.example.news.api.service.admin;
 
 import com.example.news.api.util.auth.KeycloakContext;
 import com.example.news.api.dto.request.user.UserRoleRequest;

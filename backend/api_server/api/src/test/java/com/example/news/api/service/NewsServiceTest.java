@@ -4,6 +4,7 @@ import com.example.news.api.dto.internal.DetailedEntity;
 
 import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.entity.NewsEntity;
+import com.example.news.api.service.news.NewsService;
 import com.example.news.api.util.mapper.NewsMapper;
 import com.example.news.api.repository.analysis.RelationshipRepository;
 import com.example.news.api.repository.NewsRepository;
@@ -26,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class MetaDataServiceTest {
+class NewsServiceTest {
 
     @Mock
     private NewsRepository newsRepo;
@@ -38,7 +39,7 @@ class MetaDataServiceTest {
     private NewsMapper newsMapper;
 
     @InjectMocks
-    private MetaDataService metaDataService;
+    private NewsService newsService;
 
     private NewsEntity news1;
     private NewsEntity news2;
@@ -85,7 +86,7 @@ class MetaDataServiceTest {
         when(newsMapper.toDTO(news2))
                 .thenReturn(dto2);
         //Act
-        List<com.example.news.api.dto.response.news.DetailedNewsResponse>result = metaDataService.getAllNews(limit);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse>result = newsService.getAllNews(limit);
 
         //Assert
         assertThat(result).hasSize(2);
@@ -104,7 +105,7 @@ class MetaDataServiceTest {
         when(newsRepo.findAllWithRelations(PageRequest.of(0, limit)))
                 .thenReturn(List.of());
         //Act
-        List<com.example.news.api.dto.response.news.DetailedNewsResponse>result = metaDataService.getAllNews(limit);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse>result = newsService.getAllNews(limit);
 
         //Assert
         assertThat(result).isEmpty();
@@ -122,7 +123,7 @@ class MetaDataServiceTest {
         when(this.newsMapper.toDTO(news2))
                 .thenReturn(dto2);
         //Act
-        List<com.example.news.api.dto.response.news.DetailedNewsResponse> result = this.metaDataService.getAllNewsBySourceId(sourceId);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse> result = this.newsService.getAllNewsBySourceId(sourceId);
 
         //Assert
         assertThat(result).hasSize(2);
@@ -139,7 +140,7 @@ class MetaDataServiceTest {
         when(this.newsRepo.findAllBySourceId(sourceId, pageable))
                 .thenReturn(List.of());
         //Act
-        List<com.example.news.api.dto.response.news.DetailedNewsResponse> result = this.metaDataService.getAllNewsBySourceId(sourceId);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse> result = this.newsService.getAllNewsBySourceId(sourceId);
 
         //Assert
         assertThat(result).isEmpty();
@@ -157,7 +158,7 @@ class MetaDataServiceTest {
         when(newsMapper.toDetailedDTO(news1,entities)).thenReturn(detailedNewsResponse);
 
         //Action
-        DetailedNewsResponse result = metaDataService.getDetailedNewsByLink(link);
+        DetailedNewsResponse result = newsService.getDetailedNewsByLink(link);
 
         //Assert
         assertEquals(detailedNewsResponse,result);
@@ -175,7 +176,7 @@ class MetaDataServiceTest {
         when(newsMapper.toDetailedDTO(news1,List.of())).thenReturn(detailedNewsResponse);
 
         //Action
-        DetailedNewsResponse result = metaDataService.getDetailedNewsByLink(link);
+        DetailedNewsResponse result = newsService.getDetailedNewsByLink(link);
 
         //Assert
         assertEquals(detailedNewsResponse,result);
@@ -193,7 +194,7 @@ class MetaDataServiceTest {
         //Action + Assert
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> metaDataService.getDetailedNewsByLink(link)
+                () -> newsService.getDetailedNewsByLink(link)
         );
         assertEquals("News not found",ex.getMessage());
         verify(newsRepo).findDetailByLink(link);

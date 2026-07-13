@@ -13,7 +13,8 @@ import com.example.news.api.entity.NewsEntity;
 
 @Repository
 public interface NewsRepository extends JpaRepository<NewsEntity, Integer> {
-    
+
+
     @Query("""
         SELECT n FROM NewsEntity n
         JOIN FETCH n.topic

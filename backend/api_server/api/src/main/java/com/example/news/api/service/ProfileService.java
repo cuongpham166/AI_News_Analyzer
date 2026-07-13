@@ -13,7 +13,6 @@ public class ProfileService {
 
     }
 
-
     public UserProfileResponse getProfile(JwtAuthenticationToken authentication){
         Jwt jwt = authentication.getToken();
 

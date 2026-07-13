@@ -1,4 +1,4 @@
-package com.example.news.api.service;
+package com.example.news.api.service.admin;
 
 import com.example.news.api.dto.response.admin.AdminEventResponse;
 import com.example.news.api.dto.response.admin.UserEventResponse;

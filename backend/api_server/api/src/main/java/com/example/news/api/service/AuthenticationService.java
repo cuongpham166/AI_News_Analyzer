@@ -24,11 +24,9 @@ public class AuthenticationService {
         UserResource resource = this.context.getRealm()
                 .users().get(userId);
         resource.sendVerifyEmail();
-
-        //Realm Settings_Login-Verufy Email = ON =>blocks login until the email is verified.
     }
 
-    public void register(UserRegistrationRequest newUser){
+    private UserRepresentation getUserRepresentation(UserRegistrationRequest newUser){
         UserRepresentation user = new UserRepresentation();
         user.setUsername(newUser.getUsername());
         user.setEmail(newUser.getEmail());
@@ -44,6 +42,11 @@ public class AuthenticationService {
 
         user.setCredentials(List.of(credential));
 
+        return user;
+    }
+
+    public void register(UserRegistrationRequest newUser){
+        UserRepresentation user = getUserRepresentation(newUser);
         try (Response response = this.context.getRealm()
                 .users()
                 .create(user)) {

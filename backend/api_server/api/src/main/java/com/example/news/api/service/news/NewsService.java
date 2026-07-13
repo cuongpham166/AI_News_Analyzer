@@ -1,4 +1,4 @@
-package com.example.news.api.service;
+package com.example.news.api.service.news;
 
 import java.util.List;
 
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Service;
 import com.example.news.api.util.mapper.NewsMapper;
 
 @Service
-public class MetaDataService {
+public class NewsService {
     private final NewsRepository newsRepo;
     private final RelationshipRepository relationshipRepo;
     private final NewsMapper newsMapper;
 
-    public MetaDataService(
+    public NewsService(
         NewsRepository newsRepo,
         RelationshipRepository relationshipRepo,
         NewsMapper newsMapper

@@ -1,4 +1,4 @@
-package com.example.news.api.service;
+package com.example.news.api.service.admin;
 
 import com.example.news.api.dto.response.user.DetailedUserResponse;
 import com.example.news.api.util.mapper.KeycloakMapper;
