@@ -4,7 +4,7 @@ import com.example.news.api.dto.analytics.DetailedEntityDTO;
 import com.example.news.api.dto.jpa.DetailedNewsDTO;
 import com.example.news.api.dto.jpa.NewsDTO;
 import com.example.news.api.entity.NewsEntity;
-import com.example.news.api.mapper.NewsMapper;
+import com.example.news.api.util.mapper.NewsMapper;
 import com.example.news.api.repository.analytics.RelationshipRepository;
 import com.example.news.api.repository.jpa.NewsRepository;
 import org.junit.jupiter.api.BeforeEach;

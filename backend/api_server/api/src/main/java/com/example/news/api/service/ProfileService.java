@@ -15,8 +15,6 @@ public class ProfileService {
 
 
     public UserProfileDTO getProfile(JwtAuthenticationToken authentication){
-        UserProfileDTO userProfile = new UserProfileDTO();
-
         Jwt jwt = authentication.getToken();
 
         String userId = jwt.getSubject();
@@ -26,6 +24,13 @@ public class ProfileService {
         String lastName = jwt.getClaimAsString("family_name");
 
         //getBookmarks by userId
+        UserProfileDTO userProfile = new UserProfileDTO();
+        userProfile.setUserId(userId);
+        userProfile.setUsername(username);
+        userProfile.setEmail(email);
+        userProfile.setFirstName(firstName);
+        userProfile.setLastName(lastName);
+
         return userProfile;
     }
 }

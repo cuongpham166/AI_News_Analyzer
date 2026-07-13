@@ -1,13 +1,10 @@
 package com.example.news.api.service;
 
 import com.example.news.api.dto.jpa.UserDTO;
-import com.example.news.api.mapper.KeycloakMapper;
+import com.example.news.api.util.mapper.KeycloakMapper;
 import com.example.news.api.shared.KeycloakContext;
-import com.example.news.api.shared.UserSearchRequest;
-import org.keycloak.OAuth2Constants;
-import org.keycloak.admin.client.KeycloakBuilder;
+import com.example.news.api.dto.request.user.UserSearchRequest;
 import org.keycloak.admin.client.resource.UserResource;
-import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Service;

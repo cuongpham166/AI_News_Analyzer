@@ -1,4 +1,4 @@
-package com.example.news.api.mapper;
+package com.example.news.api.util.mapper;
 
 import com.example.news.api.dto.jpa.AdminEventDTO;
 import com.example.news.api.dto.jpa.UserDTO;

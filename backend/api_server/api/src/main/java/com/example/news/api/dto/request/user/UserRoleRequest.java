@@ -1,4 +1,4 @@
-package com.example.news.api.shared;
+package com.example.news.api.dto.request.user;
 
 public class UserRoleRequest {
     private String userId;

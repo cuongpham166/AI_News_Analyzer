@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.news.api.dto.jpa.DetailedNewsDTO;
 import com.example.news.api.dto.jpa.NewsDTO;
-import com.example.news.api.mapper.NewsMapper;
+import com.example.news.api.util.mapper.NewsMapper;
 
 import com.example.news.api.repository.jpa.*;
 

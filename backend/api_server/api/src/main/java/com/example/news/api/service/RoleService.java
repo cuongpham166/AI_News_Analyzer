@@ -1,8 +1,7 @@
 package com.example.news.api.service;
 
 import com.example.news.api.shared.KeycloakContext;
-import com.example.news.api.shared.UserRoleRequest;
-import com.example.news.api.shared.UserSearchRequest;
+import com.example.news.api.dto.request.user.UserRoleRequest;
 import jakarta.ws.rs.NotFoundException;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.RoleRepresentation;

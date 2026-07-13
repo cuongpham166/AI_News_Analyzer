@@ -1,4 +1,4 @@
-package com.example.news.api.mapper;
+package com.example.news.api.util.mapper;
 import java.util.List;
 import com.example.news.api.dto.analytics.DetailedEntityDTO;
 import com.example.news.api.dto.jpa.DetailedNewsDTO;

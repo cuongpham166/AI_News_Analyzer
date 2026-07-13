@@ -2,7 +2,7 @@ package com.example.news.api.service;
 
 import com.example.news.api.dto.jpa.AdminEventDTO;
 import com.example.news.api.dto.jpa.UserEventDTO;
-import com.example.news.api.mapper.KeycloakMapper;
+import com.example.news.api.util.mapper.KeycloakMapper;
 import com.example.news.api.shared.KeycloakContext;
 import org.keycloak.representations.idm.AdminEventRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
