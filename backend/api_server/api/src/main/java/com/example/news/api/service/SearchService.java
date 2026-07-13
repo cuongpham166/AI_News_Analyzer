@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.example.news.api.dto.analytics.InferenceNews;
-import com.example.news.api.repository.analytics.SearchRepository;
+import com.example.news.api.dto.internal.InferenceNews;
+import com.example.news.api.repository.analysis.SearchRepository;
 
 
 @Service

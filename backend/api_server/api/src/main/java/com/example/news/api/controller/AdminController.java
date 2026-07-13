@@ -1,9 +1,9 @@
 package com.example.news.api.controller;
 
 
-import com.example.news.api.dto.jpa.AdminEventDTO;
-import com.example.news.api.dto.jpa.UserDTO;
-import com.example.news.api.dto.jpa.UserEventDTO;
+import com.example.news.api.dto.response.admin.AdminEventResponse;
+import com.example.news.api.dto.response.user.DetailedUserResponse;
+import com.example.news.api.dto.response.admin.UserEventResponse;
 import com.example.news.api.service.EventService;
 import com.example.news.api.service.RoleService;
 import com.example.news.api.service.UserService;
@@ -59,13 +59,13 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/events/users")
-    public List<UserEventDTO> getUserEvents(){
+    public List<UserEventResponse> getUserEvents(){
         return eventService.getUserEvents();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/events/admin")
-    public List<AdminEventDTO> getAdminEvents(){
+    public List<AdminEventResponse> getAdminEvents(){
         return eventService.getAdminEvents();
     }
 
@@ -77,19 +77,19 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/username")
-    public List<UserDTO> searchByUsername (@RequestBody UserSearchRequest userSearchRequest){
+    public List<DetailedUserResponse> searchByUsername (@RequestBody UserSearchRequest userSearchRequest){
         return userService.searchByUsername(userSearchRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/email")
-    public List<UserDTO> searchByEmail (@Valid @RequestBody UserSearchRequest userSearchRequest){
+    public List<DetailedUserResponse> searchByEmail (@Valid @RequestBody UserSearchRequest userSearchRequest){
         return userService.searchByEmail(userSearchRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/role")
-    public List<UserDTO> searchByRole (@Valid @RequestBody UserSearchRequest userSearchRequest){
+    public List<DetailedUserResponse> searchByRole (@Valid @RequestBody UserSearchRequest userSearchRequest){
         return userService.searchByRole(userSearchRequest);
     }
 

@@ -1,12 +1,12 @@
 package com.example.news.api.service;
 
-import com.example.news.api.dto.analytics.DetailedEntityDTO;
-import com.example.news.api.dto.jpa.DetailedNewsDTO;
-import com.example.news.api.dto.jpa.NewsDTO;
+import com.example.news.api.dto.internal.DetailedEntity;
+
+import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.entity.NewsEntity;
 import com.example.news.api.util.mapper.NewsMapper;
-import com.example.news.api.repository.analytics.RelationshipRepository;
-import com.example.news.api.repository.jpa.NewsRepository;
+import com.example.news.api.repository.analysis.RelationshipRepository;
+import com.example.news.api.repository.NewsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,11 +43,11 @@ class MetaDataServiceTest {
     private NewsEntity news1;
     private NewsEntity news2;
 
-    private NewsDTO dto1;
-    private NewsDTO dto2;
+    private com.example.news.api.dto.response.news.DetailedNewsResponse dto1;
+    private com.example.news.api.dto.response.news.DetailedNewsResponse dto2;
 
-    private DetailedEntityDTO entityDTO;
-    private DetailedNewsDTO detailedNewsDTO;
+    private DetailedEntity entityDTO;
+    private DetailedNewsResponse detailedNewsResponse;
 
     private String link;
     private int sourceId;
@@ -58,11 +58,11 @@ class MetaDataServiceTest {
         news1 = new NewsEntity();
         news2 = new NewsEntity();
 
-        dto1 = new NewsDTO();
-        dto2 = new NewsDTO();
+        dto1 = new com.example.news.api.dto.response.news.DetailedNewsResponse();
+        dto2 = new com.example.news.api.dto.response.news.DetailedNewsResponse();
 
-        entityDTO = new DetailedEntityDTO();
-        detailedNewsDTO = new DetailedNewsDTO();
+        entityDTO = new DetailedEntity();
+        detailedNewsResponse = new DetailedNewsResponse();
 
         link = "link";
 
@@ -85,7 +85,7 @@ class MetaDataServiceTest {
         when(newsMapper.toDTO(news2))
                 .thenReturn(dto2);
         //Act
-        List<NewsDTO>result = metaDataService.getAllNews(limit);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse>result = metaDataService.getAllNews(limit);
 
         //Assert
         assertThat(result).hasSize(2);
@@ -104,7 +104,7 @@ class MetaDataServiceTest {
         when(newsRepo.findAllWithRelations(PageRequest.of(0, limit)))
                 .thenReturn(List.of());
         //Act
-        List<NewsDTO>result = metaDataService.getAllNews(limit);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse>result = metaDataService.getAllNews(limit);
 
         //Assert
         assertThat(result).isEmpty();
@@ -122,7 +122,7 @@ class MetaDataServiceTest {
         when(this.newsMapper.toDTO(news2))
                 .thenReturn(dto2);
         //Act
-        List<NewsDTO> result = this.metaDataService.getAllNewsBySourceId(sourceId);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse> result = this.metaDataService.getAllNewsBySourceId(sourceId);
 
         //Assert
         assertThat(result).hasSize(2);
@@ -139,7 +139,7 @@ class MetaDataServiceTest {
         when(this.newsRepo.findAllBySourceId(sourceId, pageable))
                 .thenReturn(List.of());
         //Act
-        List<NewsDTO> result = this.metaDataService.getAllNewsBySourceId(sourceId);
+        List<com.example.news.api.dto.response.news.DetailedNewsResponse> result = this.metaDataService.getAllNewsBySourceId(sourceId);
 
         //Assert
         assertThat(result).isEmpty();
@@ -150,17 +150,17 @@ class MetaDataServiceTest {
     @Test
     void getDetailedNewsByLink_shouldReturnDetailedNewsDTO_withDetailedEntityDTO() {
         //Arrange
-        List<DetailedEntityDTO> entities = List.of(entityDTO);
+        List<DetailedEntity> entities = List.of(entityDTO);
 
         when(newsRepo.findDetailByLink(link)).thenReturn(Optional.of(news1));
         when(relationshipRepo.findEntitiesByNewsLink(link)).thenReturn(entities);
-        when(newsMapper.toDetailedDTO(news1,entities)).thenReturn(detailedNewsDTO);
+        when(newsMapper.toDetailedDTO(news1,entities)).thenReturn(detailedNewsResponse);
 
         //Action
-        DetailedNewsDTO result = metaDataService.getDetailedNewsByLink(link);
+        DetailedNewsResponse result = metaDataService.getDetailedNewsByLink(link);
 
         //Assert
-        assertEquals(detailedNewsDTO,result);
+        assertEquals(detailedNewsResponse,result);
         verify(newsRepo).findDetailByLink(link);
         verify(relationshipRepo).findEntitiesByNewsLink(link);
         verify(newsMapper).toDetailedDTO(news1,List.of(entityDTO));
@@ -172,13 +172,13 @@ class MetaDataServiceTest {
         //Arrange
         when(newsRepo.findDetailByLink(link)).thenReturn(Optional.of(news1));
         when(relationshipRepo.findEntitiesByNewsLink(link)).thenReturn(List.of());
-        when(newsMapper.toDetailedDTO(news1,List.of())).thenReturn(detailedNewsDTO);
+        when(newsMapper.toDetailedDTO(news1,List.of())).thenReturn(detailedNewsResponse);
 
         //Action
-        DetailedNewsDTO result = metaDataService.getDetailedNewsByLink(link);
+        DetailedNewsResponse result = metaDataService.getDetailedNewsByLink(link);
 
         //Assert
-        assertEquals(detailedNewsDTO,result);
+        assertEquals(detailedNewsResponse,result);
         verify(newsRepo).findDetailByLink(link);
         verify(relationshipRepo).findEntitiesByNewsLink(link);
         verify(newsMapper).toDetailedDTO(news1,List.of());

@@ -1,6 +1,6 @@
 package com.example.news.api.service;
 
-import com.example.news.api.dto.jpa.UserProfileDTO;
+import com.example.news.api.dto.response.user.UserProfileResponse;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ public class ProfileService {
     }
 
 
-    public UserProfileDTO getProfile(JwtAuthenticationToken authentication){
+    public UserProfileResponse getProfile(JwtAuthenticationToken authentication){
         Jwt jwt = authentication.getToken();
 
         String userId = jwt.getSubject();
@@ -24,7 +24,7 @@ public class ProfileService {
         String lastName = jwt.getClaimAsString("family_name");
 
         //getBookmarks by userId
-        UserProfileDTO userProfile = new UserProfileDTO();
+        UserProfileResponse userProfile = new UserProfileResponse();
         userProfile.setUserId(userId);
         userProfile.setUsername(username);
         userProfile.setEmail(email);

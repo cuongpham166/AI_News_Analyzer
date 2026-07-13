@@ -1,10 +1,11 @@
 package com.example.news.api.service;
 
-import com.example.news.api.dto.analytics.*;
-import com.example.news.api.repository.analytics.RelationshipRepository;
-import com.example.news.api.repository.analytics.SentimentRepository;
-import com.example.news.api.repository.analytics.SpatialRepository;
-import com.example.news.api.repository.analytics.TrendRepository;
+import com.example.news.api.dto.internal.InferenceNews;
+import com.example.news.api.dto.response.analysis.*;
+import com.example.news.api.repository.analysis.RelationshipRepository;
+import com.example.news.api.repository.analysis.SentimentRepository;
+import com.example.news.api.repository.analysis.SpatialRepository;
+import com.example.news.api.repository.analysis.TrendRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,41 +40,41 @@ class AnalysisServiceTest {
     @InjectMocks
     private  AnalysisService analysisService;
 
-    SpatialMapDTO spatialMapDTO1;
-    SpatialMapDTO spatialMapDTO2;
-    PowerCoupleDTO powerCoupleDTO;
-    EventTrackerDTO eventTrackerDTO;
-    VolatilityIndexDTO volatilityIndexDTO;
+    SpatialMapResponse spatialMapResponse1;
+    SpatialMapResponse spatialMapResponse2;
+    PowerCoupleResponse powerCoupleResponse;
+    EventTrackerResponse eventTrackerResponse;
+    VolatilityIndexResponse volatilityIndexResponse;
     String intervalUnit;
     int intervalAmount;
     IOException ioException;
-    GlobalTrendsDTO globalTrendsDTO;
-    GlobalEntityTrendsDTO globalEntityTrendsDTO;
+    GlobalTrendsResponse globalTrendsResponse;
+    GlobalEntityTrendsResponse globalEntityTrendsResponse;
     InferenceNews positiveInferenceNews1;
     InferenceNews positiveInferenceNews2;
     int topN;
     boolean isPositive;
-    TopRadarDTO topRadarDTO;
-    GraphResponseDTO graphResponseDTO;
+    TopRadarResponse topRadarResponse;
+    GraphResponse graphResponse;
 
     @BeforeEach
     void setUp() {
-        spatialMapDTO1 = new SpatialMapDTO();
-        spatialMapDTO2 = new SpatialMapDTO();
-        powerCoupleDTO = new PowerCoupleDTO();
-        eventTrackerDTO = new EventTrackerDTO();
-        volatilityIndexDTO = new VolatilityIndexDTO();
+        spatialMapResponse1 = new SpatialMapResponse();
+        spatialMapResponse2 = new SpatialMapResponse();
+        powerCoupleResponse = new PowerCoupleResponse();
+        eventTrackerResponse = new EventTrackerResponse();
+        volatilityIndexResponse = new VolatilityIndexResponse();
         intervalUnit = "day";
         intervalAmount=1;
         ioException = new IOException("Repo Failure");
-        globalTrendsDTO = new GlobalTrendsDTO();
-        globalEntityTrendsDTO = new GlobalEntityTrendsDTO();
+        globalTrendsResponse = new GlobalTrendsResponse();
+        globalEntityTrendsResponse = new GlobalEntityTrendsResponse();
         positiveInferenceNews1 = new InferenceNews();
         positiveInferenceNews2 = new InferenceNews();
         topN = 2;
         isPositive = true;
-        topRadarDTO = new TopRadarDTO();
-        graphResponseDTO = new GraphResponseDTO();
+        topRadarResponse = new TopRadarResponse();
+        graphResponse = new GraphResponse();
     }
 
     @Nested
@@ -82,12 +83,12 @@ class AnalysisServiceTest {
         void getSpatialMapWithRelativeInterval_shouldReturnSpatialMapDTOsFromRepo(){
             //Arrange
             when(spatialRepo.getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount))
-                    .thenReturn(List.of(spatialMapDTO1, spatialMapDTO2));
+                    .thenReturn(List.of(spatialMapResponse1, spatialMapResponse2));
             //Act
-            List<SpatialMapDTO> result = analysisService.getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount);
+            List<SpatialMapResponse> result = analysisService.getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).hasSize(2);
-            assertThat(result).containsExactly(spatialMapDTO1,spatialMapDTO2);
+            assertThat(result).containsExactly(spatialMapResponse1, spatialMapResponse2);
             verify(spatialRepo).getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount);
         }
 
@@ -97,7 +98,7 @@ class AnalysisServiceTest {
             when(spatialRepo.getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount))
                     .thenReturn(List.of());
             //Act
-            List<SpatialMapDTO> result = analysisService.getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount);
+            List<SpatialMapResponse> result = analysisService.getSpatialMapWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).isEmpty();
             verify(spatialRepo).getSpatialMapWithRelativeInterval(intervalUnit, intervalAmount);
@@ -111,12 +112,12 @@ class AnalysisServiceTest {
         void getPowerCoupleWithRelativeInterval_shouldReturnPowerCoupleDTOsFromRepo(){
             //Arrange
             when(relationshipRepo.getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount))
-                    .thenReturn(List.of(powerCoupleDTO));
+                    .thenReturn(List.of(powerCoupleResponse));
             //Act
-            List<PowerCoupleDTO> result = analysisService.getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount);
+            List<PowerCoupleResponse> result = analysisService.getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).hasSize(1);
-            assertThat(result).containsExactly(powerCoupleDTO);
+            assertThat(result).containsExactly(powerCoupleResponse);
             verify(relationshipRepo).getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount);
         }
 
@@ -126,7 +127,7 @@ class AnalysisServiceTest {
             when(relationshipRepo.getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount))
                     .thenReturn(List.of());
             //Act
-            List<PowerCoupleDTO> result = analysisService.getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount);
+            List<PowerCoupleResponse> result = analysisService.getPowerCoupleWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).isEmpty();
             verify(relationshipRepo).getPowerCoupleWithRelativeInterval(intervalUnit, intervalAmount);
@@ -139,12 +140,12 @@ class AnalysisServiceTest {
         void getEventTrackerWithRelativeInterval_shouldReturnEventTrackerDTOsFromRepo(){
             //Arrange
             when(relationshipRepo.getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount))
-                    .thenReturn(List.of(eventTrackerDTO));
+                    .thenReturn(List.of(eventTrackerResponse));
             //Act
-            List<EventTrackerDTO> result = analysisService.getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount);
+            List<EventTrackerResponse> result = analysisService.getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).hasSize(1);
-            assertThat(result).containsExactly(eventTrackerDTO);
+            assertThat(result).containsExactly(eventTrackerResponse);
             verify(relationshipRepo).getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount);
         }
 
@@ -154,7 +155,7 @@ class AnalysisServiceTest {
             when(relationshipRepo.getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount))
                     .thenReturn(List.of());
             //Act
-            List<EventTrackerDTO> result = analysisService.getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount);
+            List<EventTrackerResponse> result = analysisService.getEventTrackerWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).isEmpty();
             verify(relationshipRepo).getEventTrackerWithRelativeInterval(intervalUnit, intervalAmount);
@@ -167,12 +168,12 @@ class AnalysisServiceTest {
         void getVolatilityIndexWithRelativeInterval_shouldReturnVolatilityIndexDTOsFromRepo(){
             //Arrange
             when(sentimentRepo.getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount))
-                    .thenReturn(List.of(volatilityIndexDTO));
+                    .thenReturn(List.of(volatilityIndexResponse));
             //Act
-            List<VolatilityIndexDTO> result = analysisService.getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount);
+            List<VolatilityIndexResponse> result = analysisService.getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).hasSize(1);
-            assertThat(result).containsExactly(volatilityIndexDTO);
+            assertThat(result).containsExactly(volatilityIndexResponse);
             verify(sentimentRepo).getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount);
         }
 
@@ -182,7 +183,7 @@ class AnalysisServiceTest {
             when(sentimentRepo.getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount))
                     .thenReturn(List.of());
             //Act
-            List<VolatilityIndexDTO> result = analysisService.getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount);
+            List<VolatilityIndexResponse> result = analysisService.getVolatilityIndexWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
             assertThat(result).isEmpty();
             verify(sentimentRepo).getVolatilityIndexWithRelativeInterval(intervalUnit, intervalAmount);
@@ -194,9 +195,9 @@ class AnalysisServiceTest {
         @Test
         void getGlobalTrendsWithRelativeInterval_shouldReturnGlobalTrendsDTOFromRepo()  throws IOException {
             when(trendRepo.getGlobalTrendsWithRelativeInterval(intervalUnit,intervalAmount))
-                    .thenReturn(globalTrendsDTO);
-            GlobalTrendsDTO result = analysisService.getGlobalTrendsWithRelativeInterval(intervalUnit,intervalAmount);
-            assertEquals(globalTrendsDTO, result);
+                    .thenReturn(globalTrendsResponse);
+            GlobalTrendsResponse result = analysisService.getGlobalTrendsWithRelativeInterval(intervalUnit,intervalAmount);
+            assertEquals(globalTrendsResponse, result);
             verify(trendRepo).getGlobalTrendsWithRelativeInterval(intervalUnit,intervalAmount);
         }
 
@@ -218,9 +219,9 @@ class AnalysisServiceTest {
         @Test
         void getGlobalEntityWithRelativeInterval_shouldReturnGlobalEntityTrendsDTOFromRepo()  throws IOException {
             when(trendRepo.getGlobalEntityWithRelativeInterval(intervalUnit,intervalAmount))
-                    .thenReturn(globalEntityTrendsDTO);
-            GlobalEntityTrendsDTO result = analysisService.getGlobalEntityWithRelativeInterval(intervalUnit,intervalAmount);
-            assertEquals(globalEntityTrendsDTO,result);
+                    .thenReturn(globalEntityTrendsResponse);
+            GlobalEntityTrendsResponse result = analysisService.getGlobalEntityWithRelativeInterval(intervalUnit,intervalAmount);
+            assertEquals(globalEntityTrendsResponse,result);
             verify(trendRepo).getGlobalEntityWithRelativeInterval(intervalUnit,intervalAmount);
         }
 
@@ -294,11 +295,11 @@ class AnalysisServiceTest {
         void getTopicRadarWithRelativeInterval_shouldReturnTopRadarDTOFromRepo() throws IOException {
             //Arrange
             when(trendRepo.getTopicRadarWithRelativeInterval(intervalUnit, intervalAmount))
-                    .thenReturn(topRadarDTO);
+                    .thenReturn(topRadarResponse);
             //Act
-            TopRadarDTO result = analysisService.getTopicRadarWithRelativeInterval(intervalUnit,intervalAmount);
+            TopRadarResponse result = analysisService.getTopicRadarWithRelativeInterval(intervalUnit,intervalAmount);
             //Assert
-            assertEquals(topRadarDTO,result);
+            assertEquals(topRadarResponse,result);
             verify(trendRepo).getTopicRadarWithRelativeInterval(intervalUnit, intervalAmount);
         }
 
@@ -324,12 +325,12 @@ class AnalysisServiceTest {
         void getDiscoveryDataWithRelativeInterval_shouldReturnGraphResponseDTOFromRepo(){
             //Arrange
             when(relationshipRepo.getDiscoveryData(intervalUnit, intervalAmount))
-                    .thenReturn(graphResponseDTO);
+                    .thenReturn(graphResponse);
             //Act
-            GraphResponseDTO result = analysisService.getDiscoveryDataWithRelativeInterval(intervalUnit,intervalAmount);
+            GraphResponse result = analysisService.getDiscoveryDataWithRelativeInterval(intervalUnit,intervalAmount);
 
             //Assert
-            assertEquals(graphResponseDTO, result);
+            assertEquals(graphResponse, result);
             verify(relationshipRepo).getDiscoveryData(intervalUnit, intervalAmount);
         }
     }

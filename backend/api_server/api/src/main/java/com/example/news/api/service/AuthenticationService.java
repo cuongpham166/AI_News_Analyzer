@@ -1,7 +1,7 @@
 package com.example.news.api.service;
 
 import com.example.news.api.dto.request.auth.UserRegistrationRequest;
-import com.example.news.api.shared.KeycloakContext;
+import com.example.news.api.util.auth.KeycloakContext;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.resource.UserResource;

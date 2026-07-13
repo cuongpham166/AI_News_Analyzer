@@ -2,19 +2,18 @@ package com.example.news.api.service;
 
 import java.util.List;
 
-import com.example.news.api.dto.analytics.DetailedEntityDTO;
+import com.example.news.api.dto.internal.DetailedEntity;
+import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.entity.NewsEntity;
-import com.example.news.api.repository.analytics.RelationshipRepository;
+import com.example.news.api.repository.NewsRepository;
+import com.example.news.api.repository.analysis.RelationshipRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.example.news.api.dto.jpa.DetailedNewsDTO;
-import com.example.news.api.dto.jpa.NewsDTO;
-import com.example.news.api.util.mapper.NewsMapper;
 
-import com.example.news.api.repository.jpa.*;
+import com.example.news.api.util.mapper.NewsMapper;
 
 @Service
 public class MetaDataService {
@@ -33,7 +32,7 @@ public class MetaDataService {
     }
 
 
-    public List<NewsDTO> getAllNews(int limit) {
+    public List<com.example.news.api.dto.response.news.DetailedNewsResponse> getAllNews(int limit) {
         Pageable pageable = PageRequest.of(0, limit);
         return this.newsRepo.findAllWithRelations(pageable)
             .stream()
@@ -41,7 +40,7 @@ public class MetaDataService {
             .toList();
     }
 
-    public List<NewsDTO> getAllNewsBySourceId(int sourceId){
+    public List<com.example.news.api.dto.response.news.DetailedNewsResponse> getAllNewsBySourceId(int sourceId){
         Pageable pageable = PageRequest.of(
                 0, // page index (0 = first page)
                 10,
@@ -53,11 +52,11 @@ public class MetaDataService {
                 .toList();
     }
 
-    public DetailedNewsDTO getDetailedNewsByLink(String link) {
+    public DetailedNewsResponse getDetailedNewsByLink(String link) {
         NewsEntity foundNews = newsRepo.findDetailByLink(link)
                 .orElseThrow(() -> new RuntimeException("News not found"));
         // Fetch entities as DTOs (with entityType fully populated)
-        List<DetailedEntityDTO> detailedEntity = relationshipRepo.findEntitiesByNewsLink(link);
+        List<DetailedEntity> detailedEntity = relationshipRepo.findEntitiesByNewsLink(link);
         return this.newsMapper.toDetailedDTO(foundNews,detailedEntity);
     }
 }

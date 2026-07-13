@@ -1,9 +1,9 @@
 package com.example.news.api.service;
 
-import com.example.news.api.dto.jpa.AdminEventDTO;
-import com.example.news.api.dto.jpa.UserEventDTO;
+import com.example.news.api.dto.response.admin.AdminEventResponse;
+import com.example.news.api.dto.response.admin.UserEventResponse;
 import com.example.news.api.util.mapper.KeycloakMapper;
-import com.example.news.api.shared.KeycloakContext;
+import com.example.news.api.util.auth.KeycloakContext;
 import org.keycloak.representations.idm.AdminEventRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class EventService {
         this.keycloakMapper = keycloakMapper;
     }
 
-    public List<UserEventDTO> getUserEvents(){
+    public List<UserEventResponse> getUserEvents(){
         // user activity events
         // Keycloak Event -> UserEventDTO
         List<EventRepresentation> events = context
@@ -32,7 +32,7 @@ public class EventService {
                 .toList();
     }
 
-    public List<AdminEventDTO> getAdminEvents(){
+    public List<AdminEventResponse> getAdminEvents(){
         // administrator actions
         // Keycloak AdminEventRepresentation -> AdminEventDTO
         List <AdminEventRepresentation> adminEvents = context

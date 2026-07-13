@@ -1,9 +1,9 @@
 package com.example.news.api.controller;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
-import com.example.news.api.dto.analytics.*;
+import com.example.news.api.dto.internal.InferenceNews;
+import com.example.news.api.dto.response.analysis.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +29,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/global_trends")
-    public GlobalTrendsDTO getGlobalTrendsWithRelativeInterval(
+    public GlobalTrendsResponse getGlobalTrendsWithRelativeInterval(
         @RequestParam String intervalUnit, 
         @RequestParam int amount
     ) throws IOException {
@@ -37,7 +37,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/global_entity_trends")
-    public GlobalEntityTrendsDTO getGlobalEntityWithRelativeInterval(
+    public GlobalEntityTrendsResponse getGlobalEntityWithRelativeInterval(
         @RequestParam String intervalUnit, 
         @RequestParam int amount
     )throws IOException {
@@ -55,7 +55,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/spatial_map")
-    public List<SpatialMapDTO> getSpatialMapWithRelativeInterval (
+    public List<SpatialMapResponse> getSpatialMapWithRelativeInterval (
         @RequestParam String intervalUnit, 
         @RequestParam int amount
     ){
@@ -63,7 +63,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/power_couple")
-    public List<PowerCoupleDTO> getPowerCoupleWithRelativeInterval (
+    public List<PowerCoupleResponse> getPowerCoupleWithRelativeInterval (
         @RequestParam String intervalUnit, 
         @RequestParam int amount
     ){
@@ -71,7 +71,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/event_tracker")
-    public List<EventTrackerDTO> getEventTrackerWithRelativeInterval (
+    public List<EventTrackerResponse> getEventTrackerWithRelativeInterval (
         @RequestParam String intervalUnit, 
         @RequestParam int amount
     ){
@@ -79,7 +79,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/volatility_index")
-    public List<VolatilityIndexDTO> getVolatilityIndexWithRelativeInterval (
+    public List<VolatilityIndexResponse> getVolatilityIndexWithRelativeInterval (
         @RequestParam String intervalUnit, 
         @RequestParam int amount
     ){
@@ -87,7 +87,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/top_radar")
-    public TopRadarDTO getTopicRadarWithRelativeInterval(
+    public TopRadarResponse getTopicRadarWithRelativeInterval(
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ) throws IOException{
@@ -95,7 +95,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/discovery")
-    public GraphResponseDTO getDiscoveryDataWithRelativeInterval(
+    public GraphResponse getDiscoveryDataWithRelativeInterval(
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){

@@ -1,8 +1,8 @@
 package com.example.news.api.util.mapper;
 
-import com.example.news.api.dto.jpa.AdminEventDTO;
-import com.example.news.api.dto.jpa.UserDTO;
-import com.example.news.api.dto.jpa.UserEventDTO;
+import com.example.news.api.dto.response.admin.AdminEventResponse;
+import com.example.news.api.dto.response.user.DetailedUserResponse;
+import com.example.news.api.dto.response.admin.UserEventResponse;
 import org.keycloak.representations.idm.AdminEventRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class KeycloakMapper {
-    public UserDTO mapToUserDTO(UserRepresentation user) {
-        UserDTO dto = new UserDTO();
+    public DetailedUserResponse mapToUserDTO(UserRepresentation user) {
+        DetailedUserResponse dto = new DetailedUserResponse();
         dto.setId(user.getId());
         dto.setCreatedTimestamp(user.getCreatedTimestamp());
         dto.setUsername(user.getUsername());
@@ -23,8 +23,8 @@ public class KeycloakMapper {
         return dto;
     }
 
-    public UserEventDTO mapToUserEventDTO(EventRepresentation event){
-        UserEventDTO dto = new UserEventDTO();
+    public UserEventResponse mapToUserEventDTO(EventRepresentation event){
+        UserEventResponse dto = new UserEventResponse();
         dto.setEventType(event.getType());
         dto.setUserId(event.getUserId());
         dto.setClientId(event.getClientId());
@@ -33,8 +33,8 @@ public class KeycloakMapper {
         return dto;
     }
 
-    public AdminEventDTO mapToAdminEventDTO(AdminEventRepresentation adminEvent){
-        AdminEventDTO dto = new AdminEventDTO();
+    public AdminEventResponse mapToAdminEventDTO(AdminEventRepresentation adminEvent){
+        AdminEventResponse dto = new AdminEventResponse();
         dto.setOperationType(adminEvent.getOperationType());
         dto.setResourceType(adminEvent.getResourceType());
         dto.setResourcePath(adminEvent.getResourcePath());

@@ -1,6 +1,6 @@
 package com.example.news.api.config;
 
-import com.example.news.api.shared.KeycloakRealmRoleConverter;
+import com.example.news.api.util.auth.KeycloakRealmRoleConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
