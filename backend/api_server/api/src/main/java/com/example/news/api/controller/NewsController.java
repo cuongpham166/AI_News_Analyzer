@@ -9,7 +9,7 @@ import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
 import com.example.news.api.entity.NewsReactionEntity;
 import com.example.news.api.service.GraphRecommendationService;
-import com.example.news.api.service.RecommendationEngineService;
+import com.example.news.api.service.news.RecommendationEngineService;
 import com.example.news.api.service.news.NewsBookmarkService;
 import com.example.news.api.service.news.NewsReactionService;
 import org.springframework.security.oauth2.jwt.Jwt;

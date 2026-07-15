@@ -1,5 +1,6 @@
 package com.example.news.api.repository;
 
+import com.example.news.api.dto.internal.SimilarNewsId;
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
@@ -46,5 +47,17 @@ public interface UserInteractionRepository extends Neo4jRepository<Void, String>
         RETURN n.summary_embedding
         """)
     List<float[]> getHistoricalEmbeddingsForUser(String userId);
+
+
+    @Query("""
+        MATCH (src:News {link: $currentArticleLink})
+        WITH src.summary_embedding AS targetEmbedding, src
+        CALL db.index.vector.queryNodes('news_embeddings_idx', $limit, targetEmbedding)
+        YIELD node, score
+        WHERE node.link <> src.link
+        RETURN node.link AS link, score AS score
+        ORDER BY score DESC
+        """)
+    List<SimilarNewsId> findSimilarNewsIds(String currentArticleLink, int limit);
 
 }

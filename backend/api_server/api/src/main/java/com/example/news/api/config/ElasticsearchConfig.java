@@ -16,7 +16,6 @@ public class ElasticsearchConfig {
     public ElasticsearchClient elasticsearchClient() {
         RestClient restClient = RestClient.builder(HttpHost.create(System.getenv("ELASTIC_URL"))).build();
         ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
-        ElasticsearchClient esClient = new ElasticsearchClient(transport);
-        return esClient;
+        return new ElasticsearchClient(transport);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.news.api.service;
+package com.example.news.api.service.news;
 
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
 import com.example.news.api.repository.UserInteractionRepository;
