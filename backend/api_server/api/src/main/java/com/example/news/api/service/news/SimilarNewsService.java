@@ -6,10 +6,9 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.example.news.api.dto.internal.SimilarNewsId;
 import com.example.news.api.dto.response.news.SimilarNewsResponse;
-import com.example.news.api.repository.UserInteractionRepository;
+import com.example.news.api.repository.news.SimilarNewsRepository;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,22 +19,20 @@ import java.util.stream.Collectors;
 public class SimilarNewsService {
 
     private final ElasticsearchClient elasticsearchClient;
-    private final UserInteractionRepository userInteractionRepository;
-
+    private final SimilarNewsRepository similarNewsRepository;
     public SimilarNewsService(
             ElasticsearchClient elasticsearchClient,
-            UserInteractionRepository userInteractionRepository
+            SimilarNewsRepository similarNewsRepository
     ){
         this.elasticsearchClient = elasticsearchClient;
-        this.userInteractionRepository = userInteractionRepository;
+        this.similarNewsRepository = similarNewsRepository;
     }
 
     public List<SimilarNewsResponse> getSimilarNews(String currentArticleLink, int limit) {
-        List<SimilarNewsId> similarIds = userInteractionRepository.findSimilarNewsIds(currentArticleLink, limit);
+        List<SimilarNewsId> similarNewsIds = similarNewsRepository.findSimilarNewsIds(currentArticleLink,limit);
+        if (similarNewsIds.isEmpty()) return List.of();
 
-        if (similarIds.isEmpty()) return List.of();
-
-        List<String> targetLinks = similarIds.stream()
+        List<String> targetLinks = similarNewsIds.stream()
                 .map(SimilarNewsId::link)
                 .toList();
 
@@ -66,7 +63,7 @@ public class SimilarNewsService {
                             Function.identity()
                     ));
 
-            Map<String, Double> scoreMap = similarIds.stream()
+            Map<String, Double> scoreMap = similarNewsIds.stream()
                     .collect(Collectors.toMap(
                             SimilarNewsId::link,
                             SimilarNewsId::score

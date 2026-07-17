@@ -1,4 +1,4 @@
-package com.example.news.api.repository;
+package com.example.news.api.repository.news;
 
 import java.util.List;
 import java.util.Optional;

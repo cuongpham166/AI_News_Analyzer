@@ -1,4 +1,4 @@
-package com.example.news.api.service;
+package com.example.news.api.service.user;
 
 import com.example.news.api.dto.response.user.UserProfileResponse;
 import org.springframework.security.oauth2.jwt.Jwt;

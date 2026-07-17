@@ -7,7 +7,7 @@ import com.example.news.api.entity.NewsEntity;
 import com.example.news.api.service.news.NewsService;
 import com.example.news.api.util.mapper.NewsMapper;
 import com.example.news.api.repository.analysis.RelationshipRepository;
-import com.example.news.api.repository.NewsRepository;
+import com.example.news.api.repository.news.NewsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

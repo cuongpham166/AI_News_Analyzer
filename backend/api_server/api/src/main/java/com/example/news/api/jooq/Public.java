@@ -7,7 +7,9 @@ package com.example.news.api.jooq;
 import com.example.news.api.jooq.tables.Entity;
 import com.example.news.api.jooq.tables.EntityType;
 import com.example.news.api.jooq.tables.News;
+import com.example.news.api.jooq.tables.NewsBookmark;
 import com.example.news.api.jooq.tables.NewsEntity;
+import com.example.news.api.jooq.tables.NewsReaction;
 import com.example.news.api.jooq.tables.Source;
 import com.example.news.api.jooq.tables.Topic;
 
@@ -48,9 +50,19 @@ public class Public extends SchemaImpl {
     public final News NEWS = News.NEWS;
 
     /**
+     * The table <code>public.news_bookmark</code>.
+     */
+    public final NewsBookmark NEWS_BOOKMARK = NewsBookmark.NEWS_BOOKMARK;
+
+    /**
      * The table <code>public.news_entity</code>.
      */
     public final NewsEntity NEWS_ENTITY = NewsEntity.NEWS_ENTITY;
+
+    /**
+     * The table <code>public.news_reaction</code>.
+     */
+    public final NewsReaction NEWS_REACTION = NewsReaction.NEWS_REACTION;
 
     /**
      * The table <code>public.source</code>.
@@ -81,7 +93,9 @@ public class Public extends SchemaImpl {
             Entity.ENTITY,
             EntityType.ENTITY_TYPE,
             News.NEWS,
+            NewsBookmark.NEWS_BOOKMARK,
             NewsEntity.NEWS_ENTITY,
+            NewsReaction.NEWS_REACTION,
             Source.SOURCE,
             Topic.TOPIC
         );

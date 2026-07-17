@@ -7,7 +7,9 @@ package com.example.news.api.jooq.tables;
 import com.example.news.api.jooq.Keys;
 import com.example.news.api.jooq.Public;
 import com.example.news.api.jooq.tables.Entity.EntityPath;
+import com.example.news.api.jooq.tables.NewsBookmark.NewsBookmarkPath;
 import com.example.news.api.jooq.tables.NewsEntity.NewsEntityPath;
+import com.example.news.api.jooq.tables.NewsReaction.NewsReactionPath;
 import com.example.news.api.jooq.tables.Source.SourcePath;
 import com.example.news.api.jooq.tables.Topic.TopicPath;
 import com.example.news.api.jooq.tables.records.NewsRecord;
@@ -226,6 +228,32 @@ public class News extends TableImpl<NewsRecord> {
             _topic = new TopicPath(this, Keys.NEWS__NEWS_TOPIC_ID_FKEY, null);
 
         return _topic;
+    }
+
+    private transient NewsReactionPath _newsReaction;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.news_reaction</code> table
+     */
+    public NewsReactionPath newsReaction() {
+        if (_newsReaction == null)
+            _newsReaction = new NewsReactionPath(this, null, Keys.NEWS_REACTION__FK931VAPN3KNA5MBS2WGFAU733Q.getInverseKey());
+
+        return _newsReaction;
+    }
+
+    private transient NewsBookmarkPath _newsBookmark;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.news_bookmark</code> table
+     */
+    public NewsBookmarkPath newsBookmark() {
+        if (_newsBookmark == null)
+            _newsBookmark = new NewsBookmarkPath(this, null, Keys.NEWS_BOOKMARK__FKKLIYY1OAA601L4WESU6COD054.getInverseKey());
+
+        return _newsBookmark;
     }
 
     private transient NewsEntityPath _newsEntity;

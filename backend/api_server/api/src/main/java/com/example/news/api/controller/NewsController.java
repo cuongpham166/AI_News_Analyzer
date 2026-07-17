@@ -7,39 +7,32 @@ import java.util.concurrent.CompletableFuture;
 import com.example.news.api.dto.internal.ReactionType;
 import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
+import com.example.news.api.dto.response.news.SimilarNewsResponse;
 import com.example.news.api.entity.NewsReactionEntity;
-import com.example.news.api.service.GraphRecommendationService;
-import com.example.news.api.service.news.RecommendationEngineService;
-import com.example.news.api.service.news.NewsBookmarkService;
-import com.example.news.api.service.news.NewsReactionService;
+import com.example.news.api.service.news.*;
+import com.example.news.api.service.user.UserInteractionService;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-
-
-import com.example.news.api.service.news.NewsService;
 
 @RestController
 @RequestMapping("/api/news")
 public class NewsController {
     private final NewsService metadataService;
-    private final NewsBookmarkService newsBookmarkService;
-    private final NewsReactionService newsReactionService;
-    private final GraphRecommendationService graphRecommendationService;
-    private final RecommendationEngineService recommendationEngineService;
+    private final UserInteractionService userInteractionService;
+    private final RecommendedNewsService recommendedNewsService;
+    private final SimilarNewsService similarNewsService;
 
     public NewsController(
             NewsService metadataService,
-            NewsBookmarkService newsBookmarkService,
-            NewsReactionService newsReactionService,
-            GraphRecommendationService graphRecommendationService,
-            RecommendationEngineService recommendationEngineService
+            RecommendedNewsService recommendedNewsService,
+            UserInteractionService userInteractionService,
+            SimilarNewsService similarNewsService
     ) {
         this.metadataService = metadataService;
-        this.newsBookmarkService = newsBookmarkService;
-        this.newsReactionService = newsReactionService;
-        this.graphRecommendationService = graphRecommendationService;
-        this.recommendationEngineService = recommendationEngineService;
+        this.recommendedNewsService = recommendedNewsService;
+        this.userInteractionService = userInteractionService;
+        this.similarNewsService = similarNewsService;
     }
 
     @GetMapping("/all")
@@ -61,9 +54,9 @@ public class NewsController {
     public void addBookmark(@PathVariable int newsId, JwtAuthenticationToken authentication) {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
-        newsBookmarkService.addBookmark(newsId,userId);
+        userInteractionService.addJpaBookmark(newsId,userId);
 
-        CompletableFuture.runAsync(() -> graphRecommendationService.syncBookmark(userId, newsId))
+        CompletableFuture.runAsync(() -> userInteractionService.addGraphBookmark(userId, newsId))
                 .exceptionally(ex -> {
                     System.err.println("Failed to sync bookmark to Neo4j: " + ex.getMessage());
                     return null;
@@ -74,9 +67,9 @@ public class NewsController {
     public void removeBookmark(@PathVariable int newsId, JwtAuthenticationToken authentication) {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
-        newsBookmarkService.removeBookmark(newsId,userId);
+        userInteractionService.removeJpaBookmark(newsId,userId);
 
-        CompletableFuture.runAsync(() -> graphRecommendationService.removeBookmark(userId,newsId))
+        CompletableFuture.runAsync(() -> userInteractionService.removeGraphBookmark(userId,newsId))
                 .exceptionally(ex -> {
                     System.err.println("Failed to remove bookmark to Neo4j: " + ex.getMessage());
                     return null;
@@ -88,20 +81,20 @@ public class NewsController {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
 
-        Optional<NewsReactionEntity> existingReaction = newsReactionService.findNewsReaction(newsId,userId);
+        Optional<NewsReactionEntity> existingReaction = userInteractionService.findNewsReaction(newsId,userId);
 
         if (existingReaction.isPresent()) {
             ReactionType savedType = existingReaction.get().getType();
             if (savedType == reactionType) {
-                newsReactionService.removeReaction(existingReaction.get());
-                CompletableFuture.runAsync(() -> graphRecommendationService.removeReaction(userId, newsId));
+                userInteractionService.removeJpaReaction(existingReaction.get());
+                CompletableFuture.runAsync(() -> userInteractionService.removeGraphReaction(userId, newsId));
             }else{
-                newsReactionService.postReaction(newsId,userId,reactionType);
-                CompletableFuture.runAsync(() -> graphRecommendationService.syncReaction(userId, newsId, reactionType));
+                userInteractionService.addJpaReaction(newsId,userId,reactionType);
+                CompletableFuture.runAsync(() -> userInteractionService.addGraphReaction(userId, newsId, reactionType));
             }
         }else{
-            newsReactionService.postReaction(newsId,userId,reactionType);
-            CompletableFuture.runAsync(() -> graphRecommendationService.syncReaction(userId, newsId, reactionType));
+            userInteractionService.addJpaReaction(newsId,userId,reactionType);
+            CompletableFuture.runAsync(() -> userInteractionService.addGraphReaction(userId, newsId, reactionType));
         }
     }
 
@@ -109,8 +102,12 @@ public class NewsController {
     public List<RecommendedNewsResponse> getPersonalizedFeed(JwtAuthenticationToken authentication){
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
-        return recommendationEngineService.getPersonalizedFeed(userId,10);
+        return recommendedNewsService.getPersonalizedFeed(userId,10);
     }
 
+    @GetMapping("/similar")
+    public List<SimilarNewsResponse> getSimilarNews(String currentArticleLink, int limit) {
+        return similarNewsService.getSimilarNews(currentArticleLink,limit);
+    }
 
 }

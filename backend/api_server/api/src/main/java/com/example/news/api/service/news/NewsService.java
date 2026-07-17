@@ -5,7 +5,7 @@ import java.util.List;
 import com.example.news.api.dto.internal.DetailedEntity;
 import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.entity.NewsEntity;
-import com.example.news.api.repository.NewsRepository;
+import com.example.news.api.repository.news.NewsRepository;
 import com.example.news.api.repository.analysis.RelationshipRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

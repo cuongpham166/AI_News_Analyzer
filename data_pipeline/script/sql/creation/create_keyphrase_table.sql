@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS keyphrase (
+    id SERIAL PRIMARY KEY,
+    value TEXT UNIQUE NOT NULL
+);

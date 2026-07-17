@@ -1,6 +1,7 @@
 import feedparser
 import asyncio
 import aiohttp
+import uuid
 from data_pipeline.models.raw_article import RawArticle
 
 class IngestionProcessor:
@@ -40,6 +41,7 @@ class IngestionProcessor:
                 self.seen_links.add(link)
                 results.append(
                     RawArticle(
+                        newsId=uuid.uuid4(),
                         title=getattr(entry, "title", ""),
                         link=link,
                         summary=getattr(entry, "summary", ""),

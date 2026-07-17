@@ -7,7 +7,9 @@ package com.example.news.api.jooq;
 import com.example.news.api.jooq.tables.Entity;
 import com.example.news.api.jooq.tables.EntityType;
 import com.example.news.api.jooq.tables.News;
+import com.example.news.api.jooq.tables.NewsBookmark;
 import com.example.news.api.jooq.tables.NewsEntity;
+import com.example.news.api.jooq.tables.NewsReaction;
 import com.example.news.api.jooq.tables.Source;
 import com.example.news.api.jooq.tables.Topic;
 
@@ -34,9 +36,19 @@ public class Tables {
     public static final News NEWS = News.NEWS;
 
     /**
+     * The table <code>public.news_bookmark</code>.
+     */
+    public static final NewsBookmark NEWS_BOOKMARK = NewsBookmark.NEWS_BOOKMARK;
+
+    /**
      * The table <code>public.news_entity</code>.
      */
     public static final NewsEntity NEWS_ENTITY = NewsEntity.NEWS_ENTITY;
+
+    /**
+     * The table <code>public.news_reaction</code>.
+     */
+    public static final NewsReaction NEWS_REACTION = NewsReaction.NEWS_REACTION;
 
     /**
      * The table <code>public.source</code>.

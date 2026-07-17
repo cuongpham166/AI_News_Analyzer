@@ -7,12 +7,16 @@ package com.example.news.api.jooq;
 import com.example.news.api.jooq.tables.Entity;
 import com.example.news.api.jooq.tables.EntityType;
 import com.example.news.api.jooq.tables.News;
+import com.example.news.api.jooq.tables.NewsBookmark;
 import com.example.news.api.jooq.tables.NewsEntity;
+import com.example.news.api.jooq.tables.NewsReaction;
 import com.example.news.api.jooq.tables.Source;
 import com.example.news.api.jooq.tables.Topic;
 import com.example.news.api.jooq.tables.records.EntityRecord;
 import com.example.news.api.jooq.tables.records.EntityTypeRecord;
+import com.example.news.api.jooq.tables.records.NewsBookmarkRecord;
 import com.example.news.api.jooq.tables.records.NewsEntityRecord;
+import com.example.news.api.jooq.tables.records.NewsReactionRecord;
 import com.example.news.api.jooq.tables.records.NewsRecord;
 import com.example.news.api.jooq.tables.records.SourceRecord;
 import com.example.news.api.jooq.tables.records.TopicRecord;
@@ -41,8 +45,12 @@ public class Keys {
     public static final UniqueKey<EntityTypeRecord> ENTITY_TYPE_PKEY = Internal.createUniqueKey(EntityType.ENTITY_TYPE, DSL.name("entity_type_pkey"), new TableField[] { EntityType.ENTITY_TYPE.ID }, true);
     public static final UniqueKey<NewsRecord> NEWS_LINK_KEY = Internal.createUniqueKey(News.NEWS, DSL.name("news_link_key"), new TableField[] { News.NEWS.LINK }, true);
     public static final UniqueKey<NewsRecord> NEWS_PKEY = Internal.createUniqueKey(News.NEWS, DSL.name("news_pkey"), new TableField[] { News.NEWS.ID }, true);
+    public static final UniqueKey<NewsBookmarkRecord> NEWS_BOOKMARK_PKEY = Internal.createUniqueKey(NewsBookmark.NEWS_BOOKMARK, DSL.name("news_bookmark_pkey"), new TableField[] { NewsBookmark.NEWS_BOOKMARK.ID }, true);
+    public static final UniqueKey<NewsBookmarkRecord> UK55WE02XD9GQSOFQXP654NDWNW = Internal.createUniqueKey(NewsBookmark.NEWS_BOOKMARK, DSL.name("uk55we02xd9gqsofqxp654ndwnw"), new TableField[] { NewsBookmark.NEWS_BOOKMARK.NEWS_ID, NewsBookmark.NEWS_BOOKMARK.USER_ID }, true);
     public static final UniqueKey<NewsEntityRecord> NEWS_ENTITY_NEWS_ID_ENTITY_ID_KEY = Internal.createUniqueKey(NewsEntity.NEWS_ENTITY, DSL.name("news_entity_news_id_entity_id_key"), new TableField[] { NewsEntity.NEWS_ENTITY.NEWS_ID, NewsEntity.NEWS_ENTITY.ENTITY_ID }, true);
     public static final UniqueKey<NewsEntityRecord> NEWS_ENTITY_PKEY = Internal.createUniqueKey(NewsEntity.NEWS_ENTITY, DSL.name("news_entity_pkey"), new TableField[] { NewsEntity.NEWS_ENTITY.ID }, true);
+    public static final UniqueKey<NewsReactionRecord> NEWS_REACTION_PKEY = Internal.createUniqueKey(NewsReaction.NEWS_REACTION, DSL.name("news_reaction_pkey"), new TableField[] { NewsReaction.NEWS_REACTION.ID }, true);
+    public static final UniqueKey<NewsReactionRecord> UKB7NW2PINOTANRIKQ1TEOTMBD8 = Internal.createUniqueKey(NewsReaction.NEWS_REACTION, DSL.name("ukb7nw2pinotanrikq1teotmbd8"), new TableField[] { NewsReaction.NEWS_REACTION.NEWS_ID, NewsReaction.NEWS_REACTION.USER_ID }, true);
     public static final UniqueKey<SourceRecord> SOURCE_NAME_KEY = Internal.createUniqueKey(Source.SOURCE, DSL.name("source_name_key"), new TableField[] { Source.SOURCE.NAME }, true);
     public static final UniqueKey<SourceRecord> SOURCE_PKEY = Internal.createUniqueKey(Source.SOURCE, DSL.name("source_pkey"), new TableField[] { Source.SOURCE.ID }, true);
     public static final UniqueKey<TopicRecord> TOPIC_NAME_KEY = Internal.createUniqueKey(Topic.TOPIC, DSL.name("topic_name_key"), new TableField[] { Topic.TOPIC.NAME }, true);
@@ -55,6 +63,8 @@ public class Keys {
     public static final ForeignKey<EntityRecord, EntityTypeRecord> ENTITY__ENTITY_ENTITY_TYPE_ID_FKEY = Internal.createForeignKey(Entity.ENTITY, DSL.name("entity_entity_type_id_fkey"), new TableField[] { Entity.ENTITY.ENTITY_TYPE_ID }, Keys.ENTITY_TYPE_PKEY, new TableField[] { EntityType.ENTITY_TYPE.ID }, true);
     public static final ForeignKey<NewsRecord, SourceRecord> NEWS__NEWS_SOURCE_ID_FKEY = Internal.createForeignKey(News.NEWS, DSL.name("news_source_id_fkey"), new TableField[] { News.NEWS.SOURCE_ID }, Keys.SOURCE_PKEY, new TableField[] { Source.SOURCE.ID }, true);
     public static final ForeignKey<NewsRecord, TopicRecord> NEWS__NEWS_TOPIC_ID_FKEY = Internal.createForeignKey(News.NEWS, DSL.name("news_topic_id_fkey"), new TableField[] { News.NEWS.TOPIC_ID }, Keys.TOPIC_PKEY, new TableField[] { Topic.TOPIC.ID }, true);
+    public static final ForeignKey<NewsBookmarkRecord, NewsRecord> NEWS_BOOKMARK__FKKLIYY1OAA601L4WESU6COD054 = Internal.createForeignKey(NewsBookmark.NEWS_BOOKMARK, DSL.name("fkkliyy1oaa601l4wesu6cod054"), new TableField[] { NewsBookmark.NEWS_BOOKMARK.NEWS_ID }, Keys.NEWS_PKEY, new TableField[] { News.NEWS.ID }, true);
     public static final ForeignKey<NewsEntityRecord, EntityRecord> NEWS_ENTITY__NEWS_ENTITY_ENTITY_ID_FKEY = Internal.createForeignKey(NewsEntity.NEWS_ENTITY, DSL.name("news_entity_entity_id_fkey"), new TableField[] { NewsEntity.NEWS_ENTITY.ENTITY_ID }, Keys.ENTITY_PKEY, new TableField[] { Entity.ENTITY.ID }, true);
     public static final ForeignKey<NewsEntityRecord, NewsRecord> NEWS_ENTITY__NEWS_ENTITY_NEWS_ID_FKEY = Internal.createForeignKey(NewsEntity.NEWS_ENTITY, DSL.name("news_entity_news_id_fkey"), new TableField[] { NewsEntity.NEWS_ENTITY.NEWS_ID }, Keys.NEWS_PKEY, new TableField[] { News.NEWS.ID }, true);
+    public static final ForeignKey<NewsReactionRecord, NewsRecord> NEWS_REACTION__FK931VAPN3KNA5MBS2WGFAU733Q = Internal.createForeignKey(NewsReaction.NEWS_REACTION, DSL.name("fk931vapn3kna5mbs2wgfau733q"), new TableField[] { NewsReaction.NEWS_REACTION.NEWS_ID }, Keys.NEWS_PKEY, new TableField[] { News.NEWS.ID }, true);
 }

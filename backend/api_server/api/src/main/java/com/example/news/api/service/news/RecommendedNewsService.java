@@ -1,29 +1,29 @@
 package com.example.news.api.service.news;
 
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
-import com.example.news.api.repository.UserInteractionRepository;
+import com.example.news.api.repository.news.RecommendedNewsRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class RecommendationEngineService {
-    private final UserInteractionRepository userInteractionRepository;
+public class RecommendedNewsService {
+    private final RecommendedNewsRepository recommendedNewsRepository;
 
-    public RecommendationEngineService(UserInteractionRepository userInteractionRepository){
-        this.userInteractionRepository = userInteractionRepository;
+    public RecommendedNewsService(RecommendedNewsRepository recommendedNewsRepository){
+        this.recommendedNewsRepository = recommendedNewsRepository;
     }
-    public List<RecommendedNewsResponse>getPersonalizedFeed(String userId, int limit) {
-        //Fetch the summary_embeddings of news items the user enjoys
-        List<float[]> historicalVectors = userInteractionRepository.getHistoricalEmbeddingsForUser(userId);
+
+    public List<RecommendedNewsResponse> getPersonalizedFeed(String userId, int limit) {
+        List<float[]> historicalVectors = recommendedNewsRepository.getHistoricalEmbeddingsForUser(userId);
         if (historicalVectors.isEmpty()) {
             return new ArrayList<>();
         }
 
         //Calculate the average vector representing the user's taste
         float[] userProfileVector = calculateMeanVector(historicalVectors);
-        return userInteractionRepository.getVectorRecommendations(userId, userProfileVector, limit);
+        return recommendedNewsRepository.getVectorRecommendations(userId, userProfileVector, limit);
     }
 
     private float[] calculateMeanVector(List<float[]> vectors) {
@@ -42,5 +42,4 @@ public class RecommendationEngineService {
 
         return meanVector;
     }
-
 }
