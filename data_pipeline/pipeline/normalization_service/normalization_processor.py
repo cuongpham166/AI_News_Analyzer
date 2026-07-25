@@ -8,6 +8,7 @@ from email.utils import parsedate_to_datetime
 from data_pipeline.models.processed_article import ProcessedArticle
 import json
 import asyncio
+import hashlib
 
 
 class NormalizationProcessor:
@@ -17,10 +18,18 @@ class NormalizationProcessor:
     def is_duplicate(self, link):
         return link in self.enriched_links
 
+    def generate_hash_content(self,source,title,content):
+        data = source + title + content
+        hash_value = hashlib.sha256(
+            data.encode("utf-8")
+        ).hexdigest()
+        return hash_value
+
     async def process_message(self, msg:Msg) -> ProcessedArticle | None:
         raw_data = json.loads(msg.data.decode())
         link = raw_data.get("link")
         rss_date_str = raw_data.get("rss_pub_date")
+        newsId = raw_data.get("newsId")
 
         if not link or self.is_duplicate(link):
             return None
@@ -47,11 +56,15 @@ class NormalizationProcessor:
 
         self.enriched_links.add(link)
 
+        content_hash = self.generate_hash_content(source=domain_name,title=article_obj.title,content=article_obj.text)
+
         return ProcessedArticle(
+            newsId=newsId,
             title=article_obj.title,
             publish_date=timestamp,
             source=domain_name,
             link=link,
             language=detect(article_obj.text[:500]),
-            text=article_obj.text
+            text=article_obj.text,
+            content_hash=content_hash
         )

@@ -49,6 +49,7 @@ class InferenceProcessor:
         return str(summary)
 
     def analyze(self, articles: List[dict]) -> InferenceResponse:
+        print("Inference_processor: ", articles)
         texts = [a["text"] for a in articles]
         titles = [a["title"] for a in articles]
 
@@ -76,17 +77,18 @@ class InferenceProcessor:
         for i in range(len(articles)):
             results.append(
                 InferenceResult(
+                    newsId=articles[i]["newsId"],
                     link=articles[i]["link"],
                     publish_date=articles[i].get("publish_date"),
                     title=articles[i]["title"],
                     source=articles[i]["source"],
+                    content_hash=articles[i]["content_hash"],
                     sentiment=sentiment.results[i],
                     classification=classification.results[i],
                     ner=ner.results[i],
                     summarization=summaries.results[i],
                     language=articles[i]["language"],
                     keyphrases=keyphrases[i]
-
                 )
             )
 

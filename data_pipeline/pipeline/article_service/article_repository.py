@@ -2,11 +2,13 @@ import psycopg
 import os
 from dotenv import load_dotenv
 from data_pipeline.config.article_config import get_topics,get_entity_types,get_postgres_config
-
+from data_pipeline.utils.table_sql_files import get_creation_query, get_getter_query
 load_dotenv()
-query_folder_path = os.getenv("SQL_QUERY_FOLDER_PATH")
 
-root_folder = query_folder_path
+creation_query_folder_path = os.getenv("SQL_CREATION_QUERY_FOLDER_PATH")
+getter_query_folder_path = os.getenv("SQL_GETTER_QUERY_FOLDER_PATH")
+insertion_query_folder_path = os.getenv("SQL_INSERTION_QUERY_FOLDER_PATH")
+update_query_folder_path = os.getenv("SQL_UPDATE_QUERY_FOLDER_PATH")
 
 class ArticleRepository:
     def __init__(self, conn):
@@ -15,36 +17,22 @@ class ArticleRepository:
     def rollback(self):
         self.conn.rollback()
 
-    def check_connection(self):
+    def check_connection(self) -> bool:
         try:
             with self.conn.cursor() as cur:
                 cur.execute("SELECT 1;")
                 result = cur.fetchone()
                 if result:
-                    print("Connection successful! Result:", result[0])
-                else:
-                    print("Connection made, but no result returned.")
+                    return True
+                return False
         except psycopg.Error as e:
             print("Unable to connect to the database")
             print("Error:", e)
+            return False
 
-    def run_init_configs(self):
-        topic_labels = get_topics()
-        entity_types = get_entity_types()
-
-        self.create_source_table()
-        self.create_topic_table()
-        self.create_entity_type_table()
-        self.create_news_table()
-        self.create_entity_table()
-        self.create_news_entity_table()
-
-        self.insert_topic_data(topic_labels)
-        self.insert_entity_type_data(entity_types)
-
-    def create_entity_type_table(self):
+    def create_table(self, table_name):
         try:
-            sql_file = f"{root_folder}create_entity_type_table.sql"
+            sql_file = get_creation_query(table_name)
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
@@ -53,64 +41,9 @@ class ArticleRepository:
         except psycopg.Error as e:
             print("Error", e)
 
-    def create_entity_table(self):
+    def insert_entity_type(self, entity_types):
         try:
-            sql_file = f"{root_folder}create_entity_table.sql"
-            with open(sql_file, "r") as f:
-                sql = f.read()
-            with self.conn.cursor() as cur:
-                cur.execute(sql)
-            self.conn.commit()
-        except psycopg.Error as e:
-            print("Error", e)
-
-    def create_source_table(self):
-        try:
-            sql_file = f"{root_folder}create_source_table.sql"
-            with open(sql_file, "r") as f:
-                sql = f.read()
-            with self.conn.cursor() as cur:
-                cur.execute(sql)
-            self.conn.commit()
-        except psycopg.Error as e:
-            print("Error", e)
-
-    def create_topic_table(self):
-        try:
-            sql_file = f"{root_folder}create_topic_table.sql"
-            with open(sql_file, "r") as f:
-                sql = f.read()
-            with self.conn.cursor() as cur:
-                cur.execute(sql)
-            self.conn.commit()
-        except psycopg.Error as e:
-            print("Error", e)
-
-    def create_news_table(self):
-        try:
-            sql_file = f"{root_folder}create_news_table.sql"
-            with open(sql_file, "r") as f:
-                sql = f.read()
-            with self.conn.cursor() as cur:
-                cur.execute(sql)
-            self.conn.commit()
-        except psycopg.Error as e:
-            print("Error", e)
-
-    def create_news_entity_table(self):
-        try:
-            sql_file = f"{root_folder}create_news_entity_table.sql"
-            with open(sql_file, "r") as f:
-                sql = f.read()
-            with self.conn.cursor() as cur:
-                cur.execute(sql)
-            self.conn.commit()
-        except psycopg.Error as e:
-            print("Error", e)
-
-    def insert_entity_type_data(self, entity_types):
-        try:
-            sql_file = f"{root_folder}insert_entity_type_table.sql"
+            sql_file = f"{insertion_query_folder_path}insert_entity_type_table.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
@@ -120,10 +53,10 @@ class ArticleRepository:
             print("Error", e)
             self.conn.rollback()
 
-    def insert_entity_data(self, news_entities):
+    def insert_entity(self, news_entities):
         try:
             if len(news_entities) > 0:
-                sql_file = f"{root_folder}insert_entity_table.sql"
+                sql_file = f"{insertion_query_folder_path}insert_entity_table.sql"
                 with open(sql_file, "r") as f:
                     sql = f.read()
                 with self.conn.cursor() as cur:
@@ -134,9 +67,9 @@ class ArticleRepository:
             print("Error", e)
             self.conn.rollback()
 
-    def insert_source_data(self, sources):
+    def insert_source(self, sources):
         try:
-            sql_file = f"{root_folder}insert_source_table.sql"
+            sql_file = f"{insertion_query_folder_path}insert_source_table.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
@@ -148,7 +81,7 @@ class ArticleRepository:
 
     def insert_topic_data(self, topics):
         try:
-            sql_file = f"{root_folder}insert_topic_table.sql"
+            sql_file = f"{insertion_query_folder_path}insert_topic_table.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
@@ -158,16 +91,23 @@ class ArticleRepository:
             print("Error", e)
             self.conn.rollback()
 
-    def insert_news_data(self, news):
+    def insert_news(self, news):
         try:
-            self.insert_source_data([news["source"]])
-            sql_file = f"{root_folder}insert_news_table.sql"
-            #publish_date = news["publish_date"]
+            self.insert_source([news["source"]])
+            sql_file = f"{insertion_query_folder_path}insert_news_table.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
                 cur.execute(sql,
-                            (news["title"], news["publish_date"], news["link"], news["language"], news["text"], news["source"]))
+                            (news["newsId"],
+                             news["title"],
+                             news["publish_date"],
+                             news["link"],
+                             news["language"],
+                             news["text"],
+                             news["content_hash"],
+                             news["source"])
+                            )
                 row = cur.fetchone()
                 if row is not None:
                     new_id = row[0]
@@ -179,17 +119,80 @@ class ArticleRepository:
             print("Error", e)
             self.conn.rollback()
 
-    def insert_news_entity_data(self, news_link, news_entity):
+    def insert_inference_news_entity(self, news_id, news_entity):
         try:
-            sql_file = f"{root_folder}insert_news_entity_table.sql"
+            sql_file = f"{insertion_query_folder_path}insert_inference_news_entity_table.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
-                cur.execute(sql, (news_link, news_entity))
+                cur.execute(sql, (news_id, news_entity))
             self.conn.commit()
         except psycopg.Error as e:
             print("Error", e)
             self.conn.rollback()
+
+    def insert_inference_news_keyphrase(self, news_id,keyphrase):
+        try:
+            sql_file = f"{insertion_query_folder_path}insert_inference_news_keyphrase_table.sql"
+            with open(sql_file, "r") as f:
+                sql = f.read()
+            with self.conn.cursor() as cur:
+                cur.execute(sql, (news_id, keyphrase))
+            self.conn.commit()
+        except psycopg.Error as e:
+            print("Error", e)
+            self.conn.rollback()
+
+
+    def insert_keyphrase(self, keyphrases):
+        try:
+            sql_file = f"{insertion_query_folder_path}insert_keyphrase_table.sql"
+            with open(sql_file, "r") as f:
+                sql = f.read()
+            with self.conn.cursor() as cur:
+                cur.executemany(sql, [(keyphrase,) for keyphrase in keyphrases])
+            self.conn.commit()
+        except psycopg.Error as e:
+            print("Error", e)
+            self.conn.rollback()
+
+
+    def insert_inference_news(self, inference_news):
+        try:
+            news_entities = inference_news["ner"]["entities"]
+            keyphrases = inference_news["keyphrases"]["results"]
+            entities_list = [entity["value"] for entity in inference_news["ner"]["entities"]]
+            keyphrases_list = [keyphrase for keyphrase in inference_news["keyphrases"]["results"]]
+
+            self.insert_entity(news_entities)
+
+            self.insert_keyphrase(keyphrases)
+
+            sql_file = f"{insertion_query_folder_path}insert_inference_news_table.sql"
+            with open(sql_file, "r") as f:
+                sql = f.read()
+            with self.conn.cursor() as cur:
+                cur.execute(sql, (
+                    inference_news["summarization"],
+                    inference_news["sentiment"]["label"],
+                    inference_news["sentiment"]["score"],
+                    inference_news["classification"]["topic"],
+                    inference_news["newsId"]
+                ))
+            self.conn.commit()
+
+            for entity_element in entities_list:
+                self.insert_inference_news_entity(news_id=inference_news["newsId"], news_entity=entity_element)
+
+            for keyphrase_element in keyphrases_list:
+                self.insert_inference_news_keyphrase(news_id=inference_news["newsId"], keyphrase=keyphrase_element)
+
+            return True
+        except psycopg.Error as e:
+            print("Error", e)
+            self.conn.rollback()
+            return False
+
 
     # insert entity_type => insert entity => update_news with AI results => insert_news_entity
     # insert entity => update news => insert_news_entity
@@ -198,7 +201,7 @@ class ArticleRepository:
             news_entities = updated_data["ner"]["entities"]
             self.insert_entity_data(news_entities)
 
-            sql_file = f"{root_folder}update_news_table.sql"
+            sql_file = f"{update_query_folder_path}update_news_table.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
@@ -214,35 +217,26 @@ class ArticleRepository:
             entities_list = [entity["value"] for entity in updated_data["ner"]["entities"]]
 
             for entity_element in entities_list:
-                self.insert_news_entity_data(updated_data["link"], entity_element)
+                self.insert_news_entity(updated_data["link"], entity_element)
         except psycopg.Error as e:
             print("Error", e)
             self.conn.rollback()
 
+
     def fetch_all_data(self, table_name):
-        match table_name:
-            case "entity_type":
-                sql_file = f"{root_folder}get_entity_type_table.sql"
-            case "entity":
-                sql_file = f"{root_folder}get_entity_table.sql"
-            case "news_source":
-                sql_file = f"{root_folder}get_source_table.sql"
-            case "topic":
-                sql_file = f"{root_folder}get_topic_table.sql"
-            case "news":
-                sql_file = f"{root_folder}get_news_table.sql"
-            case _:
-                sql_file = f"{root_folder}get_entity_type_table.sql"
-
-        with open(sql_file, "r") as f:
-            sql = f.read()
-
-        with self.conn.cursor() as cur:
-            cur.execute(sql)
-            return cur.fetchall()
+        try:
+            sql_file = get_getter_query(table_name)
+            with open(sql_file, "r") as f:
+                sql = f.read()
+            with self.conn.cursor() as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+        except psycopg.Error as e:
+            print("Error", e)
+            self.conn.rollback()
 
     def fetch_missing_data(self):
-        sql_file = f"{root_folder}get_missing_data_news.sql"
+        sql_file = f"{getter_query_folder_path}get_missing_data_news.sql"
         with open(sql_file, "r") as f:
             sql = f.read()
         with self.conn.cursor() as cur:
@@ -251,7 +245,7 @@ class ArticleRepository:
 
     def get_fulltext_by_link(self, link):
         try:
-            sql_file = f"{root_folder}get_full_text.sql"
+            sql_file = f"{getter_query_folder_path}get_full_text.sql"
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:

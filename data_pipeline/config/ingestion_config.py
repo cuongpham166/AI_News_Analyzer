@@ -21,7 +21,6 @@ def get_rss_urls():
         "https://rss.dw.com/xml/rss_en_environment",
         "https://rss.dw.com/rdf/rss-en-cul",
         "https://rss.dw.com/rdf/rss-en-sports",
-        "https://rss.dw.com/rdf/rss-en-visitgermany",
-        "https://rthk.hk/rthk/news/rss/e_expressnews_einternational.xml"
+        "https://rss.dw.com/rdf/rss-en-visitgermany"
     ]
     return rss_urls

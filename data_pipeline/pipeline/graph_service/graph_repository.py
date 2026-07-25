@@ -3,8 +3,8 @@ from neo4j import GraphDatabase
 import ollama
 from datetime import datetime, timezone
 
-from ai.responses.inference_response import InferenceResult
-from ai.responses.ner_response import NerEntity, NerResult
+from ai.responses.ner_response import NerResult
+from ai.responses.saved_inference_response import SavedInferenceResponse
 
 from data_pipeline.config.graph_config import get_neo4j_config
 from data_pipeline.models.inference_article import InferenceArticle, Topic, Source, News
@@ -21,6 +21,15 @@ class GraphRepository:
     def close(self):
         if self.driver:
             self.driver.close()
+
+    def check_connection(self) -> bool:
+        try:
+            self.driver.verify_connectivity()
+            print("Connected to Neo4j")
+            return True
+        except Exception as e:
+            print(f"Connection failed: {e}")
+            return False
 
     def execute_cypher_file(self, file_path: Path):
         cypher_query = file_path.read_text()
@@ -47,13 +56,14 @@ class GraphRepository:
 
 
     def process_article(self, inference_result:dict):
-        print("process_article_graph_repo: ",inference_result)
-        result_obj = InferenceResult(**inference_result)
+        result_obj = SavedInferenceResponse.model_validate(inference_result)
         source = Source(name=result_obj.source)
         topic = Topic(name=result_obj.classification.topic)
         publish_date = datetime.fromtimestamp(result_obj.publish_date, tz=timezone.utc)
 
         news = News(
+            newsId=result_obj.newsId,
+            content_hash=result_obj.content_hash,
             link=result_obj.link,
             title=result_obj.title,
             publish_date=publish_date,
@@ -80,6 +90,7 @@ class GraphRepository:
         return self.save_articles(article_data,news_embedding)
 
     def save_articles(self, article_data: InferenceArticle,news_embedding):
+        print("Saving articles to Neo4j: ", article_data)
         cypher_file = Path("data_pipeline/script/neo4j/ingestion_data.cypher")
         cypher_query = cypher_file.read_text()
         data_dict = article_data.model_dump()
@@ -90,6 +101,8 @@ class GraphRepository:
         else:
             news_publish_date = str(publish_date)
         flat_article_data = {
+            "news_id":str(data_dict["news"]["newsId"]),
+            "content_hash":data_dict["news"]["content_hash"],
             "source_name": data_dict["source"]["name"],
             "topic_name": data_dict["topic"]["name"],
             "news_link": data_dict["news"]["link"],
@@ -107,12 +120,12 @@ class GraphRepository:
         print(flat_article_data["news_link"])
         print("Entities:", flat_article_data["entities"])
 
+
+
         def write(tx):
             result = tx.run(cypher_query, **flat_article_data)
             summary = result.consume()
-
             print("Neo4j write counters:", summary.counters)
-
             return summary.counters
 
         try:

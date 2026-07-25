@@ -1,13 +1,14 @@
 from pydantic import BaseModel
-import uuid
+from uuid import UUID
+
 from ai.responses.keyword_response import KeyphraseResponse
 from ai.responses.sentiment_response import SentimentResult
 from ai.responses.classification_response import ClassificationResult
 from ai.responses.ner_response import NerResult
 
 
-class InferenceResult(BaseModel):
-    newsId: uuid.UUID
+class SavedInferenceResponse(BaseModel):
+    newsId: UUID
     link: str
     publish_date: int
     language: str
@@ -19,7 +20,3 @@ class InferenceResult(BaseModel):
     ner: NerResult
     summarization: str
     keyphrases:KeyphraseResponse
-
-
-class InferenceResponse(BaseModel):
-    results: list[InferenceResult]

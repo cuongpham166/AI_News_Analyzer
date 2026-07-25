@@ -4,8 +4,9 @@ import tldextract
 import psycopg
 from nats.aio.msg import Msg
 
+from ai.responses.saved_inference_response import SavedInferenceResponse
 from data_pipeline.nats.client import create_js
-from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT
+from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, SAVED_INFERENCE_SUBJECT,STREAM_NAME
 from data_pipeline.config.article_config import get_postgres_config
 from data_pipeline.pipeline.article_service.article_processor import ArticleProcessor
 from data_pipeline.pipeline.article_service.article_repository import ArticleRepository
@@ -18,10 +19,23 @@ class ArticleConsumer:
     def check_connection(self):
         self.article_processor.check_connection()
 
+    async def publish_saved_inference_article(self, saved_result: SavedInferenceResponse):
+        try:
+            ack = await asyncio.wait_for(
+                self.js.publish(
+                    SAVED_INFERENCE_SUBJECT,
+                    saved_result.model_dump_json().encode()
+                ),
+                timeout=10
+            )
+            print(f"Published seq: {ack.seq}")
+        except asyncio.TimeoutError:
+            print(f"Publish timeout: {saved_result.link}")
+
     async def process_enriched_message(self, msg:Msg):
         enriched_article = json.loads(msg.data.decode())
         try:
-            self.article_processor.insert_news_data(enriched_article)
+            self.article_processor.insert_news(enriched_article)
             await msg.ack()
         except Exception as e:
             print(f"Error processing enriched article: {e}")
@@ -30,7 +44,9 @@ class ArticleConsumer:
     async def process_ai_message(self, msg):
         ai_article = json.loads(msg.data.decode())
         try:
-            self.article_processor.update_news_data(ai_article)
+            if self.article_processor.insert_inference_news(inference_news=ai_article):
+                saved_result = SavedInferenceResponse.model_validate(ai_article)
+                await self.publish_saved_inference_article(saved_result)
             await msg.ack()
         except Exception as e:
             print(f"Error[ArticleConsumer]processing ai article: {e}")
@@ -39,6 +55,7 @@ class ArticleConsumer:
     async def retrieve_enriched_articles(self):
         sub = await self.js.subscribe(
             ENRICHED_SUBJECT,
+            stream=STREAM_NAME,
             durable="article-consumer-enriched",
             deliver_policy="all",
             manual_ack=True,
@@ -87,7 +104,7 @@ class ArticleConsumer:
     """
 
 async def main():
-    js = await create_js()
+    nc, js = await create_js()
     await ensure_stream(js)
     config = get_postgres_config()
     conn = psycopg.connect(**config)
@@ -101,7 +118,3 @@ async def main():
         )
     finally:
         conn.close()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-

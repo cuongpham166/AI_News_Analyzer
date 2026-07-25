@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS entity (
-    id SERIAL PRIMARY KEY,
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     value TEXT UNIQUE NOT NULL,
-    entity_type_id integer REFERENCES entity_type (id)
+    entity_type_id BIGINT REFERENCES entity_type (id)
 );

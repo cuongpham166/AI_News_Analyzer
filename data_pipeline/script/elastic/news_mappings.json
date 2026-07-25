@@ -13,6 +13,9 @@
             "topic": {
                 "type": "keyword"
             },
+            "content_hash": {
+                "type": "keyword"
+            },
             "entities": {
                 "type": "nested",
                 "properties": {

@@ -9,6 +9,7 @@ def transform_document(document):
         "sentiment": document["sentiment"]["score"],
         "topic": document["classification"]["topic"],
         "summary": document["summarization"],
+        "content_hash":document["content_hash"],
         "entities": [
             {
                 "value": entity["value"],

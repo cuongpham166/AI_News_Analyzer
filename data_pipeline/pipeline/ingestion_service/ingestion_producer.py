@@ -40,7 +40,7 @@ class IngestionProducer:
 
 async def main():
     rss_urls = get_rss_urls()
-    js = await create_js()
+    nc, js = await create_js()
     await ensure_stream(js)
     scraper = IngestionProcessor(rss_urls)
     raw_data_producer = IngestionProducer(js, scraper, poll_interval=300)

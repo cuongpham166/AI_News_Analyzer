@@ -8,7 +8,7 @@ from data_pipeline.pipeline.inference_service.inference_processor import Inferen
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, STREAM_NAME
 
-semaphore = asyncio.Semaphore(4)
+semaphore = asyncio.Semaphore(1)
 
 class InferenceConsumer:
     def __init__(self, js,inference_processor):
@@ -24,11 +24,15 @@ class InferenceConsumer:
     async def process_message(self, msg:Msg):
         async with semaphore:
             processed_article = json.loads(msg.data.decode())
+            print("Inference_consumer: ",processed_article)
             try:
-                inference_data:InferenceResponse = self.inference_processor.analyze([processed_article])
-                inference_results = inference_data.results
+                inference_data:InferenceResponse = await asyncio.to_thread(
+                    self.inference_processor.analyze,
+                    [processed_article]
+                )
 
-                for result in inference_results:
+                for result in inference_data.results:
+                    print("Inference_consumer_result: ", result)
                     await self.publish_article(result)
                 await msg.ack()
 
@@ -39,22 +43,25 @@ class InferenceConsumer:
     async def run(self):
         sub = await self.js.subscribe(
             ENRICHED_SUBJECT,
+            stream=STREAM_NAME,
             durable="enriched-articles-consumer-1",
             deliver_policy="all",
             manual_ack=True
         )
         print(f"Subscribed to {ENRICHED_SUBJECT}. Waiting for messages...")
         async for msg in sub.messages:
-            await self.process_message(msg)
+            asyncio.create_task(
+                self.process_message(msg)
+            )
 
 
-async def main():
-    js = await create_js()
+async def main(inference_processor):
+    print("Inference main started")
+    nc, js = await create_js()
+    print("Inference connected to NATS")
     await ensure_stream(js)
-    inference_processor = InferenceProcessor()
+    print("Inference stream ready")
+    #inference_processor = InferenceProcessor()
     inference_consumer = InferenceConsumer(js,inference_processor)
+    print("Starting inference consumer")
     await inference_consumer.run()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

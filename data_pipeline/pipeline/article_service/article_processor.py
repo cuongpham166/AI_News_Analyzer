@@ -76,13 +76,21 @@ class ArticleProcessor:
             print("Error", e)
             self.article_repo.rollback()
 
-    def insert_news_data(self, news):
+    def insert_news(self, news):
         try:
-            new_id = self.article_repo.insert_news_data(news)
+            new_id = self.article_repo.insert_news(news)
             return new_id
         except psycopg.Error as e:
             print("Error", e)
             self.article_repo.rollback()
+
+    def insert_inference_news(self,inference_news):
+        try:
+            return self.article_repo.insert_inference_news(inference_news)
+        except psycopg.Error as e:
+            print("Error", e)
+            self.article_repo.rollback()
+            return false
 
     def insert_news_entity_data(self, news_link, news_entity):
         try:

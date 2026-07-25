@@ -5,9 +5,10 @@ from elasticsearch import Elasticsearch
 from nats.aio.msg import Msg
 
 from data_pipeline.nats.client import create_js
-from data_pipeline.nats.streams import ensure_stream, AI_SUBJECT
+from data_pipeline.nats.streams import ensure_stream,SAVED_INFERENCE_SUBJECT,STREAM_NAME
 from data_pipeline.config.indexing_config import get_elasticsearch_config
 from data_pipeline.pipeline.indexing_service import indexing_processor
+from ai.responses.saved_inference_response import SavedInferenceResponse
 from data_pipeline.pipeline.indexing_service.indexing_processor import IndexingProcessor
 from data_pipeline.pipeline.indexing_service.indexing_repository import IndexingRepository
 
@@ -19,10 +20,11 @@ class IndexingConsumer:
 
     async def process_ai_message(self, msg:Msg):
         ai_article = json.loads(msg.data.decode())
+        saved_result = SavedInferenceResponse.model_validate(ai_article)
         try:
-            index_time = datetime.now(timezone.utc).isoformat()
-            ai_article["@timestamp"] = index_time
-            self.indexing_processor.index_news_document(ai_article)
+            document = saved_result.model_dump()
+            document["@timestamp"] = datetime.now(timezone.utc).isoformat()
+            self.indexing_processor.index_news_document(document)
             await msg.ack()
         except Exception as e:
             print(f"Error[IndexingConsumer]processing ai article: {e}")
@@ -30,18 +32,19 @@ class IndexingConsumer:
 
     async def run(self):
         sub = await self.js.subscribe(
-            AI_SUBJECT,
+            SAVED_INFERENCE_SUBJECT,
+            stream=STREAM_NAME,
             durable="indexing-consumer",
             deliver_policy="all",
             manual_ack=True,
         )
-        print(f"Subscribed to {AI_SUBJECT}. Waiting for messages...")
+        print(f"Subscribed to {SAVED_INFERENCE_SUBJECT}. Waiting for messages...")
         async for msg in sub.messages:
             await self.process_ai_message(msg)
 
 
 async def main():
-    js = await create_js()
+    nc, js = await create_js()
     await ensure_stream(js)
     elastic_config = get_elasticsearch_config()
     es_client = Elasticsearch(elastic_config["elastic_url"])

@@ -28,3 +28,18 @@ def get_entity_types():
     entity_types = ["person", "organization", "location", "event"]
     return entity_types
 
+def get_table_name():
+    table_names = [
+        "source",
+        "entity_type",
+        "entity",
+        "news",
+        "topic",
+        "keyphrase",
+        "inference_news",
+        "inference_news_entity",
+        "inference_news_keyphrase",
+        "news_reaction",
+        "news_bookmark"
+    ]
+    return table_names

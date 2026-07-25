@@ -1,6 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, HttpUrl,field_validator
 from typing import List
+from uuid import UUID
 
 class Entity(BaseModel):
     id: str
@@ -34,6 +35,8 @@ class News(BaseModel):
     sentiment: float
     summary: str
     language: str
+    newsId: UUID
+    content_hash: str
 
     @field_validator("sentiment")
     def validate_sentiment(cls,value):
@@ -53,41 +56,3 @@ class InferenceArticle(BaseModel):
     news: News
     entities: Entities
     keyphrases: list[str] = []
-
-article_data = {
-    "source": {
-        "name": "BBC"
-    },
-
-    "topic": {
-        "name": "Artificial Intelligence"
-    },
-
-    "news": {
-        "link": "https://example.com/news1",
-        "title": "OpenAI conference in Berlin",
-        "publish_date": "2026-05-19T10:30:00Z",
-        "sentiment": 0.82,
-        "language": "en"
-    },
-
-    "entities": {
-        "persons": [
-            {"id": "sam_altman", "name": "Sam Altman"}
-        ],
-
-        "organizations": [
-            {"id": "openai", "name": "OpenAI"},
-            {"id": "microsoft", "name": "Microsoft"}
-        ],
-
-        "locations": [
-            {"id": "berlin_de", "name": "Berlin"},
-            {"id": "germany", "name": "Germany"}
-        ],
-
-        "events": [
-            {"id": "openai_dev_summit_2026", "name": "OpenAI Dev Summit"}
-        ]
-    }
-}

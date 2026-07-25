@@ -6,6 +6,7 @@ ENRICHED_SUBJECT = "articles.enriched"
 SAVED_SUBJECT = "articles.saved"
 AI_SUBJECT = "articles.ai"
 
+SAVED_INFERENCE_SUBJECT = "articles.inference.saved"
 
 async def ensure_stream(js):
     try:
@@ -13,7 +14,7 @@ async def ensure_stream(js):
     except NotFoundError:
         await js.add_stream(
             name=STREAM_NAME,
-            subjects=[RAW_SUBJECT, ENRICHED_SUBJECT, SAVED_SUBJECT, AI_SUBJECT],
+            subjects=[RAW_SUBJECT, ENRICHED_SUBJECT, SAVED_SUBJECT, AI_SUBJECT, SAVED_INFERENCE_SUBJECT],
             retention="limits",
             max_msgs=-1,
         )

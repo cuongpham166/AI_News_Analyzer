@@ -1,20 +1,16 @@
 MERGE (s:Source {name: $source_name})
 MERGE (t:Topic {name: $topic_name})
-MERGE (n:News {link: $news_link})
-  ON CREATE SET
-  n.title = $news_title,
-  n.publish_date = datetime($news_publish_date),
-  n.sentiment = $news_sentiment,
-  n.language = $news_language,
-  n.summary = $news_summary,
-  n.summary_embedding = $news_embedding
-  ON MATCH SET
-  n.title = $news_title,
-  n.publish_date = datetime($news_publish_date),
-  n.sentiment = $news_sentiment,
-  n.language = $news_language,
-  n.summary = $news_summary,
-  n.summary_embedding = $news_embedding
+MERGE (n:News {id: $news_id})
+
+SET
+    n.link = $news_link,
+    n.content_hash = $content_hash,
+    n.title = $news_title,
+    n.publish_date = datetime($news_publish_date),
+    n.sentiment = $news_sentiment,
+    n.language = $news_language,
+    n.summary = $news_summary,
+    n.summary_embedding = $news_embedding
 
 MERGE (s)-[:PUBLISHED]->(n)
 MERGE (n)-[:COVERS]->(t)

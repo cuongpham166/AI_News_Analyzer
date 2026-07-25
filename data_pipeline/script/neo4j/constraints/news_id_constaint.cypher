@@ -1,0 +1,4 @@
+CREATE CONSTRAINT news_id_unique
+IF NOT EXISTS
+FOR (n:News)
+REQUIRE n.id IS UNIQUE;

@@ -19,8 +19,21 @@ class IndexingRepository:
     def __init__(self, es_client):
         self.es_client = es_client
 
-    def check_connection(self):
-        print("Check connection: ", self.es_client.info())
+    def check_connection(self) -> bool:
+        try:
+            if self.es_client.ping():
+                print("Connected to Elasticsearch")
+                return True
+
+            return  False
+
+        except exceptions.ConnectionError as e:
+            print(f"Connection failed: {e}")
+            return False
+
+        except exceptions.ElasticsearchException as e:
+            print(f"Elasticsearch error: {e}")
+            return False
 
     def create_index(self, index_name: str, mapping: dict):
         if not self.es_client.indices.exists(index=index_name):
@@ -43,7 +56,7 @@ class IndexingRepository:
         transformed_document = transform_document(document)
         doc_id = transformed_document['link']
         try:
-            self.es_client.index(index="news", id=doc_id, document=transformed_document)
+            self.es_client.index(index="news", id=document["newsId"], document=transformed_document)
         except exceptions.ConflictError:
             print("Document already exists, skipping insertion")
 

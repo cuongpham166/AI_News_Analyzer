@@ -1,3 +1,0 @@
-CREATE CONSTRAINT news_link_unique IF NOT EXISTS
-FOR (n:News)
-REQUIRE n.link IS UNIQUE;

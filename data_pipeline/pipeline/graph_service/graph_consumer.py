@@ -6,7 +6,7 @@ from neo4j import GraphDatabase
 
 from ai.responses.inference_response import InferenceResult
 from data_pipeline.nats.client import create_js
-from data_pipeline.nats.streams import ensure_stream, AI_SUBJECT
+from data_pipeline.nats.streams import ensure_stream,SAVED_INFERENCE_SUBJECT,STREAM_NAME
 from data_pipeline.config.graph_config import get_neo4j_config
 from data_pipeline.pipeline.graph_service.graph_repository import GraphRepository
 from data_pipeline.pipeline.graph_service.graph_processor import GraphProcessor
@@ -30,17 +30,18 @@ class GraphConsumer:
 
     async def run(self):
         sub = await self.js.subscribe(
-            AI_SUBJECT,
+            SAVED_INFERENCE_SUBJECT,
+            stream=STREAM_NAME,
             durable="graph-consumer",
             deliver_policy="all",
             manual_ack=True,
         )
-        print(f"Subscribed to {AI_SUBJECT}. Waiting for messages...")
+        print(f"Subscribed to {SAVED_INFERENCE_SUBJECT}. Waiting for messages...")
         async for msg in sub.messages:
             await self.process_ai_message(msg)
 
 async def main():
-    js = await create_js()
+    nc, js = await create_js()
     await ensure_stream(js)
     graph_config = get_neo4j_config()
     driver = GraphDatabase.driver(
