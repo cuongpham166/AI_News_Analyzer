@@ -12,11 +12,15 @@ from data_pipeline.utils.graph_processor_utils import build_metablock_for_embedd
 
 from concurrent.futures import ProcessPoolExecutor
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
+
 GRAPH_EXECUTOR = ProcessPoolExecutor(max_workers=2)
 
 class GraphRepository:
     def __init__(self, driver):
         self.driver = driver
+        self.logger = LoggerFactory.get_logger(LoggerName.Graph.REPOSITORY)
 
     def close(self):
         if self.driver:
@@ -25,17 +29,16 @@ class GraphRepository:
     def check_connection(self) -> bool:
         try:
             self.driver.verify_connectivity()
-            print("Connected to Neo4j")
+            self.logger.info("Connected to the database.")
             return True
         except Exception as e:
-            print(f"Connection failed: {e}")
+            self.logger.exception("Unable to connect to the database.")
             return False
 
     def execute_cypher_file(self, file_path: Path):
         cypher_query = file_path.read_text()
         with self.driver.session() as session:
             session.execute_write(lambda tx: tx.run(cypher_query))
-        print(f"Executed {file_path.name}")
 
     def create_constraints(self):
         constraints_folder = Path("data_pipeline/script/neo4j/constraints")
@@ -116,16 +119,9 @@ class GraphRepository:
             "keyphrases":data_dict["keyphrases"]
         }
 
-        print("Saving article to Neo4j:")
-        print(flat_article_data["news_link"])
-        print("Entities:", flat_article_data["entities"])
-
-
-
         def write(tx):
             result = tx.run(cypher_query, **flat_article_data)
             summary = result.consume()
-            print("Neo4j write counters:", summary.counters)
             return summary.counters
 
         try:
@@ -135,7 +131,7 @@ class GraphRepository:
             return flat_article_data
 
         except Exception as e:
-            print("Neo4j write failed:", str(e))
+            self.logger.exception("Unable to insert new entry")
 
 
 if __name__ == "__main__":

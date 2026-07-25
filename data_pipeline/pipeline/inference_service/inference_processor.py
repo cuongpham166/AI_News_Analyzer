@@ -4,6 +4,7 @@ from typing import List
 
 from keybert import KeyBERT
 
+from ai.analyzer.keyword_extractor import keyword_extractor
 from ai.analyzer.sentiment_classifier.sentiment_classifier import SentimentClassifier
 from ai.analyzer.topic_classifier.topic_classifier import TopicClassifier
 from ai.analyzer.news_summarizer.news_summarizer import NewsSummarizer
@@ -15,6 +16,8 @@ from ai.utils.keyword_extractor.entity_deduplicator import EntityDeduplicator
 from ai.utils.keyword_extractor.entity_extractor import EntityExtractor
 from ai.utils.keyword_extractor.text_normalizer import TextNormalizer
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
 
 class InferenceProcessor:
     def __init__(self):
@@ -38,6 +41,7 @@ class InferenceProcessor:
 
         self.device = torch.device("cpu")
         torch.set_num_threads(4)
+        self.logger = LoggerFactory.get_logger(LoggerName.Inference.CONSUMER)
 
     def get_summary_text(self, summary):
         if not summary:
@@ -49,28 +53,42 @@ class InferenceProcessor:
         return str(summary)
 
     def analyze(self, articles: List[dict]) -> InferenceResponse:
-        print("Inference_processor: ", articles)
+        #print("inference_processor: ", articles)
+        newsId = str(articles[0]["newsId"])
+
         texts = [a["text"] for a in articles]
         titles = [a["title"] for a in articles]
 
-        summaries = self.news_summarizer.analyze_input(texts)
+        summaries = self.news_summarizer.analyze_input(texts,newsId)
 
         sentiment_inputs = [
             self.get_summary_text(summaries.results[i]) if len(texts[i]) > 1000 else texts[i]
             for i in range(len(texts))
         ]
-        sentiment = self.sentiment_classifier.analyze_input_onnx(sentiment_inputs)
+        sentiment = self.sentiment_classifier.analyze_input_onnx(sentiment_inputs, newsId)
 
-        classification = self.topic_classifier.classify_onnx(titles)
+        classification = self.topic_classifier.classify_onnx(titles,newsId)
 
-        keyphrases = [self.keyword_extractor.extract_keywords(text=a["title"]+" "+a["text"]) for a in articles]
+        keyword_extractor_text = ""
+        for a in articles:
+            title = a["title"]
+            text = a["text"]
+            keyword_extractor_text += f"{title} {text}"
+
+        """
+        keyphrases = [
+            self.keyword_extractor.extract_keywords(
+                text=a["title"]+" "+a["text"]) for a in articles
+        ]
+        """
+        keyphrases = [self.keyword_extractor.extract_keywords(newsId, text=keyword_extractor_text)]
 
         ner_inputs = [
             texts[i] + " " + self.get_summary_text(summaries.results[i])
             for i in range(len(texts))
         ]
 
-        ner = self.entity_classifier.analyze_input(ner_inputs)
+        ner = self.entity_classifier.analyze_input(ner_inputs,newsId)
 
         results = []
 

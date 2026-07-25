@@ -10,9 +10,13 @@ getter_query_folder_path = os.getenv("SQL_GETTER_QUERY_FOLDER_PATH")
 insertion_query_folder_path = os.getenv("SQL_INSERTION_QUERY_FOLDER_PATH")
 update_query_folder_path = os.getenv("SQL_UPDATE_QUERY_FOLDER_PATH")
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
+
 class ArticleRepository:
     def __init__(self, conn):
         self.conn = conn
+        self.logger = LoggerFactory.get_logger(LoggerName.Article.REPOSITORY)
 
     def rollback(self):
         self.conn.rollback()
@@ -23,11 +27,12 @@ class ArticleRepository:
                 cur.execute("SELECT 1;")
                 result = cur.fetchone()
                 if result:
+                    self.logger.info("Connected to the database.")
                     return True
+                self.logger.exception("Unable to connect to the database.")
                 return False
         except psycopg.Error as e:
-            print("Unable to connect to the database")
-            print("Error:", e)
+            self.logger.exception("Unable to connect to the database.")
             return False
 
     def create_table(self, table_name):
@@ -39,7 +44,7 @@ class ArticleRepository:
                 cur.execute(sql)
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception(f"Unable to create {table_name} table")
 
     def insert_entity_type(self, entity_types):
         try:
@@ -50,7 +55,7 @@ class ArticleRepository:
                 cur.executemany(sql, [(et,) for et in entity_types])
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new entity type")
             self.conn.rollback()
 
     def insert_entity(self, news_entities):
@@ -64,7 +69,7 @@ class ArticleRepository:
                         cur.execute(sql, (entity["value"], entity["type"]))
                     self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new entity")
             self.conn.rollback()
 
     def insert_source(self, sources):
@@ -76,7 +81,7 @@ class ArticleRepository:
                 cur.executemany(sql, [(source,) for source in sources])
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new source")
             self.conn.rollback()
 
     def insert_topic_data(self, topics):
@@ -88,7 +93,7 @@ class ArticleRepository:
                 cur.executemany(sql, [(topic,) for topic in topics])
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new topic")
             self.conn.rollback()
 
     def insert_news(self, news):
@@ -116,7 +121,7 @@ class ArticleRepository:
             self.conn.commit()
             return new_id
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new news")
             self.conn.rollback()
 
     def insert_inference_news_entity(self, news_id, news_entity):
@@ -128,7 +133,7 @@ class ArticleRepository:
                 cur.execute(sql, (news_id, news_entity))
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new inference news entity")
             self.conn.rollback()
 
     def insert_inference_news_keyphrase(self, news_id,keyphrase):
@@ -140,7 +145,7 @@ class ArticleRepository:
                 cur.execute(sql, (news_id, keyphrase))
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new inference news keyphrase")
             self.conn.rollback()
 
 
@@ -153,7 +158,7 @@ class ArticleRepository:
                 cur.executemany(sql, [(keyphrase,) for keyphrase in keyphrases])
             self.conn.commit()
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new keyphrase")
             self.conn.rollback()
 
 
@@ -189,7 +194,7 @@ class ArticleRepository:
 
             return True
         except psycopg.Error as e:
-            print("Error", e)
+            self.logger.exception("Unable to insert new inference news")
             self.conn.rollback()
             return False
 

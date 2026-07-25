@@ -11,10 +11,14 @@ from data_pipeline.config.article_config import get_postgres_config
 from data_pipeline.pipeline.article_service.article_processor import ArticleProcessor
 from data_pipeline.pipeline.article_service.article_repository import ArticleRepository
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
+
 class ArticleConsumer:
     def __init__(self, js, article_processor):
         self.js = js
         self.article_processor = article_processor
+        self.logger = LoggerFactory.get_logger(LoggerName.Article.CONSUMER)
 
     def check_connection(self):
         self.article_processor.check_connection()
@@ -28,31 +32,56 @@ class ArticleConsumer:
                 ),
                 timeout=10
             )
-            print(f"Published seq: {ack.seq}")
+
+            self.logger.debug(
+                "Saved inference article published",
+                news_id=str(saved_result.newsId),
+                seq=ack.seq,
+            )
         except asyncio.TimeoutError:
-            print(f"Publish timeout: {saved_result.link}")
+            self.logger.warning(
+                "Publish timeout",
+                news_id=str(saved_result.newsId)
+            )
 
     async def process_enriched_message(self, msg:Msg):
         enriched_article = json.loads(msg.data.decode())
         try:
             self.article_processor.insert_news(enriched_article)
+            self.logger.exception(
+                "Enriched news saved.",
+                news_id=str(enriched_article["newsId"])
+            )
             await msg.ack()
         except Exception as e:
-            print(f"Error processing enriched article: {e}")
+            self.logger.exception(
+                "Saving enriched news failed.",
+                news_id=str(enriched_article["newsId"])
+            )
             await msg.nak(delay=5)
 
     async def process_ai_message(self, msg):
         ai_article = json.loads(msg.data.decode())
         try:
             if self.article_processor.insert_inference_news(inference_news=ai_article):
+                self.logger.exception(
+                    "Inference news saved.",
+                    news_id=str(ai_article["newsId"])
+                )
                 saved_result = SavedInferenceResponse.model_validate(ai_article)
                 await self.publish_saved_inference_article(saved_result)
             await msg.ack()
         except Exception as e:
-            print(f"Error[ArticleConsumer]processing ai article: {e}")
+            self.logger.exception(
+                "Saving inference news failed.",
+                news_id=str(ai_article["newsId"])
+            )
             await msg.nak(delay=5)
 
     async def retrieve_enriched_articles(self):
+
+        self.logger.info("Article consumer started")
+
         sub = await self.js.subscribe(
             ENRICHED_SUBJECT,
             stream=STREAM_NAME,
@@ -60,7 +89,9 @@ class ArticleConsumer:
             deliver_policy="all",
             manual_ack=True,
         )
-        print(f"Subscribed to {ENRICHED_SUBJECT}. Waiting for messages...")
+
+        self.logger.info(f"Subscribed to {ENRICHED_SUBJECT}.")
+
         async for msg in sub.messages:
             await self.process_enriched_message(msg)
 
@@ -71,9 +102,12 @@ class ArticleConsumer:
             deliver_policy="all",
             manual_ack=True,
         )
-        print(f"Subscribed to {AI_SUBJECT}. Waiting for messages...")
+
+        self.logger.info(f"Subscribed to {AI_SUBJECT}.")
+
         async for msg in sub.messages:
             await self.process_ai_message(msg)
+
 
     async def publish_article(self, article: dict):
         await self.js.publish(

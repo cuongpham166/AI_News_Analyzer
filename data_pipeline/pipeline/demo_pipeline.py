@@ -128,13 +128,13 @@ async def run_demo():
         published_processed_article = await demo_pipeline.run_normalization_service(published_raw_article)
         #print("published_processed_article: ", published_processed_article)
         published_inference_article = await demo_pipeline.run_inference_service(published_processed_article)
-        #print("published_inference_article: ",published_inference_article)
+        print("published_inference_article: ",published_inference_article)
 
         #await demo_pipeline.run_article_service_insert_news(published_processed_article)
         #await demo_pipeline.run_article_service_insert_inference_news(published_inference_article)
 
 
-        await demo_pipeline.run_graph_service(published_inference_article)
+        #await demo_pipeline.run_graph_service(published_inference_article)
         #await demo_pipeline.run_indexing_service(published_inference_article)
 
 

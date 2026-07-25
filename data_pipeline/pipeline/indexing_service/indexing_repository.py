@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 from data_pipeline.config.indexing_config import get_elasticsearch_config
 from data_pipeline.utils.indexing_repository_utils import transform_document
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
 
 load_dotenv()
 query_folder_path = os.getenv("ELASTIC_SCRIPT_PATH")
@@ -18,21 +20,23 @@ sql_root_folder = sql_query_folder_path
 class IndexingRepository:
     def __init__(self, es_client):
         self.es_client = es_client
+        self.logger = LoggerFactory.get_logger(LoggerName.Indexing.REPOSITORY)
 
     def check_connection(self) -> bool:
         try:
             if self.es_client.ping():
-                print("Connected to Elasticsearch")
+                self.logger.info("Connected to the database.")
                 return True
 
+            self.logger.exception("Unable to connect to the database.")
             return  False
 
         except exceptions.ConnectionError as e:
-            print(f"Connection failed: {e}")
+            self.logger.exception("Unable to connect to the database.")
             return False
 
         except exceptions.ElasticsearchException as e:
-            print(f"Elasticsearch error: {e}")
+            self.logger.exception("Elasticsearch error.")
             return False
 
     def create_index(self, index_name: str, mapping: dict):

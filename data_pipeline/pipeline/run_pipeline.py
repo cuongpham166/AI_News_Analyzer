@@ -8,10 +8,17 @@ from data_pipeline.pipeline.indexing_service.indexing_consumer import main as in
 from data_pipeline.pipeline.graph_service.graph_consumer import main as graph_main
 from data_pipeline.pipeline.inference_service.inference_processor import InferenceProcessor
 
-async  def start_pipeline():
-    print("Initializing all pipeline modules...")
-    inference_processor = InferenceProcessor()
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
+from data_pipeline.logger.logger_levels import LoggerLevels
 
+async  def start_pipeline():
+
+    LoggerFactory.configure(LoggerLevels.INFO)
+    logger = LoggerFactory.get_logger(LoggerName.ROOT)
+    logger.info("Pipeline starting")
+
+    inference_processor = InferenceProcessor()
     await asyncio.gather(
         inference_main(inference_processor),
         ingestion_main(),

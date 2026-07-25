@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.news.api.dto.internal.InferenceNews;
 import com.example.news.api.dto.response.analysis.*;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ public class AnalysisController {
         this.analysisService = analysisService;
     }
 
+    @Operation(summary = "Check Public")
     @GetMapping("/public")
     public String publicApi() {
         return "Public";

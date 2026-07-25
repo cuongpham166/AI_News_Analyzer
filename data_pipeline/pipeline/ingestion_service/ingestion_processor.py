@@ -2,21 +2,26 @@ import feedparser
 import asyncio
 import aiohttp
 import uuid
+
 from data_pipeline.models.raw_article import RawArticle
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
 
 class IngestionProcessor:
     def __init__(self, rss_urls):
         self.rss_urls = rss_urls
         self.seen_links = set()
+        self.logger = LoggerFactory.get_logger(LoggerName.Ingestion.PROCESSOR)
 
     async def fetch_feed(self, session, url):
         try:
             async with session.get(url, timeout=10) as resp:
                 resp.raise_for_status()
                 content = await resp.read()
+                self.logger.debug("RSS fetch completed")
                 return feedparser.parse(content)
         except Exception as e:
-            print(f"Error fetching {url}: {e}")
+            self.logger.exception("RSS fetch failed")
             return None
 
     async def scrape(self) -> list[RawArticle]:
@@ -29,7 +34,7 @@ class IngestionProcessor:
 
         for feed in feeds:
             if isinstance(feed, Exception):
-                print(f"Feed error: {feed}")
+                self.logger.exception("Feed error")
                 continue
             if not feed:
                 continue

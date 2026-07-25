@@ -12,11 +12,14 @@ from ai.responses.saved_inference_response import SavedInferenceResponse
 from data_pipeline.pipeline.indexing_service.indexing_processor import IndexingProcessor
 from data_pipeline.pipeline.indexing_service.indexing_repository import IndexingRepository
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
 
 class IndexingConsumer:
     def __init__(self, js, processor):
         self.js = js
         self.indexing_processor = processor
+        self.logger = LoggerFactory.get_logger(LoggerName.Indexing.CONSUMER)
 
     async def process_ai_message(self, msg:Msg):
         ai_article = json.loads(msg.data.decode())
@@ -25,12 +28,21 @@ class IndexingConsumer:
             document = saved_result.model_dump()
             document["@timestamp"] = datetime.now(timezone.utc).isoformat()
             self.indexing_processor.index_news_document(document)
+            self.logger.exception(
+                "Inference news saved.",
+                news_id=str(ai_article["newsId"])
+            )
             await msg.ack()
         except Exception as e:
-            print(f"Error[IndexingConsumer]processing ai article: {e}")
+            self.logger.exception(
+                "Saving inference news failed.",
+                news_id=str(ai_article["newsId"])
+            )
             await msg.nak(delay=5)
 
     async def run(self):
+        self.logger.info("Indexing consumer started")
+
         sub = await self.js.subscribe(
             SAVED_INFERENCE_SUBJECT,
             stream=STREAM_NAME,
@@ -38,7 +50,9 @@ class IndexingConsumer:
             deliver_policy="all",
             manual_ack=True,
         )
-        print(f"Subscribed to {SAVED_INFERENCE_SUBJECT}. Waiting for messages...")
+
+        self.logger.info(f"Subscribed to {SAVED_INFERENCE_SUBJECT}.")
+
         async for msg in sub.messages:
             await self.process_ai_message(msg)
 

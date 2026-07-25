@@ -2,18 +2,23 @@ from langdetect import detect
 from nats.aio.msg import Msg
 from newspaper import Article
 import tldextract
+import json
+import asyncio
+import hashlib
+import time
+
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 
 from data_pipeline.models.processed_article import ProcessedArticle
-import json
-import asyncio
-import hashlib
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
 
 class NormalizationProcessor:
     def __init__(self):
         self.enriched_links = set()
+        self.logger = LoggerFactory.get_logger(LoggerName.Normalization.PROCESSOR)
 
     def is_duplicate(self, link):
         return link in self.enriched_links
@@ -27,11 +32,17 @@ class NormalizationProcessor:
 
     async def process_message(self, msg:Msg) -> ProcessedArticle | None:
         raw_data = json.loads(msg.data.decode())
+        #raw_data = json.loads(msg["data"].decode())
         link = raw_data.get("link")
         rss_date_str = raw_data.get("rss_pub_date")
         newsId = raw_data.get("newsId")
 
         if not link or self.is_duplicate(link):
+            self.logger.debug(
+                "Duplicated News",
+                news_id=str(newsId),
+                link=link,
+            )
             return None
 
         article_obj = Article(link)

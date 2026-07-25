@@ -1,5 +1,5 @@
 from typing import List, Dict
-
+import time
 import numpy as np
 import torch
 import onnxruntime as ort
@@ -9,6 +9,10 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from ai.tokenizer.sentiment.sentiment_tokenizer import SentimentTokenizer
 from ai.responses.sentiment_response import SentimentResponse, SentimentResult
 from ai.config.labels.sentiment_labels import SentimentLabel
+
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
+
 pytorch_model_dir = "ai/models/sentiment/pytorch"
 local_dir = "ai/models/sentiment"
 
@@ -27,17 +31,26 @@ class SentimentClassifier:
 
         self.session = ort.InferenceSession(int8_onnx_model_path, providers=['CPUExecutionProvider'])
         self.sentiment_tokenizer_int8 = SentimentTokenizer(int8_onnx_model_dir)
+        self.logger = LoggerFactory.get_logger(LoggerName.Inference.SENTIMENT)
 
     def save(self):
         self.model.save_pretrained(local_dir)
         self.sentiment_tokenizer.save(local_dir)
 
-    def analyze_input(self, articles: List[str]) -> SentimentResponse:
-        tokenized_inputs = self.sentiment_tokenizer.encode(articles).to(self.device)
+    def analyze_input(self, articles: List[str], newsId) -> SentimentResponse:
+        start = time.perf_counter()
 
+        tokenize_start = time.perf_counter()
+        tokenized_inputs = self.sentiment_tokenizer.encode(articles).to(self.device)
+        tokenize_ms = (time.perf_counter() - tokenize_start) * 1000
+
+        inference_start = time.perf_counter()
         with torch.no_grad():
             output = self.model(**tokenized_inputs)
             logits = output.logits
+        inference_ms = (time.perf_counter() - inference_start) * 1000
+
+        post_start = time.perf_counter()
 
         probabilities = torch.softmax(logits, dim=-1)
         prediction_ids = logits.argmax(dim=-1)
@@ -55,16 +68,38 @@ class SentimentClassifier:
                     score=round(score, 4)
                 )
             )
+
+        post_ms = (time.perf_counter() - post_start) * 1000
+        total_ms = (time.perf_counter() - start) * 1000
+
+        self.logger.debug(
+            "Sentiment analysis with PyTorch completed",
+            news_id=newsId,
+            tokenize_ms=round(tokenize_ms, 2),
+            inference_ms=round(inference_ms, 2),
+            postprocess_ms=round(post_ms, 2),
+            total_ms=round(total_ms, 2),
+        )
         return SentimentResponse(results=results)
 
-    def analyze_input_onnx(self, articles: List[str]) -> SentimentResponse:
+    def analyze_input_onnx(self, articles: List[str], newsId) -> SentimentResponse:
+        start = time.perf_counter()
+
+        tokenize_start = time.perf_counter()
         tokenized_inputs = self.sentiment_tokenizer_int8.encode(articles)
+        tokenize_ms = (time.perf_counter() - tokenize_start) * 1000
+
+        inference_start = time.perf_counter()
         ort_inputs = {
             "input_ids": tokenized_inputs["input_ids"].numpy(),
             "attention_mask": tokenized_inputs["attention_mask"].numpy()
         }
 
         logits = self.session.run(None, ort_inputs)[0]
+        inference_ms = (time.perf_counter() - inference_start) * 1000
+
+        post_start = time.perf_counter()
+
         exp_logits = np.exp(logits - np.max(logits, axis=-1, keepdims=True))
         probabilities = exp_logits / exp_logits.sum(axis=-1, keepdims=True)
         prediction_ids = logits.argmax(axis=-1)
@@ -81,4 +116,16 @@ class SentimentClassifier:
                     score=round(score, 4)
                 )
             )
+        post_ms = (time.perf_counter() - post_start) * 1000
+        total_ms = (time.perf_counter() - start) * 1000
+
+        self.logger.debug(
+            "Sentiment analysis with ONNX completed",
+            news_id=newsId,
+            tokenize_ms=round(tokenize_ms, 2),
+            inference_ms=round(inference_ms, 2),
+            postprocess_ms=round(post_ms, 2),
+            total_ms=round(total_ms, 2),
+        )
+
         return SentimentResponse(results=results)

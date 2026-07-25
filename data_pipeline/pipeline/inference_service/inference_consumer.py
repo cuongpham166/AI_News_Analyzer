@@ -1,5 +1,6 @@
 import json
 import asyncio
+import time
 
 from nats.aio.msg import Msg
 
@@ -8,12 +9,16 @@ from data_pipeline.pipeline.inference_service.inference_processor import Inferen
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, STREAM_NAME
 
+from data_pipeline.logger.logger_factory import LoggerFactory
+from data_pipeline.logger.logger_names import LoggerName
+
 semaphore = asyncio.Semaphore(1)
 
 class InferenceConsumer:
     def __init__(self, js,inference_processor):
         self.js = js
         self.inference_processor = inference_processor
+        self.logger = LoggerFactory.get_logger(LoggerName.Inference.CONSUMER)
 
     async def publish_article(self, article: InferenceResult):
         await self.js.publish(
@@ -21,26 +26,52 @@ class InferenceConsumer:
             article.model_dump_json().encode()
         )
 
+        self.logger.debug(
+            "Inference article published",
+            news_id=str(article.newsId)
+        )
+
     async def process_message(self, msg:Msg):
         async with semaphore:
             processed_article = json.loads(msg.data.decode())
-            print("Inference_consumer: ",processed_article)
             try:
+                start = time.perf_counter()
                 inference_data:InferenceResponse = await asyncio.to_thread(
                     self.inference_processor.analyze,
                     [processed_article]
                 )
 
+                duration_ms = round(
+                    (time.perf_counter() - start) * 1000,
+                    2
+                )
+                if duration_ms > 5000:
+                    self.logger.warning(
+                        "Slow inference detected",
+                        news_id=str(processed_article["newsId"]),
+                        duration_ms=duration_ms
+                    )
+                else:
+                    self.logger.info(
+                        "News inference completed",
+                        news_id=str(processed_article["newsId"]),
+                        duration_ms=duration_ms
+                    )
+
                 for result in inference_data.results:
-                    print("Inference_consumer_result: ", result)
                     await self.publish_article(result)
                 await msg.ack()
 
             except Exception as e:
-                print(f"Error processing article: {e}")
+                self.logger.exception(
+                    "Analyzing enriched news failed.",
+                    news_id=str(processed_article["newsId"])
+                )
                 await msg.term()
 
     async def run(self):
+        self.logger.info("Inference consumer started")
+
         sub = await self.js.subscribe(
             ENRICHED_SUBJECT,
             stream=STREAM_NAME,
@@ -48,7 +79,9 @@ class InferenceConsumer:
             deliver_policy="all",
             manual_ack=True
         )
-        print(f"Subscribed to {ENRICHED_SUBJECT}. Waiting for messages...")
+
+        self.logger.info(f"Subscribed to {ENRICHED_SUBJECT}.")
+
         async for msg in sub.messages:
             asyncio.create_task(
                 self.process_message(msg)
@@ -56,12 +89,8 @@ class InferenceConsumer:
 
 
 async def main(inference_processor):
-    print("Inference main started")
     nc, js = await create_js()
-    print("Inference connected to NATS")
     await ensure_stream(js)
-    print("Inference stream ready")
     #inference_processor = InferenceProcessor()
     inference_consumer = InferenceConsumer(js,inference_processor)
-    print("Starting inference consumer")
     await inference_consumer.run()
