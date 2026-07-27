@@ -1,6 +1,6 @@
 package com.example.news.api.config;
 
-import com.example.news.api.util.UserRateLimitInterceptor;
+import com.example.news.api.util.security.UserRateLimitInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
