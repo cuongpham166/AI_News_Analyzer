@@ -1,28 +1,21 @@
 package com.example.news.api.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
-@Table(name = "source")
+@Table(
+        name = "source",
+        uniqueConstraints = @UniqueConstraint(columnNames = "name")
+)
 public class SourceEntity {
     @Id
-    private Integer id;
+    private Long id;
+
+    @Column(nullable = false, unique = true)
     private String name;
-
-    public Integer getId() {
-        return this.id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
 }

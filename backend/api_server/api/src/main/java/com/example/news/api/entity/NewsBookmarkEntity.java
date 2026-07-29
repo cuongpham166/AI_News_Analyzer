@@ -1,7 +1,11 @@
 package com.example.news.api.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
 @Table(
         name = "news_bookmark",
@@ -11,7 +15,7 @@ import jakarta.persistence.*;
 )
 public class NewsBookmarkEntity {
     @Id
-    private Integer id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "news_id", nullable = false)
@@ -20,27 +24,4 @@ public class NewsBookmarkEntity {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public NewsEntity getNews() {
-        return news;
-    }
-
-    public void setNews(NewsEntity news) {
-        this.news = news;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
 }

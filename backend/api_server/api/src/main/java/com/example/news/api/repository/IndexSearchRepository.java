@@ -56,4 +56,14 @@ public class IndexSearchRepository {
         }
         return allNews;
     }
+
+    public List<InferenceNews> searchMultiField (String searchText) throws IOException {
+        List<InferenceNews> allNews = new ArrayList<>();
+        SearchRequest searchRequest = indexDataQuery.multiFieldSearchQuery(searchText);
+        SearchResponse<InferenceNews> response = esClient.search(searchRequest, InferenceNews.class);
+        for (Hit<InferenceNews> hit : response.hits().hits()) {
+            allNews.add(hit.source());
+        }
+        return allNews;
+    }
 }

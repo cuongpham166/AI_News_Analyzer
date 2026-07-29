@@ -62,4 +62,12 @@ public class GraphAnalysisService {
     public GraphResponse getEntitiesGraphWithRelativeInterval(String intervalUnit, int amount) {
         return graphAnalysisRepository.getEntitiesGraphWithRelativeInterval(intervalUnit, amount);
     }
+
+    public List<CoOccurrenceCellResponse> getEntityCoOccurrenceMatrixWithRelativeInterval (String intervalUnit, int amount){
+        return graphAnalysisRepository.getEntityCoOccurrenceMatrixWithRelativeInterval(intervalUnit, amount);
+    }
+
+    public List<EntityPolarizationResponse> getEntityPolarizationWithRelativeInterval (String intervalUnit, int amount){
+        return graphAnalysisRepository.getEntityPolarizationWithRelativeInterval(intervalUnit, amount);
+    }
 }

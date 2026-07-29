@@ -1,6 +1,7 @@
 
 import asyncio
 import json
+import time
 from data_pipeline.nats.client import create_js
 from data_pipeline.nats.streams import ensure_stream, RAW_SUBJECT, ENRICHED_SUBJECT, STREAM_NAME
 from data_pipeline.pipeline.normalization_service.normalization_processor import NormalizationProcessor

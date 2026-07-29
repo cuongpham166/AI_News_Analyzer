@@ -2,6 +2,7 @@ package com.example.news.api.repository.news;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,12 +13,11 @@ import org.springframework.stereotype.Repository;
 import com.example.news.api.entity.NewsEntity;
 
 @Repository
-public interface NewsRepository extends JpaRepository<NewsEntity, Integer> {
+public interface NewsRepository extends JpaRepository<NewsEntity, UUID> {
 
 
     @Query("""
         SELECT n FROM NewsEntity n
-        JOIN FETCH n.topic
         JOIN FETCH n.source
         """)
     List<NewsEntity> findAllWithRelations(Pageable pageable);
@@ -27,7 +27,6 @@ public interface NewsRepository extends JpaRepository<NewsEntity, Integer> {
 
     @Query("""
     SELECT n FROM NewsEntity n
-    JOIN FETCH n.topic
     JOIN FETCH n.source
     WHERE n.link = :link
     """)

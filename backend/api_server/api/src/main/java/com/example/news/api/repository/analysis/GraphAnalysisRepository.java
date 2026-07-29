@@ -297,4 +297,49 @@ public class GraphAnalysisRepository {
 
         return new GraphResponse(nodes, links);
     }
+
+    public List<CoOccurrenceCellResponse> getEntityCoOccurrenceMatrixWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getEntityCoOccurrenceMatrixQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(CoOccurrenceCellResponse.class)
+                .mappedBy((typeSystem, record) -> new CoOccurrenceCellResponse(
+                        record.get("entityA").asString(),
+                        record.get("typeA").asString(),
+                        record.get("entityB").asString(),
+                        record.get("typeB").asString(),
+                        record.get("sharedCount").asLong(),
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+    public List<EntityPolarizationResponse> getEntityPolarizationWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getEntityPolarizationQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(EntityPolarizationResponse.class)
+                .mappedBy((typeSystem, record) -> new EntityPolarizationResponse(
+                        record.get("entity").asString(),
+                        record.get("entityGroup").asString(),
+                        record.get("totalArticles").asLong(),
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("polarizationScore").isNull() ? 0.0 : record.get("polarizationScore").asDouble()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+
 }

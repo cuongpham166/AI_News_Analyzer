@@ -25,14 +25,15 @@ class LoggerFactory:
         )
 
         formatter = JsonFormatter(
-            fmt=(
-                "%(timestamp)s "
-                "%(level)s "
-                "%(name)s "
-                "%(message)s "
-                "%(service)s"
-            )
+            "%(asctime)s %(levelname)s %(name)s %(message)s",
+            datefmt="%Y-%m-%dT%H:%M:%S"
         )
+
+        formatter.rename_fields = {
+            "asctime": "timestamp",
+            "levelname": "level",
+            "name": "logger",
+        }
 
         file_handler = logging.FileHandler(
             log_file,

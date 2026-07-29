@@ -114,10 +114,15 @@ class ArticleRepository:
                              news["source"])
                             )
                 row = cur.fetchone()
-                if row is not None:
-                    new_id = row[0]
+
+                if row is None:
+                    cur.execute(
+                        "SELECT id FROM news WHERE link = %s",
+                        (news["link"],)
+                    )
+                    new_id = cur.fetchone()[0]
                 else:
-                    new_id = -1
+                    new_id = row[0]
             self.conn.commit()
             return new_id
         except psycopg.Error as e:
@@ -177,6 +182,12 @@ class ArticleRepository:
             with open(sql_file, "r") as f:
                 sql = f.read()
             with self.conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id FROM news WHERE id = %s",
+                    (inference_news["newsId"],)
+                )
+                print(cur.fetchone())
+
                 cur.execute(sql, (
                     inference_news["summarization"],
                     inference_news["sentiment"]["label"],

@@ -4,6 +4,8 @@ import com.example.news.api.dto.internal.ReactionType;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Repository;
 
+import java.util.UUID;
+
 @Repository
 public class UserReactionGraphRepositoryImpl  implements  UserReactionGraphRepository{
     private final Neo4jClient neo4jClient;
@@ -13,7 +15,7 @@ public class UserReactionGraphRepositoryImpl  implements  UserReactionGraphRepos
     }
 
     @Override
-    public void syncReaction(String userId, int newsId, ReactionType reactionType) {
+    public void syncReaction(String userId, UUID newsId, ReactionType reactionType) {
         neo4jClient.query("""
             MERGE (u:User {id: $userId})
             WITH u
@@ -28,7 +30,7 @@ public class UserReactionGraphRepositoryImpl  implements  UserReactionGraphRepos
     }
 
     @Override
-    public void removeReaction(String userId, int newsId) {
+    public void removeReaction(String userId, UUID newsId) {
         neo4jClient.query("""
             MATCH (u:User {id: $userId})-[r:REACTED_TO]->(n:News {id: $newsId})
             DELETE r

@@ -118,4 +118,191 @@ public class IndexAnalysisQuery {
                 )
         );
     }
+
+    public SearchRequest getEchoChamberRequest(long startEpoch, long endEpoch, int minDocCount) throws IOException{
+        return SearchRequest.of(s ->s
+                .index("news")
+                .size(0)
+                .query(q -> q
+                        .range(r -> r
+                                .field("publish_date")
+                                .format("epoch_second")
+                                .gte(JsonData.of(startEpoch))
+                                .lte(JsonData.of(endEpoch))
+                        )
+                )
+                .aggregations("duplicated_clusters", a -> a
+                        .terms(t -> t
+                                .field("content_hash")
+                                .minDocCount(minDocCount)
+                                .size(20)
+                        )
+                        .aggregations("publishers", sub -> sub
+                                .terms(t -> t
+                                        .field("source")
+                                        .size(10)
+                                )
+                        )
+                        .aggregations("sample_title", sub -> sub
+                                .topHits(th -> th
+                                        .size(1)
+                                        .source(src -> src
+                                                .filter(f -> f
+                                                        .includes("title")
+                                                )
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
+    public SearchRequest getEntityVelocityRequest(long startEpoch, long endEpoch, long previousStartEpoch) throws IOException {
+        return SearchRequest.of(s -> s
+                .index("news")
+                .size(0)
+                .query(q -> q
+                        .range(r -> r
+                                .field("publish_date")
+                                .format("epoch_second")
+                                .gte(JsonData.of(previousStartEpoch))
+                                .lte(JsonData.of(endEpoch))
+                        )
+                )
+                .aggregations("entities", a -> a
+                        .nested(n -> n.path("entities"))
+                        .aggregations("entity_names", entityNames -> entityNames
+                                .terms(t -> t
+                                        .field("entities.value.keyword")
+                                        .size(50)
+                                )
+                                // Step back out to parent document to check root field 'publish_date'
+                                .aggregations("to_parent", toParent -> toParent
+                                        .reverseNested(rn -> rn)
+                                        .aggregations("current_period", current -> current
+                                                .filter(f -> f
+                                                        .range(r -> r
+                                                                .field("publish_date")
+                                                                .format("epoch_second")
+                                                                .gte(JsonData.of(startEpoch))
+                                                                .lte(JsonData.of(endEpoch))
+                                                        )
+                                                )
+                                        )
+                                        .aggregations("previous_period", previous -> previous
+                                                .filter(f -> f
+                                                        .range(r -> r
+                                                                .field("publish_date")
+                                                                .format("epoch_second")
+                                                                .gte(JsonData.of(previousStartEpoch))
+                                                                .lt(JsonData.of(startEpoch))
+                                                        )
+                                                )
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
+    public SearchRequest getMediaPulseOverviewRequest(long startEpoch, long endEpoch) throws IOException {
+        return SearchRequest.of(s -> s
+                .index("news")
+                .size(0)
+                .query(q -> q
+                        .range(r -> r
+                                .field("publish_date")
+                                .format("epoch_second")
+                                .gte(JsonData.of(startEpoch))
+                                .lte(JsonData.of(endEpoch))
+                        )
+                )
+
+                .aggregations("total_articles", a -> a
+                        .valueCount(vc -> vc.field("link"))
+                )
+
+                .aggregations("unique_stories", a -> a
+                        .cardinality(c -> c.field("content_hash"))
+                )
+                .aggregations("nested_entities", a -> a
+                        .nested(n -> n.path("entities"))
+                        .aggregations("by_entity_type", typeAgg -> typeAgg
+                                .terms(t -> t
+                                        .field("entities.entity_type")
+                                        .size(10)
+                                )
+                                .aggregations("top_values", valAgg -> valAgg
+                                        .terms(t -> t
+                                                .field("entities.value.keyword")
+                                                .size(15)
+                                        )
+                                )
+                        )
+                )
+
+        );
+    }
+
+    public SearchRequest getSignificantTermsAggregationRequest(long startEpoch, long endEpoch) throws IOException {
+        //Weighted Word Cloud / Tag Cloud: Font size represents the score or doc_count returned by the aggregation.
+        return SearchRequest.of(s -> s
+                .index("news")
+                .size(0)
+                .query(q -> q
+                        .range(r -> r
+                                .field("publish_date")
+                                .format("epoch_second")
+                                .gte(JsonData.of(startEpoch))
+                                .lte(JsonData.of(endEpoch))
+                        )
+                )
+                .aggregations("nested_entities", n -> n
+                        .nested(nested -> nested.path("entities"))
+                        .aggregations("emerging_buzzwords", eb -> eb
+                                .significantTerms(st -> st
+                                        .field("entities.value.keyword")
+                                        .size(15)
+                                        .minDocCount(2L)
+                                )
+                        )
+                )
+        );
+    }
+
+
+    public SearchRequest getSentimentVolumeTimelineRequest(long startEpoch, long endEpoch, CalendarInterval calendarInterval) throws IOException {
+        //Area Chart with Dual Axes: Plot Article Volume on the left Y-axis and Average Sentiment on the right Y-axis over time.
+        //user can change calenderInterval (day, week, month, year)
+        return SearchRequest.of(s -> s
+                .index("news")
+                .size(0)
+                .query(q -> q
+                        .range(r -> r
+                                .field("publish_date")
+                                .format("epoch_second")
+                                .gte(JsonData.of(startEpoch))
+                                .lte(JsonData.of(endEpoch))
+                        )
+                )
+
+                .aggregations("articles_over_time", n -> n
+                        .dateHistogram(d -> d
+                                .field("publish_date")
+                                .format("epoch_second")
+                                .calendarInterval(calendarInterval) //day, week, month, year
+                                //.minDocCount(1)
+                        )
+                        .aggregations("avg_sentiment", as -> as
+                                .avg(a -> a.field("sentiment"))
+                        )
+                        .aggregations("sentiment_breakdown", sb -> sb
+                                .terms(t->t.field("sentiment_label"))
+                        )
+                )
+        );
+    }
+
+
+
 }

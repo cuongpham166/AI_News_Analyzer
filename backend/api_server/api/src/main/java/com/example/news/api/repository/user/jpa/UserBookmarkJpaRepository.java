@@ -5,9 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface UserBookmarkJpaRepository extends JpaRepository<NewsBookmarkEntity, Integer>  {
-    boolean existsByNews_IdAndUserId(int newsId, String userId);
-    Optional<NewsBookmarkEntity> findByNews_IdAndUserId(int newsId, String userId);
+public interface UserBookmarkJpaRepository extends JpaRepository<NewsBookmarkEntity, Long>  {
+    boolean existsByNews_IdAndUserId(UUID newsId, String userId);
+    Optional<NewsBookmarkEntity> findByNews_IdAndUserId(UUID newsId, String userId);
 }

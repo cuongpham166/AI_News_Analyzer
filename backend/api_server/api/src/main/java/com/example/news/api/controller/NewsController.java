@@ -2,6 +2,7 @@ package com.example.news.api.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import com.example.news.api.dto.internal.ReactionType;
@@ -51,7 +52,7 @@ public class NewsController {
     }
 
     @PostMapping("/{newsId}/bookmark")
-    public void addBookmark(@PathVariable int newsId, JwtAuthenticationToken authentication) {
+    public void addBookmark(@PathVariable UUID newsId, JwtAuthenticationToken authentication) {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
         userInteractionService.addJpaBookmark(newsId,userId);
@@ -64,7 +65,7 @@ public class NewsController {
     }
 
     @DeleteMapping("/{newsId}/bookmark")
-    public void removeBookmark(@PathVariable int newsId, JwtAuthenticationToken authentication) {
+    public void removeBookmark(@PathVariable UUID newsId, JwtAuthenticationToken authentication) {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
         userInteractionService.removeJpaBookmark(newsId,userId);
@@ -77,7 +78,7 @@ public class NewsController {
     }
 
     @PostMapping("/{newsId}/reaction")
-    public void postReaction(@PathVariable int newsId, @PathVariable ReactionType reactionType, JwtAuthenticationToken authentication){
+    public void postReaction(@PathVariable UUID newsId, @PathVariable ReactionType reactionType, JwtAuthenticationToken authentication){
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
 

@@ -3,5 +3,5 @@ VALUES (
   %s, %s, to_timestamp(%s), %s, %s, %s, %s,
   (SELECT id FROM source WHERE name = %s)
 )
-ON CONFLICT (content_hash) DO NOTHING
+ON CONFLICT (link) DO NOTHING
 RETURNING id;

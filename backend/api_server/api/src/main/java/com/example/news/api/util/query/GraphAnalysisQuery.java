@@ -197,17 +197,17 @@ public class GraphAnalysisQuery {
     public String getEntitiesGraphQuery() {
         return """
             MATCH (n:News)-[:MENTIONS_PERSON|MENTIONS_ORGANIZATION|MENTIONS_LOCATION|MENTIONS_EVENT]->(e)
-            WHERE n.publish_date >= datetime({epochMillis: $startTime})
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
                 AND n.publish_date <= datetime({epochMillis: $endEpoch})
             WITH n, e
             MATCH (n)-[:MENTIONS_PERSON|MENTIONS_ORGANIZATION|MENTIONS_LOCATION|MENTIONS_EVENT]->(other)
-            WHERE elementId(e) < elementId(other)
+            WHERE e <> other
             WITH e, other, count(n) AS weight, avg(n.sentiment) AS sentiment
-            WHERE weight > 1
+            WHERE weight >= 1
             RETURN
-                coalesce(e.name, e.title, e.value) AS source,
+                coalesce(e.name, e.title) AS source,
                 labels(e)[0] AS sourceGroup,
-                coalesce(other.name, other.title, other.value) AS target,
+                coalesce(other.name, other.title) AS target,
                 labels(other)[0] AS targetGroup,
                 weight,
                 round(sentiment, 2) AS sentiment
@@ -216,5 +216,44 @@ public class GraphAnalysisQuery {
         """;
     }
 
+    public String getEntityCoOccurrenceMatrixQuery() {
+        return """
+        MATCH (n:News)-[:MENTIONS_PERSON|MENTIONS_ORGANIZATION]->(e1)
+        WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+            AND n.publish_date <= datetime({epochMillis: $endEpoch})
+        MATCH (n)-[:MENTIONS_PERSON|MENTIONS_ORGANIZATION]->(e2)
+        WHERE e1 <> e2
+        WITH e1, e2, count(n) AS sharedCount, round(avg(n.sentiment), 2) AS avgSentiment
+        WHERE sharedCount >= 2
+        RETURN 
+            coalesce(e1['name'], e1['title'], 'Unknown') AS entityA,
+            labels(e1)[0] AS typeA,
+            coalesce(e2['name'], e2['title'], 'Unknown') AS entityB,
+            labels(e2)[0] AS typeB,
+            sharedCount,
+            avgSentiment
+        ORDER BY sharedCount DESC
+        LIMIT 100
+        """;
+    }
+
+    public String getEntityPolarizationQuery() {
+        return """
+        MATCH (n:News)-[:MENTIONS_PERSON|MENTIONS_ORGANIZATION|MENTIONS_LOCATION]->(e)
+        WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+            AND n.publish_date <= datetime({epochMillis: $endEpoch})
+          AND n.sentiment IS NOT NULL
+        WITH e, count(n) AS totalArticles, avg(n.sentiment) AS avgSentiment, stDev(n.sentiment) AS volatility
+        WHERE totalArticles >= 1 AND volatility IS NOT NULL
+        RETURN 
+            coalesce(e['name'], e['title'], 'Unknown') AS entity,
+            labels(e)[0] AS entityGroup,
+            totalArticles,
+            round(avgSentiment, 2) AS avgSentiment,
+            round(volatility, 2) AS polarizationScore
+        ORDER BY polarizationScore DESC
+        LIMIT 30
+        """;
+    }
 
 }

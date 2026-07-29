@@ -2,7 +2,11 @@ package com.example.news.api.entity;
 
 import com.example.news.api.dto.internal.ReactionType;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
 @Table(
         name = "news_reaction",
@@ -12,7 +16,7 @@ import jakarta.persistence.*;
 )
 public class NewsReactionEntity {
     @Id
-    private Integer id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "news_id", nullable = false)
@@ -22,38 +26,7 @@ public class NewsReactionEntity {
     private String userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "reaction_type",nullable = false)
     private ReactionType type;
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public NewsEntity getNews() {
-        return news;
-    }
-
-    public void setNews(NewsEntity news) {
-        this.news = news;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public ReactionType getType() {
-        return type;
-    }
-
-    public void setType(ReactionType type) {
-        this.type = type;
-    }
 }

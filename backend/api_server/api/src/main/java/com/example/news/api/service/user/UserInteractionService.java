@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserInteractionService {
@@ -39,7 +40,7 @@ public class UserInteractionService {
     }
 
     @Transactional
-    public void addJpaBookmark (int newsId, String userId){
+    public void addJpaBookmark (UUID newsId, String userId){
         if (!userBookmarkJpaRepository.existsByNews_IdAndUserId(newsId, userId)) {
             NewsEntity news = newsRepository.findById(newsId)
                     .orElseThrow(() -> new EntityNotFoundException("News not found"));
@@ -52,33 +53,33 @@ public class UserInteractionService {
         }
     }
 
-    public void addGraphBookmark(String userId, int newsId) {
+    public void addGraphBookmark(String userId, UUID newsId) {
         userBookmarkGraphRepository.syncBookmark(userId, newsId);
     }
 
-    public void removeJpaBookmark(int newsId, String userId){
+    public void removeJpaBookmark(UUID newsId, String userId){
         userBookmarkJpaRepository
                 .findByNews_IdAndUserId(newsId,userId)
                 .ifPresent(userBookmarkJpaRepository::delete);
     }
 
-    public void removeGraphBookmark(String userId, int newsId){
+    public void removeGraphBookmark(String userId, UUID newsId){
         userBookmarkGraphRepository.removeBookmark(userId,newsId);
     }
 
-    public Long getReactionCount(int newsId, ReactionType reactionType){
+    public Long getReactionCount(UUID newsId, ReactionType reactionType){
         return userReactionJpaRepository.countByNews_IdAndType(
                 newsId,
                 reactionType
         );
     }
 
-    public Optional<NewsReactionEntity> findNewsReaction(int newsId, String userId){
+    public Optional<NewsReactionEntity> findNewsReaction(UUID newsId, String userId){
         return userReactionJpaRepository.findByNews_IdAndUserId(newsId, userId);
     }
 
     @Transactional
-    public void addJpaReaction(int newsId, String userId, ReactionType reactionType){
+    public void addJpaReaction(UUID newsId, String userId, ReactionType reactionType){
         NewsEntity news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new EntityNotFoundException("News not found"));
 
@@ -97,11 +98,11 @@ public class UserInteractionService {
         userReactionJpaRepository.delete(newsReactionEntity);
     }
 
-    public void addGraphReaction(String userId, int newsId, ReactionType reactionType){
+    public void addGraphReaction(String userId, UUID newsId, ReactionType reactionType){
         userReactionGraphRepository.syncReaction(userId, newsId, reactionType);
     }
 
-    public void removeGraphReaction(String userId, int newsId){
+    public void removeGraphReaction(String userId, UUID newsId){
         userReactionGraphRepository.removeReaction(userId, newsId);
     }
 

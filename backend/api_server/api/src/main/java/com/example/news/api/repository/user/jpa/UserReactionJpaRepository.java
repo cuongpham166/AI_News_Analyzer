@@ -6,19 +6,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface UserReactionJpaRepository extends JpaRepository<NewsReactionEntity, Integer> {
+public interface UserReactionJpaRepository extends JpaRepository<NewsReactionEntity, Long> {
     Optional<NewsReactionEntity> findByNews_IdAndUserId(
-            int newsId,
+            UUID newsId,
             String userId
     );
 
     long countByNews_IdAndType(
-            int newsId,
+            UUID newsId,
             ReactionType type
     );
 
-    boolean existsByNews_IdAndUserId(int newsId, String userId);
+    boolean existsByNews_IdAndUserId(UUID newsId, String userId);
 
 }

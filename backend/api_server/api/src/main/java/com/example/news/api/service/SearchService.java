@@ -28,4 +28,8 @@ public class SearchService {
         return this.indexSearchRepository.findInterfaceNewsByText(searchText);
     }
 
+    public List<InferenceNews> searchMultiField (String searchText) throws IOException {
+        return this.indexSearchRepository.searchMultiField(searchText);
+    }
+
 }

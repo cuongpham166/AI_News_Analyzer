@@ -8,15 +8,13 @@ import lombok.Setter;
 @Getter
 @Entity
 @Table(
-        name = "topic",
+        name = "entity_type",
         uniqueConstraints = @UniqueConstraint(columnNames = "name")
 )
-public class TopicEntity {
+public class EntityTypeEntity {
     @Id
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String name;
-
-
 }
