@@ -1,4 +1,4 @@
-package com.example.news.api.dto.internal;
+package com.example.news.api.dto.internal.analysis;
 
 import lombok.*;
 

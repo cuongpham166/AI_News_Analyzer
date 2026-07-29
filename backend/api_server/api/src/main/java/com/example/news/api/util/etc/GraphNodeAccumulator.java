@@ -1,6 +1,6 @@
 package com.example.news.api.util.etc;
 
-import com.example.news.api.dto.internal.GraphNode;
+import com.example.news.api.dto.internal.analysis.GraphNode;
 import lombok.Getter;
 
 @Getter

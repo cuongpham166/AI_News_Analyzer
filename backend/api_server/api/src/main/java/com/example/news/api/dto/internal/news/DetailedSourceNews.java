@@ -1,4 +1,4 @@
-package com.example.news.api.dto.internal;
+package com.example.news.api.dto.internal.news;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class TopicDistribution {
+public class DetailedSourceNews {
+    private Long id;
     private String name;
-    private long count;
 }

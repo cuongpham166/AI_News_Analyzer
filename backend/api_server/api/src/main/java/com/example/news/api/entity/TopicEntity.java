@@ -13,7 +13,7 @@ import lombok.Setter;
 )
 public class TopicEntity {
     @Id
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String name;

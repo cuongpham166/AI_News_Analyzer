@@ -1,8 +1,8 @@
 package com.example.news.api.dto.response.news;
 
-import com.example.news.api.dto.internal.news.DetailedInferenceNews;
 import com.example.news.api.dto.internal.news.DetailedSourceNews;
 import lombok.*;
+
 import java.sql.Timestamp;
 import java.util.UUID;
 
@@ -11,15 +11,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class DetailedNewsResponse {
+public class NewsResponse {
     private UUID id;
     private String title;
-    private Timestamp publishDate;
     private String link;
-    private String language;
-    private String fullText;
-
+    private String lang;
+    private Timestamp publishDate;
     private DetailedSourceNews source;
-
-    private DetailedInferenceNews inference;
 }

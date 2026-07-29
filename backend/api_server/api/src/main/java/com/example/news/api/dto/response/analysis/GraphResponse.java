@@ -1,7 +1,7 @@
 package com.example.news.api.dto.response.analysis;
 
-import com.example.news.api.dto.internal.GraphLink;
-import com.example.news.api.dto.internal.GraphNode;
+import com.example.news.api.dto.internal.analysis.GraphLink;
+import com.example.news.api.dto.internal.analysis.GraphNode;
 import lombok.*;
 
 import java.util.ArrayList;

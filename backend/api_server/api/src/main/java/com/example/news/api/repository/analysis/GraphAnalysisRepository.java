@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.news.api.dto.internal.DiscoveryLinkRecord;
-import com.example.news.api.dto.internal.GraphLink;
-import com.example.news.api.dto.internal.GraphNode;
+import com.example.news.api.dto.internal.analysis.GraphLink;
+import com.example.news.api.dto.internal.analysis.GraphNode;
 import com.example.news.api.dto.response.analysis.GraphResponse;
 import com.example.news.api.dto.response.analysis.graph.*;
 import com.example.news.api.util.etc.GraphNodeAccumulator;

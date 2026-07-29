@@ -14,21 +14,9 @@ import com.example.news.api.entity.NewsEntity;
 
 @Repository
 public interface NewsRepository extends JpaRepository<NewsEntity, UUID> {
-
-
-    @Query("""
-        SELECT n FROM NewsEntity n
-        JOIN FETCH n.source
-        """)
-    List<NewsEntity> findAllWithRelations(Pageable pageable);
-
+    Optional<NewsEntity> findById(UUID id);
     List<NewsEntity> findAllBySourceId(int sourceId, Pageable pageable);
 
 
-    @Query("""
-    SELECT n FROM NewsEntity n
-    JOIN FETCH n.source
-    WHERE n.link = :link
-    """)
-    Optional<NewsEntity> findDetailByLink(@Param("link") String link);
+
 }

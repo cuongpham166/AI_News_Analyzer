@@ -1,5 +1,6 @@
 package com.example.news.api.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -7,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.example.news.api.dto.internal.ReactionType;
 import com.example.news.api.dto.response.news.DetailedNewsResponse;
+import com.example.news.api.dto.response.news.NewsResponse;
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
 import com.example.news.api.dto.response.news.SimilarNewsResponse;
 import com.example.news.api.entity.NewsReactionEntity;
@@ -19,36 +21,31 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/news")
 public class NewsController {
-    private final NewsService metadataService;
+    private final NewsService newsService;
     private final UserInteractionService userInteractionService;
     private final RecommendedNewsService recommendedNewsService;
     private final SimilarNewsService similarNewsService;
 
     public NewsController(
-            NewsService metadataService,
+            NewsService newsService,
             RecommendedNewsService recommendedNewsService,
             UserInteractionService userInteractionService,
             SimilarNewsService similarNewsService
     ) {
-        this.metadataService = metadataService;
+        this.newsService = newsService;
         this.recommendedNewsService = recommendedNewsService;
         this.userInteractionService = userInteractionService;
         this.similarNewsService = similarNewsService;
     }
 
     @GetMapping("/all")
-    public List<DetailedNewsResponse> getAllNews(@RequestParam(required = false, defaultValue = "10") int limit) {
-        return this.metadataService.getAllNews(limit);
-    }
-
-    @GetMapping("/all/source")
-    public List<DetailedNewsResponse> getAllNewsBySourceId(@RequestParam int sourceId) {
-        return this.metadataService.getAllNewsBySourceId(sourceId);
+    public List<NewsResponse> getAllNews(@RequestParam(required = false, defaultValue = "10") int limit) {
+        return this.newsService.getAllNews(limit);
     }
 
     @GetMapping("/detail")
-    public DetailedNewsResponse getNewsByLink(@RequestParam String link) {
-        return this.metadataService.getDetailedNewsByLink(link);
+    public DetailedNewsResponse getNewsByLink(@RequestParam UUID Id) {
+        return this.newsService.getDetailedNews(Id);
     }
 
     @PostMapping("/{newsId}/bookmark")
