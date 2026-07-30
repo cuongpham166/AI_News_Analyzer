@@ -5,6 +5,7 @@ import com.example.news.api.dto.internal.InferenceNews;
 import com.example.news.api.dto.response.analysis.TopRadarResponse;
 import com.example.news.api.dto.response.analysis.index.*;
 import com.example.news.api.repository.analysis.IndexAnalysisRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class IndexAnalysisService {
         return  indexAnalysisRepository.getImpactArticlesWithRelativeInterval(intervalUnit, amount, topN, isPositive);
     }
 
+    @Cacheable(value = "analytics_long_ttl", key = "{#intervalUnit, #amount}")
     public TopRadarResponse getTopicRadarWithRelativeInterval (String intervalUnit, int amount) throws IOException {
         return  indexAnalysisRepository.getTopicRadarWithRelativeInterval(intervalUnit, amount);
     }
@@ -49,6 +51,7 @@ public class IndexAnalysisService {
         return  indexAnalysisRepository.getSignificantTermsAggregationWithRelativeInterval(intervalUnit, amount);
     }
 
+    @Cacheable(value = "analytics_short_ttl", key = "{#intervalUnit, #amount, #calendarInterval}")
     public SentimentVolumeTimelineResponse getSentimentVolumeTimelineWithRelativeInterval (String intervalUnit, int amount, String calendarInterval) throws IOException {
         return indexAnalysisRepository.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval);
     }

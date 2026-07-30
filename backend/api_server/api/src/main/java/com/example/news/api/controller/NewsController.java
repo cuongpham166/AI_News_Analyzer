@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import com.example.news.api.dto.internal.ApiResponse;
 import com.example.news.api.dto.internal.ReactionType;
 import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.dto.response.news.NewsResponse;
@@ -14,6 +15,7 @@ import com.example.news.api.dto.response.news.SimilarNewsResponse;
 import com.example.news.api.entity.NewsReactionEntity;
 import com.example.news.api.service.news.*;
 import com.example.news.api.service.user.UserInteractionService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -39,13 +41,15 @@ public class NewsController {
     }
 
     @GetMapping("/all")
-    public List<NewsResponse> getAllNews(@RequestParam(required = false, defaultValue = "10") int limit) {
-        return this.newsService.getAllNews(limit);
+    public ResponseEntity<ApiResponse<List<NewsResponse>>> getAllNews(@RequestParam(required = false, defaultValue = "10") int limit) {
+        List<NewsResponse> data = newsService.getAllNews(limit);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @GetMapping("/detail")
-    public DetailedNewsResponse getNewsByLink(@RequestParam UUID Id) {
-        return this.newsService.getDetailedNews(Id);
+    public ResponseEntity<ApiResponse<DetailedNewsResponse>> getNewsByLink(@RequestParam UUID Id) {
+        DetailedNewsResponse data = newsService.getDetailedNews(Id);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @PostMapping("/{newsId}/bookmark")

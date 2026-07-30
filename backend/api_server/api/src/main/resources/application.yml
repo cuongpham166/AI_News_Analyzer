@@ -17,3 +17,26 @@ spring:
 
   elasticsearch:
     uris: ${ELASTIC_URL}
+
+  resilience4j:
+    timelimiter:
+      configs:
+        default:
+          timeoutDuration: 10s
+          cancelRunningFuture: true
+
+      instances:
+        Neo4jGraph:
+          baseConfig: default
+
+    circuitbreaker:
+      configs:
+        default:
+          slidingWindowSize: 10
+          minimumNumberOfCalls: 5
+          failureRateThreshold: 50
+          waitDurationInOpenState: 10s
+
+      instances:
+        Neo4jGraph:
+          baseConfig: default
