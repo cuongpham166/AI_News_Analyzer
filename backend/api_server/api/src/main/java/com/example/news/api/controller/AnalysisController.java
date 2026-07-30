@@ -153,8 +153,8 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<GlobalTrendsResponse>> getGlobalTrendsWithRelativeInterval(
         @RequestParam String intervalUnit, 
         @RequestParam int amount
-    ) throws IOException {
-        GlobalTrendsResponse data = indexAnalysisService.getGlobalTrendsWithRelativeInterval(intervalUnit, amount);
+    ){
+        GlobalTrendsResponse data = indexAnalysisService.getGlobalTrendsWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -163,8 +163,8 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<GlobalEntityTrendsResponse>> getGlobalEntityWithRelativeInterval(
         @RequestParam String intervalUnit, 
         @RequestParam int amount
-    )throws IOException {
-        GlobalEntityTrendsResponse data = indexAnalysisService.getGlobalEntityWithRelativeInterval(intervalUnit,amount);
+    ){
+        GlobalEntityTrendsResponse data = indexAnalysisService.getGlobalEntityWithRelativeInterval(intervalUnit,amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -175,8 +175,8 @@ public class AnalysisController {
         @RequestParam int amount, 
         @RequestParam int topN, 
         @RequestParam boolean isPositive
-    ) throws IOException{
-        List<InferenceNews> data = indexAnalysisService.getImpactArticlesWithRelativeInterval(intervalUnit,amount,topN,isPositive);
+    ){
+        List<InferenceNews> data = indexAnalysisService.getImpactArticlesWithRelativeInterval(intervalUnit,amount,topN,isPositive).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -185,12 +185,12 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<TopRadarResponse>> getTopicRadarWithRelativeInterval(
             @RequestParam String intervalUnit,
             @RequestParam int amount
-    ) throws IOException{
-        TopRadarResponse data = indexAnalysisService.getTopicRadarWithRelativeInterval(intervalUnit, amount);
+    ){
+        TopRadarResponse data = indexAnalysisService.getTopicRadarWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
-    @Operation(summary = "Generates an $N \\times N$ heatmap grid calculating mutual coverage density and joint sentiment between top political and corporate figures.")
+    @Operation(summary = "Generates an $N times N$ heatmap grid calculating mutual coverage density and joint sentiment between top political and corporate figures.")
     @GetMapping("/co_occurrence_cell")
     public ResponseEntity<ApiResponse<List<CoOccurrenceCellResponse>>> getEntityCoOccurrenceMatrixWithRelativeInterval (
             @RequestParam String intervalUnit,
@@ -216,8 +216,8 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<List<EchoChamberResponse>>> getEchoChamberWithRelativeInterval (
             @RequestParam String intervalUnit,
             @RequestParam int amount
-    ) throws IOException {
-        List<EchoChamberResponse> data = indexAnalysisService.getEchoChamberWithRelativeInterval(intervalUnit, amount);
+    ){
+        List<EchoChamberResponse> data = indexAnalysisService.getEchoChamberWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -226,8 +226,8 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<List<EntityVelocityResponse>>> getEntityVelocityWithRelativeInterval (
             @RequestParam String intervalUnit,
             @RequestParam int amount
-    ) throws IOException {
-        List<EntityVelocityResponse> data = indexAnalysisService.getEntityVelocityWithRelativeInterval(intervalUnit, amount);
+    ){
+        List<EntityVelocityResponse> data = indexAnalysisService.getEntityVelocityWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -236,8 +236,8 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<MediaPulseOverviewResponse>> getMediaPulseOverviewWithRelativeInterval (
             @RequestParam String intervalUnit,
             @RequestParam int amount
-    ) throws IOException {
-        MediaPulseOverviewResponse data = indexAnalysisService.getMediaPulseOverviewWithRelativeInterval(intervalUnit, amount);
+    ){
+        MediaPulseOverviewResponse data = indexAnalysisService.getMediaPulseOverviewWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -246,8 +246,8 @@ public class AnalysisController {
     public ResponseEntity<ApiResponse<List<SignificantTermsAggregationResponse>>> getSignificantTermsAggregationWithRelativeInterval (
             @RequestParam String intervalUnit,
             @RequestParam int amount
-    ) throws IOException {
-        List<SignificantTermsAggregationResponse> data = indexAnalysisService.getSignificantTermsAggregationWithRelativeInterval(intervalUnit, amount);
+    ){
+        List<SignificantTermsAggregationResponse> data = indexAnalysisService.getSignificantTermsAggregationWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -257,8 +257,8 @@ public class AnalysisController {
             @RequestParam String intervalUnit,
             @RequestParam int amount,
             @RequestParam String calendarInterval
-    ) throws IOException {
-        SentimentVolumeTimelineResponse data = indexAnalysisService.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval);
+    ){
+        SentimentVolumeTimelineResponse data = indexAnalysisService.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 

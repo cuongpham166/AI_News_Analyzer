@@ -22,11 +22,13 @@ spring:
     timelimiter:
       configs:
         default:
-          timeoutDuration: 10s
+          timeoutDuration: 15s
           cancelRunningFuture: true
 
       instances:
         Neo4jGraph:
+          baseConfig: default
+        ElasticIndex:
           baseConfig: default
 
     circuitbreaker:
@@ -39,4 +41,6 @@ spring:
 
       instances:
         Neo4jGraph:
+          baseConfig: default
+        ElasticIndex:
           baseConfig: default
