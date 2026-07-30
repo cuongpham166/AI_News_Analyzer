@@ -18,29 +18,50 @@ spring:
   elasticsearch:
     uris: ${ELASTIC_URL}
 
-  resilience4j:
-    timelimiter:
-      configs:
-        default:
-          timeoutDuration: 15s
-          cancelRunningFuture: true
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 15s
+        cancelRunningFuture: true
 
-      instances:
-        Neo4jGraph:
-          baseConfig: default
-        ElasticIndex:
-          baseConfig: default
+    instances:
+      Neo4jGraph:
+        baseConfig: default
+      ElasticIndex:
+        baseConfig: default
+      PostgresArticle:
+        baseConfig: default
 
-    circuitbreaker:
-      configs:
-        default:
-          slidingWindowSize: 10
-          minimumNumberOfCalls: 5
-          failureRateThreshold: 50
-          waitDurationInOpenState: 10s
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
 
-      instances:
-        Neo4jGraph:
-          baseConfig: default
-        ElasticIndex:
-          baseConfig: default
+    instances:
+      Neo4jGraph:
+        baseConfig: default
+      ElasticIndex:
+        baseConfig: default
+      PostgresArticle:
+        baseConfig: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: analytics-api
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

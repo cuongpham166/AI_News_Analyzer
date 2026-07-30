@@ -1,6 +1,7 @@
 package com.example.news.api.config;
 
 import com.example.news.api.util.auth.KeycloakRealmRoleConverter;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -23,11 +24,13 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(EndpointRequest.toAnyEndpoint()).permitAll()
+
+                        //Public API Endpoints
                         .requestMatchers("/api/analysis/**").permitAll()
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
+                        .requestMatchers("/swagger-ui/**","/v3/api-docs/**").permitAll()
+
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
