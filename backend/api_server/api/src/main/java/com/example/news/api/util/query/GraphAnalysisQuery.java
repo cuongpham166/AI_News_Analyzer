@@ -117,10 +117,22 @@ public class GraphAnalysisQuery {
             MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)
             WHERE n.publish_date >= datetime({epochMillis: $startEpoch}) 
                 AND n.publish_date <= datetime({epochMillis: $endEpoch})
+                AND l.latitude <> 0.0
+                AND l.longitude <> 0.0
+            WITH
+                l.latitude AS latitude,
+                l.longitude as longitude,
+                head(collect(DISTINCT l.name)) AS primaryLocation,
+                collect(DISTINCT l.name) AS aliases,
+                count(n) AS totalCount,
+                sum(n.sentiment) AS totalSentimentSum
             RETURN 
-                l.name AS location,
-                count(n) AS count,
-                round(avg(n.sentiment), 2) AS avgSentiment
+                primaryLocation AS location,
+                aliases,
+                latitude,
+                longitude,
+                totalCount AS count,
+                round((totalSentimentSum / totalCount), 2) AS avgSentiment
             ORDER BY count DESC
             LIMIT 50
         """;

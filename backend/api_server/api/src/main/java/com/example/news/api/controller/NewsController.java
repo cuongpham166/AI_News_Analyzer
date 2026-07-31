@@ -27,7 +27,6 @@ public class NewsController {
     private final UserInteractionService userInteractionService;
     private final RecommendedNewsService recommendedNewsService;
     private final SimilarNewsService similarNewsService;
-
     public NewsController(
             NewsService newsService,
             RecommendedNewsService recommendedNewsService,

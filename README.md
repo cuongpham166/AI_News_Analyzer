@@ -63,8 +63,10 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
 
 ![Overview Structure](/images/Structure.png)
 
-### Database Overview
+### Monitoring Structure
+![Monitoring Structure](/images/Monitoring.png)
 
+### Database Overview
 #### PostgresSQL: The Relational Backbone of the application
 - **Use Cases**: Structured Data Storage, Complex Aggregations, Data Integrity
 

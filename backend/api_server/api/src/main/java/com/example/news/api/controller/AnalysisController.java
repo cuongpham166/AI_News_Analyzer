@@ -7,6 +7,7 @@ import com.example.news.api.dto.internal.InferenceNews;
 import com.example.news.api.dto.response.analysis.*;
 import com.example.news.api.dto.response.analysis.graph.*;
 import com.example.news.api.dto.response.analysis.index.*;
+import com.example.news.api.service.LocationService;
 import com.example.news.api.service.analysis.GraphAnalysisService;
 import com.example.news.api.service.analysis.IndexAnalysisService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,13 +21,15 @@ import org.springframework.web.bind.annotation.*;
 public class AnalysisController {
     private final GraphAnalysisService graphAnalysisService;
     private final IndexAnalysisService indexAnalysisService;
-
+    private final LocationService locationService;
     public AnalysisController(
             GraphAnalysisService graphAnalysisService,
-            IndexAnalysisService indexAnalysisService
+            IndexAnalysisService indexAnalysisService,
+            LocationService locationService
     ) {
         this.graphAnalysisService = graphAnalysisService;
         this.indexAnalysisService = indexAnalysisService;
+        this.locationService = locationService;
     }
 
     @Operation(summary = "Visualizes strong directional entity pairings and connection pathways using flow-based Sankey diagrams.")
@@ -261,5 +264,4 @@ public class AnalysisController {
         SentimentVolumeTimelineResponse data = indexAnalysisService.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
-
 }

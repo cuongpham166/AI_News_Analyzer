@@ -11,6 +11,7 @@ import com.example.news.api.dto.internal.analysis.GraphNode;
 import com.example.news.api.dto.response.analysis.GraphResponse;
 import com.example.news.api.dto.response.analysis.graph.*;
 import com.example.news.api.util.etc.GraphNodeAccumulator;
+import org.neo4j.driver.Value;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Repository;
 
@@ -169,6 +170,9 @@ public class GraphAnalysisRepository {
                 .fetchAs(SpatialMapResponse.class)
                 .mappedBy((typeSystem, record) -> new SpatialMapResponse(
                         record.get("location").asString(),
+                        record.get("aliases").asList(Value::asString),
+                        record.get("latitude").asDouble(),
+                        record.get("longitude").asDouble(),
                         record.get("count").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble()
                 ))

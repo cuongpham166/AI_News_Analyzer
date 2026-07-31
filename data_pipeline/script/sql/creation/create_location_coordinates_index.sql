@@ -1,0 +1,1 @@
+CREATE INDEX idx_location_name_lower ON location_coordinates (LOWER(location_name));
