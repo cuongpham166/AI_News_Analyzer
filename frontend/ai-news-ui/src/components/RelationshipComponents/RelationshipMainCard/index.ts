@@ -1,3 +1,3 @@
-import RelationshipMainCard from '@/components/RelationshipComponents/RelationshipMainCard';
+import RelationshipMainCard from '@/components/RelationshipComponents/RelationshipMainCard/RelationshipMainCard.tsx';
 
 export default RelationshipMainCard;

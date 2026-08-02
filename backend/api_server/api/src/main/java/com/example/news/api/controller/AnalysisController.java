@@ -155,9 +155,10 @@ public class AnalysisController {
     @GetMapping("/global_trends")
     public ResponseEntity<ApiResponse<GlobalTrendsResponse>> getGlobalTrendsWithRelativeInterval(
         @RequestParam String intervalUnit, 
-        @RequestParam int amount
+        @RequestParam int amount,
+        @RequestParam String calendarInterval
     ){
-        GlobalTrendsResponse data = indexAnalysisService.getGlobalTrendsWithRelativeInterval(intervalUnit, amount).join();
+        GlobalTrendsResponse data = indexAnalysisService.getGlobalTrendsWithRelativeInterval(intervalUnit, amount,calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 

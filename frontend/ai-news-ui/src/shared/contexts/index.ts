@@ -1,4 +1,3 @@
-import { EntityRelationshipContext } from '@/shared/contexts/EntityRelationshipContext';
-import { GlobalPulseContext } from '@/shared/contexts/GlobalPulseContext';
+import {GlobalIntervalContext} from '@/shared/contexts/GlobalIntervalContext';
 
-export { EntityRelationshipContext, GlobalPulseContext };
+export { GlobalIntervalContext };

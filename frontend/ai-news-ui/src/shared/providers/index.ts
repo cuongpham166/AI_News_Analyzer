@@ -1,4 +1,5 @@
-import { EntityRelationshipProvider } from '@/shared/providers/EntityRelationshipProvider';
-import { GlobalPulseProvider } from '@/shared/providers/GlobalPulseProvider';
+import {GlobalIntervalProvider} from '@/shared/providers/GlobalIntervalProvider.tsx';
 
-export { EntityRelationshipProvider, GlobalPulseProvider };
+export {
+  GlobalIntervalProvider,
+};

@@ -1,15 +1,15 @@
 import DetailedNewsPage from '@/pages/DetailedNewsPage.tsx';
-import GlobalPulsePage from '@/pages/GlobalPulsePage.tsx';
-import DimensionsRisksPage from '@/pages/DimensionsRisksPage.tsx';
+import OverviewPage from '@/pages/OverviewPage.tsx';
 import DiscoveryPage from '@/pages/DiscoveryPage.tsx';
 import NotFoundPage from '@/pages/NotFoundPage.tsx';
-import RelationshipPage from '@/pages/RelationshipPage.tsx';
+import NetworkLabPage from '@/pages/NetworkLabPage.tsx';
+import MediaBiasPage from '@/pages/MediaBiasPage.tsx';
 
 export {
   DetailedNewsPage,
-  GlobalPulsePage,
-  DimensionsRisksPage,
+  OverviewPage,
+  NetworkLabPage,
   DiscoveryPage,
   NotFoundPage,
-  RelationshipPage,
+  MediaBiasPage,
 };

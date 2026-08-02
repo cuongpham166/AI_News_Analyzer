@@ -1,4 +1,3 @@
-import { useGlobalPulse } from '@/shared/custom_hooks/useGlobalPulse';
-import { useEntityRelationship } from '@/shared/custom_hooks/useEntityRelationship';
+import {useGlobalInterval} from '@/shared/custom_hooks/useGlobalInterval.ts';
 
-export { useEntityRelationship, useGlobalPulse };
+export {useGlobalInterval };

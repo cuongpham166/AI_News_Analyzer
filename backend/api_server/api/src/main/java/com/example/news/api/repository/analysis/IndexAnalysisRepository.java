@@ -37,9 +37,9 @@ public class IndexAnalysisRepository {
         this.indexAnalysisMapper = indexAnalysisMapper;
     }
 
-    private SearchResponse<Void> executeGlobalTrendsSearch (long startEpoch,long endEpoch, String intervalUnit) throws IOException {
-        CalendarInterval intervalEnum = this.aggInterval.mapInterval(intervalUnit);
-        SearchRequest searchRequest = indexAnalysisQuery.getGlobalTrendsRequest(startEpoch,endEpoch,intervalEnum);
+    private SearchResponse<Void> executeGlobalTrendsSearch (long startEpoch,long endEpoch, CalendarInterval calendarInterval) throws IOException {
+        //CalendarInterval intervalEnum = this.aggInterval.mapInterval(intervalUnit);
+        SearchRequest searchRequest = indexAnalysisQuery.getGlobalTrendsRequest(startEpoch,endEpoch,calendarInterval);
         return esClient.search(searchRequest, Void.class);
     }
 
@@ -103,11 +103,13 @@ public class IndexAnalysisRepository {
         };
     }
 
-    public GlobalTrendsResponse getGlobalTrendsWithRelativeInterval (String intervalUnit, int amount) throws IOException {
+    public GlobalTrendsResponse getGlobalTrendsWithRelativeInterval (String intervalUnit, int amount,String calendarInterval) throws IOException {
         long[] result = this.aggInterval.computeEpochRangeRelative(intervalUnit,amount);
         long startEpoch = result[0];
         long endEpoch   = result[1];
-        SearchResponse<Void> response = executeGlobalTrendsSearch(startEpoch,endEpoch,intervalUnit);
+        CalendarInterval interval = parseCalendarInterval(calendarInterval);
+        //SearchResponse<Void> response = executeGlobalTrendsSearch(startEpoch,endEpoch,intervalUnit);
+        SearchResponse<Void> response = executeGlobalTrendsSearch(startEpoch,endEpoch,interval);
         return indexAnalysisMapper.mapGlobalTrends(response);
     }
 

@@ -5,11 +5,9 @@ import { useElementSize } from '@mantine/hooks';
 import { fetchRelationshipGraphData } from '../../../services/analysisService';
 import type { RelationshipGraph } from '../../../shared/interfaces/RelationshipGraph';
 import { getColorCode } from '../../../shared/utils/getColorCode';
-import { useEntityRelationship } from '../../../shared/custom_hooks/useEntityRelationship.ts';
 import { SentimentColors } from '@/shared/constants/Colors';
 
 const RelationshipSummaryChart = () => {
-  const { entityRelationshipInterval } = useEntityRelationship();
   const { ref, width, height } = useElementSize();
   const [relationshipGraph, setRelationshipGraph] =
     useState<RelationshipGraph>();
@@ -35,7 +33,7 @@ const RelationshipSummaryChart = () => {
     [],
   );
 
-  useEffect(() => {
+  /*useEffect(() => {
     const loadRelationshipGraphData = async () => {
       await fetchRelationshipGraph(
         entityRelationshipInterval.intervalUnit,
@@ -43,7 +41,7 @@ const RelationshipSummaryChart = () => {
       );
     };
     loadRelationshipGraphData();
-  }, [fetchRelationshipGraph, entityRelationshipInterval]);
+  }, [fetchRelationshipGraph, entityRelationshipInterval]);*/
 
   return (
     <div

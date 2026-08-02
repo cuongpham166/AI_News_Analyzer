@@ -1,10 +1,8 @@
 import { Blockquote, Paper, Stack, Text, Title } from '@mantine/core';
 import { ThemeColors } from '@/shared/constants/Colors';
-import detailedNewsData from '../../../../test/DetailedNews';
+
 
 function DetailedNewsCard() {
-  const isoString = detailedNewsData.publishDate;
-  const publishedDate = new Date(isoString);
   return (
     <Paper
       p='lg'
@@ -19,9 +17,9 @@ function DetailedNewsCard() {
         {/*Headline Seaction */}
         <Stack>
           <Title order={3} style={{ color: ThemeColors.primary }}>
-            {detailedNewsData.title}
+            Test
           </Title>
-          <Text size='md'>{publishedDate.toLocaleString('en-GB')}</Text>
+          <Text size='md'>ddd</Text>
         </Stack>
 
         <Blockquote
@@ -30,9 +28,9 @@ function DetailedNewsCard() {
           cite='– Summarized by distilbart-cnn-12-6'
           mt='xs'
         >
-          {detailedNewsData.summary}
+
         </Blockquote>
-        <Text size='md'>{detailedNewsData.fullText}</Text>
+        <Text size='md'></Text>
       </Stack>
     </Paper>
   );

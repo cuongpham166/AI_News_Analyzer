@@ -9,6 +9,7 @@ import lombok.*;
 @ToString
 public class SignificantTermsAggregationResponse {
     private String term;
+    private String entityType;
     private double score;
     private long docCount;
     private long bgCount;

@@ -33,10 +33,10 @@ public class IndexAnalysisService {
     @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
     @CircuitBreaker(name = "ElasticIndex", fallbackMethod = "getGlobalTrendsWithRelativeIntervalFallback")
     @TimeLimiter(name = "ElasticIndex")
-    public CompletableFuture<GlobalTrendsResponse> getGlobalTrendsWithRelativeInterval (String intervalUnit, int amount){
+    public CompletableFuture<GlobalTrendsResponse> getGlobalTrendsWithRelativeInterval (String intervalUnit, int amount,String calendarInterval){
         return CompletableFuture.supplyAsync(() ->{
             try {
-                return indexAnalysisRepository.getGlobalTrendsWithRelativeInterval(intervalUnit, amount);
+                return indexAnalysisRepository.getGlobalTrendsWithRelativeInterval(intervalUnit, amount,calendarInterval);
             } catch (IOException e) {
                 throw new CompletionException(e);
             }
@@ -172,6 +172,7 @@ public class IndexAnalysisService {
     private CompletableFuture<GlobalTrendsResponse> getGlobalTrendsWithRelativeIntervalFallback(
             String intervalUnit,
             int amount,
+            String calendarInterval,
             Throwable t
     ) {
         return CompletableFuture.completedFuture(new GlobalTrendsResponse());

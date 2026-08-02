@@ -387,8 +387,24 @@ public class IndexAnalysisMapper {
 
                 if (sigAgg != null && sigAgg.isSigsterms() && sigAgg.sigsterms().buckets() != null) {
                     for (var bucket : sigAgg.sigsterms().buckets().array()) {
+                        String entityType = null;
+                        Map<String, Aggregate> bucketAggs = bucket.aggregations();
+                        if (bucketAggs != null && bucketAggs.containsKey("entity_type")) {
+
+                            Aggregate entityTypeAgg = bucketAggs.get("entity_type");
+
+                            if (entityTypeAgg.isSterms()) {
+                                var typeBuckets = entityTypeAgg.sterms().buckets().array();
+
+                                if (!typeBuckets.isEmpty()) {
+                                    entityType = typeBuckets.get(0).key().stringValue();
+                                }
+                            }
+                        }
+
                         results.add(new SignificantTermsAggregationResponse(
                                 bucket.key(),
+                                entityType,
                                 bucket.score(),
                                 bucket.docCount(),
                                 bucket.bgCount()

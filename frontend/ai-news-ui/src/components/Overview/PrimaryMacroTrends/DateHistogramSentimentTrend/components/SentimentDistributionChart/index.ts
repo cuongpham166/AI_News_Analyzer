@@ -1,0 +1,4 @@
+import SentimentDistributionChart
+  from '@/components/Overview/PrimaryMacroTrends/DateHistogramSentimentTrend/components/SentimentDistributionChart/SentimentDistributionChart.tsx';
+
+export default SentimentDistributionChart;

@@ -13,7 +13,7 @@ import java.io.IOException;
 public class IndexAnalysisQuery {
     public IndexAnalysisQuery(){}
 
-    public SearchRequest getGlobalTrendsRequest (long startEpoch, long endEpoch, CalendarInterval intervalEnum) throws IOException {
+    public SearchRequest getGlobalTrendsRequest (long startEpoch, long endEpoch, CalendarInterval calendarInterval) throws IOException {
         return SearchRequest.of(s -> s
                 .index("news")
                 .size(0)
@@ -31,7 +31,8 @@ public class IndexAnalysisQuery {
                 .aggregations("trends_over_time", a -> a
                         .dateHistogram(d -> d
                                 .field("publish_date")
-                                .calendarInterval(intervalEnum)
+                                .format("epoch_second")
+                                .calendarInterval(calendarInterval) //day, week, month, year
                         )
                         .aggregations("avg_sentiment", AggregationData.getAvgSentimentAgg())
                         .aggregations("top_topics",AggregationData.getTopicAgg())
@@ -64,7 +65,7 @@ public class IndexAnalysisQuery {
                                 .aggregations("top_entities", terms -> terms
                                         .terms(t -> t
                                                 .field("entities.value.keyword")
-                                                .size(5)
+                                                .size(20)
                                         )
                                         .aggregations("to_news", reverse -> reverse
                                                 .reverseNested(r -> r)
@@ -265,7 +266,13 @@ public class IndexAnalysisQuery {
                                         .size(15)
                                         .minDocCount(2L)
                                 )
+                                .aggregations("entity_type", et -> et
+                                        .terms(t -> t
+                                                .field("entities.entity_type")
+                                        )
+                                )
                         )
+
                 )
         );
     }

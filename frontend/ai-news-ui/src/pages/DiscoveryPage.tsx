@@ -1,12 +1,13 @@
-import RelationshipSummaryTaskbar from '@/components/DiscoveryComponents/RelationshipSummaryTaskbar';
+
 import RelationshipSummaryCard from '@/components/DiscoveryComponents/RelationshipSummaryCard';
 import RelationshipSummaryAnnotation from '@/components/DiscoveryComponents/RelationshipSummaryAnnotation';
 import { Grid, Stack } from '@mantine/core';
+import Taskbar from '@/components/generic/Taskbar';
 
 function DiscoveryPage() {
   return (
     <Stack>
-      <RelationshipSummaryTaskbar />
+      <Taskbar taskbarTitle={'Discovery'} />
       <Grid gap='md'>
         <Grid.Col span={9} style={{ height: '90%' }}>
           <RelationshipSummaryCard />
