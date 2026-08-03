@@ -2,20 +2,19 @@ import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import Layout from '@/components/LayoutComponents/Layout.tsx';
+import Layout from '@/components/Layout/Layout.tsx';
 
 import {
   DetailedNewsPage,
-  GlobalPulsePage,
-  DimensionsRisksPage,
+  OverviewPage,
   DiscoveryPage,
   NotFoundPage,
-  RelationshipPage,
+  NetworkLabPage,
+  MediaBiasPage
 } from '@/pages';
 
 import {
-  EntityRelationshipProvider,
-  GlobalPulseProvider,
+  GlobalIntervalProvider
 } from '@/shared/providers';
 
 const App = () => {
@@ -27,19 +26,33 @@ const App = () => {
             <Route
               path='/'
               element={
-                <GlobalPulseProvider>
-                  <GlobalPulsePage />
-                </GlobalPulseProvider>
+                <GlobalIntervalProvider>
+                  <OverviewPage />
+                </GlobalIntervalProvider>
               }
             />
-            <Route path='/dimension' element={<DimensionsRisksPage />} />
-            <Route path='/relationship' element={<RelationshipPage />} />
+            <Route
+              path='/network_lab'
+              element={
+                <GlobalIntervalProvider>
+                  <NetworkLabPage />
+                </GlobalIntervalProvider>
+              }
+            />
+            <Route
+              path='/media_bias'
+              element={
+                <GlobalIntervalProvider>
+                  <MediaBiasPage />
+                </GlobalIntervalProvider>
+              }
+            />
             <Route
               path='/discovery'
               element={
-                <EntityRelationshipProvider>
+                <GlobalIntervalProvider>
                   <DiscoveryPage />
-                </EntityRelationshipProvider>
+                </GlobalIntervalProvider>
               }
             />
             <Route path='/news' element={<DetailedNewsPage />} />

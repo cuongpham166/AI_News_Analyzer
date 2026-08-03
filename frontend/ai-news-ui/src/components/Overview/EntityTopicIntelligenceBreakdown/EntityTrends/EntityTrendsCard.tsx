@@ -15,25 +15,33 @@ import MetricCard from '@/components/generic/MetricCard';
 import BubbleTimelineChart
   from '@/components/Overview/EntityTopicIntelligenceBreakdown/EntityTrends/components/BubbleTimelineChart';
 import RankingChart from '@/components/Overview/EntityTopicIntelligenceBreakdown/EntityTrends/components/RankingChart';
-import SentimentChart
-  from '@/components/Overview/EntityTopicIntelligenceBreakdown/EntityTrends/components/SentimentChart';
 import EntitiesHeatmap
   from '@/components/Overview/EntityTopicIntelligenceBreakdown/EntityTrends/components/EntitiesHeatmap';
+import globalEntitiesTrendsData from '@/shared/test_data/GlobalEntitiesTrendsData.ts';
+import type {
+  GlobalEntitiesTrendsType
+} from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalEntitiesTrendsType.ts';
+import EntitiesImpactMatrix
+  from '@/components/Overview/EntityTopicIntelligenceBreakdown/EntityTrends/components/EntityImpactMatrix';
 
 function EntityTrendsCard() {
   const [view, setView] = useState<
-    'timeline' | 'heatmap' | 'ranking' | 'sentiment'
+    'timeline' | 'heatmap' | 'ranking' |'impact'
   >('timeline');
-
   const loadView = (viewName:string):ReactNode => {
-    if(viewName === 'timeline') {
-      return <BubbleTimelineChart />
-    }else if(viewName === 'ranking') {
-      return <RankingChart/>
-    }else if (viewName === 'heatmap') {
-      return  <EntitiesHeatmap/>
-    } else{
-      return  <SentimentChart />;
+    switch (viewName) {
+      case 'timeline':
+        return <BubbleTimelineChart data={globalEntitiesTrendsData.data} />;
+        case 'heatmap':
+          return <EntitiesHeatmap data={globalEntitiesTrendsData.data} />;
+          case 'ranking':
+            return <RankingChart data={globalEntitiesTrendsData.data} />;
+              case 'impact':
+                return (
+                  <EntitiesImpactMatrix data={globalEntitiesTrendsData.data} />
+                );
+      default:
+        return <BubbleTimelineChart data={globalEntitiesTrendsData.data} />;
     }
   }
 
@@ -54,13 +62,13 @@ function EntityTrendsCard() {
         <SegmentedControl
           value={view}
           onChange={(val) =>
-            setView(val as 'timeline'| 'heatmap' | 'ranking' | 'sentiment')
+            setView(val as 'timeline' | 'heatmap' | 'ranking' | 'impact')
           }
           data={[
             { label: 'Bubble Timeline', value: 'timeline' },
             { label: 'Heatmap', value: 'heatmap' },
             { label: 'Ranking View', value: 'ranking' },
-            { label: 'Sentiment View', value: 'sentiment' },
+            { label: 'Impact Matrix', value: 'impact' },
           ]}
         />
 

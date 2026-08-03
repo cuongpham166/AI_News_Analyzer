@@ -68,7 +68,7 @@ const TopicRadarChart = ({ data, height = 420 }:TopicRadarChartProps) => {
             show: false,
           },
 
-          //emphasis: EMPHASIS,
+          emphasis: EMPHASIS,
         },
       ],
     };
