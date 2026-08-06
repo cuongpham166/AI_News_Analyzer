@@ -1,4 +1,9 @@
-# AI News Analyzer
+<div align="center">
+   <img src="/images/stack.svg" alt="Trinoetic Logo" width="70" align="center"/>
+  <h1>Trinoetic</h1>
+  <p>AI-powered news intelligence and analytics.</p>
+</div>
+
 
 ## Introduction
 
@@ -114,6 +119,9 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
   - **(:Source)-[:PUBLISHED]->(:News)**
   - **(:News)-[:TAGGED_WITH]->(:Key Phrase)**
 
+### Dual Engine RAG Overview
+![RAG Workflow](/images/RAG.png)
+
 ### Inference Overview
 
 The project utilizes a custom inference approach using Hugging face Transformers (for PyTorch models) and ONNX Runtime (for ONNX models) for high performance model execution. The PyTorch model can be converted to ONNX by the written script. Rather than relying on high level pipeline and abstractions, the preprocessing (tokenization) and post-processing (logits transformation) are implemented manually to ensure the control over the inference lifecycle
@@ -158,9 +166,8 @@ The platform follows a clean, event-driven data pipeline that moves news article
   - The topic classifier was evaluated on a validation dataset of 6,000 samples using both the original PyTorch FP32 model and the quantized ONNX INT8 model.
   - **Dataset (Total Samples: 6000)**: Economy (982), Entertainment(655), Health(648), Politics(641), Science(145), Sports(915), Technology(982) and World(1032)
 
-### Dual Engine RAG Overview
-![RAG Workflow](/images/RAG.png)
-#### Purpose & Usecase
+### Dual Engine RAG
+#### Purpose & Use case
 Two independent RAG pathways are built to achieve total coverage over complex intelligence feeds:
 - **The Vector & Network Pathway (Neo4j):** Built to answer relational questions. It excels at multi-hop analysis—uncovering hidden connections between changing actors, locations, and events, even if those connections span across completely different articles.
 - **The Lexical & Metadata Pathway (Elasticsearch):** Built to answer precise situational questions. It excels at scanning thousands of words of raw text for precise tracking, while simultaneously filtering metrics like real-time temporal windows (e.g., now-24h) and sentiment scores.
@@ -512,6 +519,6 @@ engagement from various actors to address these concerns within a complex geopol
 where sovereignty, international law, and humanitarian needs intersect.
 ```
 ## Examples
-![Dashboard](/images/Project.png)
-![Entity Relationship](/images/Project_2.png)
-![Neo4j](/images/Neo4j_Example.png)
+![Page_1](/images/Page_1.png)
+![Page_2 Relationship](/images/Page_2.png)
+![Page_3](/images/Page_3.png)
