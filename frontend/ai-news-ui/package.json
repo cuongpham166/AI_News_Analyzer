@@ -10,19 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@amcharts/amcharts5": "^5.20.0",
-    "@amcharts/amcharts5-fonts": "^5.0.1",
-    "@amcharts/amcharts5-geodata": "^5.1.6",
     "@mantine/core": "^9.0.2",
+    "@mantine/dates": "^9.5.1",
     "@mantine/hooks": "^9.0.2",
     "@phosphor-icons/react": "^2.1.10",
     "@recharts/devtools": "^0.0.11",
+    "@tanstack/react-query": "^5.101.4",
     "@visx/responsive": "^4.0.0",
     "@visx/scale": "^4.0.0",
     "@visx/text": "^4.0.0",
     "@visx/tooltip": "^4.0.0",
     "@visx/wordcloud": "^4.0.0",
-    "axios": "^1.15.0",
+    "axios": "^1.19.0",
+    "dayjs": "^1.11.21",
     "dotenv": "^17.4.2",
     "echarts": "^6.1.0",
     "echarts-for-react": "^3.0.6",
@@ -30,9 +30,10 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-force-graph-2d": "^1.29.1",
+    "react-hook-form": "^7.84.0",
     "react-router-dom": "^7.14.1",
-    "recharts": "^3.8.1",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

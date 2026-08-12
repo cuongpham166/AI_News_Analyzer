@@ -1,4 +1,0 @@
-import SignificantTermsAggregationChart
-  from '@/components/Overview/EntityTopicIntelligenceBreakdown/SignificantTermsAggregation/SignificantTermsAggregationChart/SignificantTermsAggregationChart.tsx';
-
-export default SignificantTermsAggregationChart;

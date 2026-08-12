@@ -9,7 +9,7 @@ import {
   UserIcon,
   ArticleIcon,
   NewspaperIcon,
-  ShareNetworkIcon,
+  ShareNetworkIcon,StackIcon
 } from '@phosphor-icons/react';
 import { ThemeColors } from '@/shared/constants/Colors';
 
@@ -21,6 +21,7 @@ function Sidebar() {
     { icon: ShareNetworkIcon, label: 'Network Lab', url: '/network_lab' },
     { icon: ArticleIcon, label: 'Media Bias', url: '/media_bias' },
     { icon: GlobeIcon, label: 'Risk & Map', url: '/discovery' },
+    { icon: NewspaperIcon, label: 'Detailed', url: '/detailed_news' },
     { icon: NewspaperIcon, label: 'News', url: '/news' },
     { icon: UserIcon, label: 'Profile' },
   ];
@@ -33,71 +34,71 @@ function Sidebar() {
   };
 
   return (
-    <Stack justify='space-between' style={{ height: '100%' }}>
-      <Stack gap='0' justify='center' align='center' style={{ width: '100%' }}>
-        <FileMagnifyingGlassIcon
-          size={50}
-          color={ThemeColors.secondary}
-          weight='fill'
-        />
-        <Text
-          c={ThemeColors.secondary}
-          size='xl'
-          style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 700 }}
-        >
-          AI Analyzer
+    <Stack
+      justify='space-between'
+      h='100%'
+      p='xl'
+      style={{
+        background: '#0F172A',
+      }}
+    >
+      <Stack gap={4} align='center'>
+        <StackIcon size={50} weight='duotone' color='#FFFFFF' />
+        <Text size='lg' fw={700} c='#FFFFFF'>
+          Trinoetic
         </Text>
       </Stack>
 
-      <Stack gap='lg'>
-        {menuData.map((item, index) => {
-          const isHovered = hoveredIndex === index;
+      <Stack gap={6}>
+        {menuData.map((item) => {
+          const active = location.pathname === item.url;
           return (
             <NavLink
               key={item.label}
               label={item.label}
-              component='a'
-              leftSection={
-                <item.icon
-                  size={26}
-                  color={
-                    isHovered ? ThemeColors.primary : ThemeColors.secondary
-                  }
-                />
-              }
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              onClick={(event) => onMenuClick(event)}
-              styles={(theme) => ({
-                label: {
-                  color: isHovered
-                    ? ThemeColors.primary
-                    : ThemeColors.secondary,
-                  fontWeight: 500,
-                  fontSize: '16px',
+              leftSection={<item.icon size={22} />}
+              onClick={() => navigate(item.url)}
+              styles={{
+                root: {
+                  borderRadius: 8,
+                  padding: '10px 12px',
+
+                  backgroundColor: active ? '#1D4ED8' : 'transparent',
+
+                  color: active ? '#FFFFFF' : '#CBD5E1',
+
+                  '&:hover': {
+                    backgroundColor: active ? '#1D4ED8' : '#1E293B',
+                  },
                 },
 
-                root: {
-                  padding: '0.5rem 1rem',
-                  borderRadius: theme.radius.sm,
-                  backgroundColor: isHovered
-                    ? ThemeColors.secondary
-                    : 'transparent',
-                  cursor: 'pointer',
+                label: {
+                  fontSize: 15,
+                  fontWeight: 500,
                 },
-              })}
+
+                section: {
+                  color: 'inherit',
+                },
+              }}
             />
           );
         })}
       </Stack>
+
       <Button
-        leftSection={<SignOutIcon size={25} />}
-        variant='default'
+        variant='subtle'
         fullWidth
-        style={{
-          background: ThemeColors.secondary,
-          color: ThemeColors.primary,
-          border: 'none',
+        leftSection={<SignOutIcon size={22} />}
+        styles={{
+          root: {
+            color: '#CBD5E1',
+
+            '&:hover': {
+              backgroundColor: '#1E293B',
+              color: '#CBD5E1',
+            },
+          },
         }}
       >
         Logout

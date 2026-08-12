@@ -1,4 +1,0 @@
-import SignificantTermsAggregationCard
-  from '@/components/Overview/EntityTopicIntelligenceBreakdown/SignificantTermsAggregation/SignificantTermsAggregationCard.tsx';
-
-export default SignificantTermsAggregationCard;

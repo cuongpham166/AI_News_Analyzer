@@ -40,14 +40,12 @@ const DeepVelocityChart = ({ data,height=420 }:DeepVelocityChartProps) => {
         name: 'Current Mentions',
         min: 0,
         max: metrics.maxMentions * 1.2,
-        splitLine: { show: true },
       },
       yAxis: {
         type: 'value',
         name: 'Velocity %',
         min: 0,
         max: metrics.maxVelocity * 1.2,
-        splitLine: { show: true },
       },
       series: [
         {
@@ -57,6 +55,7 @@ const DeepVelocityChart = ({ data,height=420 }:DeepVelocityChartProps) => {
             const score = val[2] || 1;
             return Math.min(Math.max(score / 2, 12), 40);
           },
+
           markArea: createMarkArea(
             metrics.mentionThreshold,
             metrics.velocityThreshold,

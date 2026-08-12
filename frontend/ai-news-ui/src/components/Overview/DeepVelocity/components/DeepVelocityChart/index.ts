@@ -1,3 +1,3 @@
-import DeepVelocityChart from '@/components/Overview/DeepVelocity/components/DeepVelocityChart/DeepVelocityChart.tsx';
+import DeepVelocityChart from './DeepVelocityChart.tsx';
 
 export default DeepVelocityChart;

@@ -19,7 +19,6 @@ function EChartContainer({
         option={option}
         style={{ height: '100%', width: '100%' }}
         showLoading={loading}
-        // notMerge ensures that when options/filters change, old chart elements clear automatically
         notMerge={true}
       />
     </Box>

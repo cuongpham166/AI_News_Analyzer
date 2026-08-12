@@ -10,12 +10,10 @@ import {
   DiscoveryPage,
   NotFoundPage,
   NetworkLabPage,
-  MediaBiasPage
+  MediaBiasPage,
+  NewsPage
 } from '@/pages';
 
-import {
-  GlobalIntervalProvider
-} from '@/shared/providers';
 
 const App = () => {
   return (
@@ -23,39 +21,12 @@ const App = () => {
       <Router>
         <Layout>
           <Routes>
-            <Route
-              path='/'
-              element={
-                <GlobalIntervalProvider>
-                  <OverviewPage />
-                </GlobalIntervalProvider>
-              }
-            />
-            <Route
-              path='/network_lab'
-              element={
-                <GlobalIntervalProvider>
-                  <NetworkLabPage />
-                </GlobalIntervalProvider>
-              }
-            />
-            <Route
-              path='/media_bias'
-              element={
-                <GlobalIntervalProvider>
-                  <MediaBiasPage />
-                </GlobalIntervalProvider>
-              }
-            />
-            <Route
-              path='/discovery'
-              element={
-                <GlobalIntervalProvider>
-                  <DiscoveryPage />
-                </GlobalIntervalProvider>
-              }
-            />
-            <Route path='/news' element={<DetailedNewsPage />} />
+            <Route path='/' element={<OverviewPage />} />
+            <Route path='/network_lab' element={<NetworkLabPage />} />
+            <Route path='/media_bias' element={<MediaBiasPage />} />
+            <Route path='/discovery' element={<DiscoveryPage />} />
+            <Route path='/detailed_news' element={<DetailedNewsPage />} />
+            <Route path='/news' element={<NewsPage />} />
             <Route path='/news/:link' element={<DetailedNewsPage />} />
             <Route path='*' element={<NotFoundPage />} />
           </Routes>

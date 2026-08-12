@@ -1,4 +1,0 @@
-import DateHistogramSentimentTrendCard
-  from '@/components/Overview/PrimaryMacroTrends/DateHistogramSentimentTrend/DateHistogramSentimentTrendCard.tsx';
-
-export default DateHistogramSentimentTrendCard;

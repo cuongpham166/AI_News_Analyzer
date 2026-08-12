@@ -7,7 +7,6 @@ public class GraphAnalysisQuery {
     public GraphAnalysisQuery(){}
 
     public String getPowerCouplesQuery() {
-        // Sankey Diagram
         return """
             MATCH (p:Person)<-[:MENTIONS_PERSON]-(n:News)-[:MENTIONS_ORGANIZATION]->(o:Organization)
             WHERE n.publish_date >= datetime({epochMillis: $startEpoch})

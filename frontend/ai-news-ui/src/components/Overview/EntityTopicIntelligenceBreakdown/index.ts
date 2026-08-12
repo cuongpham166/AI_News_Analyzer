@@ -1,4 +1,0 @@
-import EntityTopicIntelligenceBreakdown
-  from '@/components/Overview/EntityTopicIntelligenceBreakdown/EntityTopicIntelligenceBreakdown.tsx';
-
-export default EntityTopicIntelligenceBreakdown;

@@ -1,108 +1,95 @@
 import React, { type ReactNode, useState } from 'react';
 import Searchbar from '../Searchbar';
-import { Button, Group, NativeSelect, NumberInput, Paper, Title } from '@mantine/core';
+import { Button, Group, NativeSelect, NumberInput, Stack, Title, Box, Select, Text } from '@mantine/core';
 import { ThemeColors } from '@/shared/constants/Colors';
-import { useGlobalInterval } from '@/shared/custom_hooks';
-import { ArrowRightIcon, CaretDownIcon } from '@phosphor-icons/react';
 
+import { ArrowRightIcon, CaretDownIcon } from '@phosphor-icons/react';
+import { useDashboardIntervalStore } from '@/stores/dashboard.store.ts';
+import type { Interval } from '@/shared/types/DashboardInterval.ts';
 type Props = {
   taskbarTitle: string;
 };
 
 const Taskbar: React.FC<Props> = ({ taskbarTitle }) => {
-  const [intervalUnit, setIntervalUnit] = useState<string>('month');
-  const [intervalAmount, setIntervalAmount] = useState<number>(6);
-  const { globalInterval, setGlobalInterval } = useGlobalInterval();
+  const interval = useDashboardIntervalStore((s) => s.interval);
+  const updateInterval = useDashboardIntervalStore((s) => s.updateInterval);
 
-  const onChangeNumberInterval = (value) => {
-    setIntervalAmount(parseInt(value));
-  };
-
-  const onChangeTypeInterval = (value) => {
-    switch (value) {
-      case 'Days ago':
-        setIntervalUnit('day');
-        break;
-      case 'Weeks ago':
-        setIntervalUnit('week');
-        break;
-      case 'Months ago':
-        setIntervalUnit('month');
-        break;
-      case 'Years ago':
-        setIntervalUnit('year');
-        break;
-      default:
-        break;
-    }
-  };
-
-  const onChangeGlobalInterval = () => {
-    setGlobalInterval({
-      ...globalInterval,
-      ...{ intervalUnit: intervalUnit, amount: intervalAmount },
+  const onChangeNumberInterval = (value: number | string) => {
+    updateInterval({
+      amount: Number(value),
     });
   };
 
+  const onChangeTypeInterval = (value: Interval['intervalUnit'] | null) => {
+    if (!value) return;
+
+    updateInterval({
+      intervalUnit: value,
+    });
+  };
+
+  const onChangeGlobalInterval = () => {
+    // TODO:
+    // Reload dashboard data
+  };
+
   return (
-    <Paper p='md' style={{ background: ThemeColors.third }}>
-      <Group align='center' gap='lg' style={{ width: '100%' }}>
-        <Title order={3} style={{ color: ThemeColors.primary }}>
-          {taskbarTitle}
-        </Title>
-        <Group
-          gap='md'
-          align='center'
-          style={{ flex: 1, justifyContent: 'flex-end' }}
-        >
-          <Searchbar />
-          <Group gap='sm' align='center'>
+    <Box>
+      <Group justify='space-between' align='flex-start' wrap='nowrap'>
+        {/* Dashboard Identity */}
+        <Stack gap={4}>
+          <Title order={2} fw={700} c={ThemeColors.text}>
+            {taskbarTitle}
+          </Title>
+
+          <Text size='sm' c={ThemeColors.textSecondary}>
+            AI-powered news intelligence and analytics
+          </Text>
+        </Stack>
+
+        {/* Dashboard Controls */}
+        <Stack gap='xs' align='flex-end'>
+          <Group gap='xs' align='center'>
+            <Text size='sm' fw={500} c={ThemeColors.textSecondary}>
+              Analyze
+            </Text>
+
             <NumberInput
-              name='time_value'
-              defaultValue={6}
+              value={interval.amount}
               min={1}
               max={10}
-              style={{ width: 80 }}
-              onChange={(value) => onChangeNumberInterval(value)}
+              w={70}
+              h={36}
+              hideControls
+              onChange={onChangeNumberInterval}
             />
-            <NativeSelect
-              variant=''
-              data={['Days ago', 'Weeks ago', 'Months ago', 'Years ago']}
-              defaultValue='Months ago'
-              rightSection={
-                <CaretDownIcon size={16} color={ThemeColors.primary} />
-              }
-              style={{
-                minWidth: 120,
-                background: ThemeColors.secondary,
-                color: ThemeColors.primary,
-                borderRadius: 'calc(0.5rem * 1)',
-              }}
-              onChange={(event) =>
-                onChangeTypeInterval(event.currentTarget.value)
+
+            <Select
+              value={interval.intervalUnit}
+              w={110}
+              data={[
+                { value: 'day', label: 'Days' },
+                { value: 'week', label: 'Weeks' },
+                { value: 'month', label: 'Months' },
+                { value: 'year', label: 'Years' },
+              ]}
+              onChange={(value) =>
+                onChangeTypeInterval(value as Interval['intervalUnit'])
               }
             />
+
             <Button
-              variant='filled'
+              h={36}
               rightSection={<ArrowRightIcon size={14} />}
-              styles={{
-                root: {
-                  backgroundColor: ThemeColors.primary,
-                  color: ThemeColors.secondary,
-                  border: 'none',
-                  '&:hover': {
-                    backgroundColor: '#1864ab !important',
-                  },
-                },
-              }}
               onClick={onChangeGlobalInterval}
             >
               Update
             </Button>
           </Group>
-        </Group>
+          <Searchbar />
+        </Stack>
       </Group>
-    </Paper>
+    </Box>
   );
 };
 

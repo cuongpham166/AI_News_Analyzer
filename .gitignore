@@ -16,3 +16,4 @@ backend/.env
 
 # nginx local certificates
 backend/nginx/certs/
+frontend/ai-news-ui/src/shared/test_data/

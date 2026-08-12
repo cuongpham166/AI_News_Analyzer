@@ -1,10 +1,10 @@
-import DetailedNewsPage from '@/pages/DetailedNewsPage.tsx';
-import OverviewPage from '@/pages/OverviewPage.tsx';
-import DiscoveryPage from '@/pages/DiscoveryPage.tsx';
+import DetailedNewsPage from '@/pages/news/DetailedNewsPage.tsx';
+import OverviewPage from '@/pages/analysis/OverviewPage.tsx';
+import DiscoveryPage from '@/pages/analysis/DiscoveryPage.tsx';
 import NotFoundPage from '@/pages/NotFoundPage.tsx';
-import NetworkLabPage from '@/pages/NetworkLabPage.tsx';
-import MediaBiasPage from '@/pages/MediaBiasPage.tsx';
-
+import NetworkLabPage from '@/pages/analysis/NetworkLabPage.tsx';
+import MediaBiasPage from '@/pages/analysis/MediaBiasPage.tsx';
+import NewsPage from '@/pages/news/NewsPage.tsx';
 export {
   DetailedNewsPage,
   OverviewPage,
@@ -12,4 +12,5 @@ export {
   DiscoveryPage,
   NotFoundPage,
   MediaBiasPage,
+  NewsPage,
 };

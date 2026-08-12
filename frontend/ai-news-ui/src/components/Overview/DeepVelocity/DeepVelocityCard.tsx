@@ -14,7 +14,7 @@ import DeepVelocityChart from '@/components/Overview/DeepVelocity/components/Dee
 import deepVelocityData from '@/shared/test_data/DeepVelocityData.ts';
 import {calculateMomentumScore,calculateTrendDirection} from '@/shared/utils/calculateDeepVelocityMetrics.ts';
 import { useMemo, useState } from 'react';
-
+import DashboardCard from '@/components/generic/DashboardCard';
 function DeepVelocityCard() {
   const chartData = useMemo(() => {
     return deepVelocityData.data.map((item) => ({
@@ -46,34 +46,28 @@ function DeepVelocityCard() {
   return (
     <Grid gutter='md'>
       <Grid.Col span={12}>
-        <MetricCard>
-          <Stack gap='md'>
-            <Group justify='space-between'>
-              <Title order={5} mb='xs' c={ThemeColors.primary}>
-                Deep Velocity Analytics Matrix
-              </Title>
-              <Group gap='xs'>
-                <Text size='sm' c={ThemeColors.primary} fw={500}>
-                  Trend Direction:
-                </Text>
-                <SegmentedControl
-                  value={selectedTrendDirection}
-                  onChange={(val) => setSelectedTrendDirection(val)}
-                  data={[
-                    { label: 'All', value: 'All' },
-                    { label: 'Rising', value: 'Rising' },
-                    { label: 'Falling', value: 'Falling' },
-                    { label: 'Stable', value: 'Stable' },
-                  ]}
-                />
-              </Group>
+        <DashboardCard
+          title='Deep Velocity Analytics Matrix'
+          description=''
+          headerActions={
+            <Group gap='xs'>
+              <Text size='sm' c={ThemeColors.primary} fw={500}>
+                Trend Direction:
+              </Text>
+              <SegmentedControl
+                value={selectedTrendDirection}
+                onChange={(val) => setSelectedTrendDirection(val)}
+                data={[
+                  { label: 'All', value: 'All' },
+                  { label: 'Rising', value: 'Rising' },
+                  { label: 'Falling', value: 'Falling' },
+                  { label: 'Stable', value: 'Stable' },
+                ]}
+              />
             </Group>
-
-            <Box style={{ flex: 1, minHeight: 0 }}>
-              <DeepVelocityChart data={filteredData} />
-            </Box>
-          </Stack>
-        </MetricCard>
+          }
+          children={<DeepVelocityChart data={filteredData} />}
+        />
       </Grid.Col>
     </Grid>
   );

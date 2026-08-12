@@ -78,6 +78,10 @@ export const createMarkLine = (
   mentionThreshold: number,
   velocityThreshold: number,
 ) => ({
+  symbol: ['none', 'none'],
+  tooltip: {
+    show: false,
+  },
   data: [{ xAxis: mentionThreshold }, { yAxis: velocityThreshold }],
 });
 

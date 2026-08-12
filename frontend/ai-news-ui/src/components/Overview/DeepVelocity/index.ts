@@ -1,3 +1,3 @@
-import DeepVelocityCard from '@/components/Overview/DeepVelocity/DeepVelocityCard.tsx';
+import DeepVelocityCard from './DeepVelocityCard.tsx';
 
 export default DeepVelocityCard;

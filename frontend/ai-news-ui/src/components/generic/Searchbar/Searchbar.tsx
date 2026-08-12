@@ -4,9 +4,12 @@ import { ThemeColors } from '@/shared/constants/Colors';
 
 const Searchbar = () => {
   return (
-    <Group gap='sm' align='center' style={{ flex: 2 }}>
-      <Autocomplete placeholder='Search' radius='sm' style={{ flex: 1 }} />
-    </Group>
+    <Autocomplete
+      placeholder='Search articles, entities...'
+      w={365}
+      size='md'
+      radius='md'
+    />
   );
 };
 

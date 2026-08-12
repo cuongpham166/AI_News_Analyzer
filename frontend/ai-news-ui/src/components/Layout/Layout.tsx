@@ -1,5 +1,5 @@
 import React, { type ReactNode } from 'react';
-import { AppShell } from '@mantine/core';
+import { AppShell, Box } from '@mantine/core';
 import Sidebar from './Sidebar';
 import { ThemeColors } from '@/shared/constants/Colors';
 
@@ -10,27 +10,26 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <AppShell
-      navbar={{ width: 270, breakpoint: 'sm' }}
+      navbar={{
+        width: 250,
+        breakpoint: 'sm',
+      }}
       padding='md'
-      // Force the Shell to be exactly the height of the window
       styles={{
         root: {
-          //height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
+          minHeight: '100vh',
         },
+
         main: {
-          //height: '100vh',
-          display: 'flex',
-          //overflow: 'hidden',
+          minHeight: '100vh',
           backgroundColor: ThemeColors.primaryBackground,
         },
       }}
     >
       <AppShell.Navbar
-        p='70 25'
+        p='lg'
         style={{
-          backgroundColor: ThemeColors.primary,
+          backgroundColor: ThemeColors.sidebar,
           border: 'none',
         }}
       >
@@ -38,17 +37,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        {/* We use a div here to ensure children take 100% height/width of Main */}
-        <div
+        <Box
           style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
             width: '100%',
+            minHeight: '100%',
           }}
         >
           {children}
-        </div>
+        </Box>
       </AppShell.Main>
     </AppShell>
   );
