@@ -19,10 +19,16 @@ class NormalizationConsumer:
     async def handle(self, msg):
         try:
             self.logger.info("Processing article")
-
             start = time.perf_counter()
+
             processed_result: ProcessedArticle = await self.processor.process_message(msg)
+
             duration = (time.perf_counter() - start) * 1000
+
+            if processed_result is None:
+                self.logger.info("Skipping article")
+                await msg.ack()
+                return
 
             self.logger.info(
                 "Article normalized",
@@ -30,11 +36,6 @@ class NormalizationConsumer:
                 link=processed_result.link,
                 duration_ms=round(duration, 2)
             )
-
-            if processed_result is None:
-                self.logger.info("Skipping article")
-                await msg.ack()
-                return
 
             await self.js.publish(
                 ENRICHED_SUBJECT,
@@ -56,6 +57,8 @@ class NormalizationConsumer:
     async def run(self):
         self.logger.info("Normalization consumer started")
 
+        semaphore = asyncio.Semaphore(2)
+
         sub = await self.js.subscribe(
             subject=RAW_SUBJECT,
             stream=STREAM_NAME,
@@ -67,7 +70,12 @@ class NormalizationConsumer:
         self.logger.info(f"Subscribed to {RAW_SUBJECT}")
 
         async for msg in sub.messages:
-            await self.handle(msg)
+            async with semaphore:
+                await self.handle(msg)
+
+        async for msg in sub.messages:
+            asyncio.create_task(worker(msg))
+
 
 
 async def main():

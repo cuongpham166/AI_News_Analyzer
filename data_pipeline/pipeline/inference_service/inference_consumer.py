@@ -7,7 +7,7 @@ from nats.aio.msg import Msg
 from ai.responses.inference_response import InferenceResponse, InferenceResult
 from data_pipeline.pipeline.inference_service.inference_processor import InferenceProcessor
 from data_pipeline.nats.client import create_js
-from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, STREAM_NAME
+from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, STREAM_NAME,SAVED_SUBJECT
 
 from data_pipeline.logger.logger_factory import LoggerFactory
 from data_pipeline.logger.logger_names import LoggerName
@@ -73,14 +73,14 @@ class InferenceConsumer:
         self.logger.info("Inference consumer started")
 
         sub = await self.js.subscribe(
-            ENRICHED_SUBJECT,
+            SAVED_SUBJECT,
             stream=STREAM_NAME,
             durable="enriched-articles-consumer-1",
             deliver_policy="all",
             manual_ack=True
         )
 
-        self.logger.info(f"Subscribed to {ENRICHED_SUBJECT}.")
+        self.logger.info(f"Subscribed to {SAVED_SUBJECT}.")
 
         async for msg in sub.messages:
             asyncio.create_task(

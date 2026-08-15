@@ -111,4 +111,4 @@ class ArticleProcessor:
         self.article_repo.fetch_all_data(table_name)
 
     def fetch_missing_data(self):
-        self.article_repo.fetch_missing_data()
+        return self.article_repo.fetch_missing_data()

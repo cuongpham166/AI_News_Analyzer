@@ -1,4 +1,4 @@
-from langdetect import detect
+from langdetect import detect, LangDetectException
 from nats.aio.msg import Msg
 from newspaper import Article
 import tldextract
@@ -23,23 +23,30 @@ class NormalizationProcessor:
     def is_duplicate(self, link):
         return link in self.enriched_links
 
-    def generate_hash_content(self,source,title,content):
+    def generate_hash_content(self,source,title,content)-> str:
         data = source + title + content
-        hash_value = hashlib.sha256(
+        return hashlib.sha256(
             data.encode("utf-8")
         ).hexdigest()
-        return hash_value
 
     async def process_message(self, msg:Msg) -> ProcessedArticle | None:
         raw_data = json.loads(msg.data.decode())
-        #raw_data = json.loads(msg["data"].decode())
+        #raw_data = json.loads(msg["data"].decode()) #Test
+
         link = raw_data.get("link")
         rss_date_str = raw_data.get("rss_pub_date")
         newsId = raw_data.get("newsId")
 
-        if not link or self.is_duplicate(link):
+        if not link:
+            self.logger.warning(
+                "Article has no link",
+                news_id=str(newsId),
+            )
+            return None
+
+        if self.is_duplicate(link):
             self.logger.debug(
-                "Duplicated News",
+                "Duplicated article",
                 news_id=str(newsId),
                 link=link,
             )
@@ -47,10 +54,28 @@ class NormalizationProcessor:
 
         article_obj = Article(link)
 
-        await asyncio.to_thread(article_obj.download)
-        await asyncio.to_thread(article_obj.parse)
+        try:
+            await asyncio.to_thread(article_obj.download)
+            await asyncio.to_thread(article_obj.parse)
+        except Exception:
+            self.logger.exception(
+                "Article download/parse failed",
+                news_id=str(newsId),
+                link=link,
+            )
+            raise
 
-        # --- timestamp logic ---
+        title = (article_obj.title or "").strip()
+        text = (article_obj.text or "").strip()
+
+        if not text:
+            self.logger.warning(
+                "Article contains no extractable text",
+                news_id=str(newsId),
+                link=link,
+            )
+            return None
+
         if rss_date_str:
             try:
                 dt_object = parsedate_to_datetime(rss_date_str)
@@ -65,17 +90,33 @@ class NormalizationProcessor:
         ext = tldextract.extract(link)
         domain_name = ext.domain.upper()
 
-        self.enriched_links.add(link)
+        try:
+            language = detect(text[:500])
+        except LangDetectException:
+            self.logger.warning(
+                "Unable to detect article language",
+                news_id=str(newsId),
+                link=link,
+            )
 
-        content_hash = self.generate_hash_content(source=domain_name,title=article_obj.title,content=article_obj.text)
+            language = "en"
+
+
+        content_hash = self.generate_hash_content(
+            source=domain_name,
+            title=article_obj.title,
+            content=article_obj.text
+        )
+
+        self.enriched_links.add(link)
 
         return ProcessedArticle(
             newsId=newsId,
-            title=article_obj.title,
+            title=title,
             publish_date=timestamp,
             source=domain_name,
             link=link,
-            language=detect(article_obj.text[:500]),
-            text=article_obj.text,
+            language=language,
+            text=text,
             content_hash=content_hash
         )

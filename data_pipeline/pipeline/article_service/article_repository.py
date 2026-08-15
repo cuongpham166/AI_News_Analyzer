@@ -79,10 +79,9 @@ class ArticleRepository:
                 sql = f.read()
             with self.conn.cursor() as cur:
                 cur.executemany(sql, [(source,) for source in sources])
-            self.conn.commit()
         except psycopg.Error as e:
             self.logger.exception("Unable to insert new source")
-            self.conn.rollback()
+
 
     def insert_topic_data(self, topics):
         try:
@@ -99,9 +98,12 @@ class ArticleRepository:
     def insert_news(self, news):
         try:
             self.insert_source([news["source"]])
+
             sql_file = f"{insertion_query_folder_path}insert_news_table.sql"
+
             with open(sql_file, "r") as f:
                 sql = f.read()
+
             with self.conn.cursor() as cur:
                 cur.execute(sql,
                             (news["newsId"],
@@ -117,17 +119,31 @@ class ArticleRepository:
 
                 if row is None:
                     cur.execute(
-                        "SELECT id FROM news WHERE link = %s",
-                        (news["link"],)
+                        """
+                        SELECT id
+                        FROM news
+                        WHERE link = %s
+                        """,
+                        (news["link"],),
                     )
-                    new_id = cur.fetchone()[0]
+
+                    result = cur.fetchone()
+
+                    if result is None:
+                        raise RuntimeError(
+                            f"News not found after insert: "
+                            f"{news['link']}"
+                        )
+
+                    news_id = result[0]
                 else:
-                    new_id = row[0]
+                    news_id = row[0]
             self.conn.commit()
-            return new_id
+            return news_id
         except psycopg.Error as e:
             self.logger.exception("Unable to insert new news")
             self.conn.rollback()
+            return None
 
     def insert_inference_news_entity(self, news_id, news_entity):
         try:

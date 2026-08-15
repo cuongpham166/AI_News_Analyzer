@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
 import uuid
 
-class RawArticle(BaseModel):
-    newsId: uuid.UUID
+class ArticleCandidate(BaseModel):
     title: str
     link: str
     summary: str

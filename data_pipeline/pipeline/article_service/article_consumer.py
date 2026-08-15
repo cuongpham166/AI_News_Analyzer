@@ -6,7 +6,7 @@ from nats.aio.msg import Msg
 
 from ai.responses.saved_inference_response import SavedInferenceResponse
 from data_pipeline.nats.client import create_js
-from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, SAVED_INFERENCE_SUBJECT,STREAM_NAME
+from data_pipeline.nats.streams import ensure_stream, ENRICHED_SUBJECT, AI_SUBJECT, SAVED_INFERENCE_SUBJECT,STREAM_NAME,SAVED_SUBJECT
 from data_pipeline.config.article_config import get_postgres_config
 from data_pipeline.pipeline.article_service.article_processor import ArticleProcessor
 from data_pipeline.pipeline.article_service.article_repository import ArticleRepository
@@ -32,27 +32,55 @@ class ArticleConsumer:
                 ),
                 timeout=10
             )
+            self.logger.debug("Saved inference article published",news_id=str(saved_result.newsId),seq=ack.seq)
+        except asyncio.TimeoutError:
+            self.logger.warning("Publish timeout",news_id=str(saved_result.newsId))
+
+    async def publish_saved_article(self, article: dict):
+        try:
+            ack = await asyncio.wait_for(
+                self.js.publish(
+                    SAVED_SUBJECT,
+                    json.dumps(article).encode(),
+                ),
+                timeout=10,
+            )
 
             self.logger.debug(
-                "Saved inference article published",
-                news_id=str(saved_result.newsId),
+                "Saved article published",
+                news_id=str(article["newsId"]),
                 seq=ack.seq,
             )
+
         except asyncio.TimeoutError:
             self.logger.warning(
-                "Publish timeout",
-                news_id=str(saved_result.newsId)
+                "Saved article publish timeout",
+                news_id=str(article["newsId"]),
             )
+            raise
 
     async def process_enriched_message(self, msg:Msg):
         enriched_article = json.loads(msg.data.decode())
         try:
-            self.article_processor.insert_news(enriched_article)
-            self.logger.exception(
+            news_id = self.article_processor.insert_news(enriched_article)
+
+            if news_id is None:
+                raise RuntimeError(
+                    f"Could not save news "
+                    f"{enriched_article['newsId']}"
+                )
+
+            await self.publish_saved_article(
+                enriched_article
+            )
+
+            await msg.ack()
+
+            self.logger.info(
                 "Enriched news saved.",
                 news_id=str(enriched_article["newsId"])
             )
-            await msg.ack()
+
         except Exception as e:
             self.logger.exception(
                 "Saving enriched news failed.",
@@ -62,9 +90,10 @@ class ArticleConsumer:
 
     async def process_ai_message(self, msg):
         ai_article = json.loads(msg.data.decode())
+
         try:
             if self.article_processor.insert_inference_news(inference_news=ai_article):
-                self.logger.exception(
+                self.logger.info(
                     "Inference news saved.",
                     news_id=str(ai_article["newsId"])
                 )
@@ -109,33 +138,32 @@ class ArticleConsumer:
             await self.process_ai_message(msg)
 
 
-    async def publish_article(self, article: dict):
-        await self.js.publish(
-            ENRICHED_SUBJECT,
-            json.dumps(article).encode()
-        )
-
-    """
     async def recover_missing_data(self):
         print("recover_missing_data")
         missing_news = self.article_processor.fetch_missing_data()
         for row in missing_news:
-            sql_timestamp = row[1]
+            sql_timestamp = row[2]
             epoch_seconds = int(sql_timestamp.timestamp())
 
-            ext = tldextract.extract(row[2])
+            ext = tldextract.extract(row[3])
             domain_name = ext.domain.upper()
 
             enriched_article = {
-                "title": row[0],
+                "newsId":str(row[0]),
+                "title": row[1],
                 "publish_date": epoch_seconds,
                 "source": domain_name,
-                "link": row[2],
-                "language": row[3],
-                "text": row[4]
+                "link": row[3],
+                "language": row[4],
+                "text": row[5],
+                "content_hash": row[6],
             }
-            await self.publish_article(enriched_article)
-    """
+
+            await self.js.publish(
+                SAVED_SUBJECT,
+                json.dumps(enriched_article).encode()
+            )
+
 
 async def main():
     nc, js = await create_js()
@@ -148,7 +176,8 @@ async def main():
         article_consumer = ArticleConsumer(js, article_processor)
         await asyncio.gather(
             article_consumer.retrieve_enriched_articles(),
-            article_consumer.retrieve_ai_articles()
+            article_consumer.retrieve_ai_articles(),
+            article_consumer.recover_missing_data(),
         )
     finally:
         conn.close()

@@ -21,8 +21,8 @@ async  def start_pipeline():
     inference_processor = InferenceProcessor()
     await asyncio.gather(
         inference_main(inference_processor),
-        ingestion_main(),
-        normalization_main(),
+        #ingestion_main(),
+        #normalization_main(),
         article_main(),
         indexing_main(),
         graph_main()

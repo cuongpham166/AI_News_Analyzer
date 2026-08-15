@@ -19,7 +19,7 @@ from data_pipeline.pipeline.indexing_service.indexing_processor import IndexingP
 from data_pipeline.pipeline.indexing_service.indexing_test_repository import IndexingTestRepository
 from data_pipeline.pipeline.inference_service.inference_processor import InferenceProcessor
 from data_pipeline.pipeline.ingestion_service.ingestion_processor import IngestionProcessor
-from data_pipeline.config.ingestion_config import get_rss_urls
+from data_pipeline.config.ingestion_config import get_rss_urls,get_test_rss_urls
 from data_pipeline.pipeline.normalization_service.normalization_processor import NormalizationProcessor
 from data_pipeline.config.indexing_config import get_elasticsearch_config
 from data_pipeline.pipeline.indexing_service.indexing_repository import IndexingRepository
@@ -86,7 +86,7 @@ class DemoPipeline:
 
 
 async def run_demo():
-    urls = get_rss_urls()
+    urls = get_test_rss_urls()
     graph_config = get_neo4j_config()
     driver = GraphDatabase.driver(
         graph_config["uri"],
@@ -125,6 +125,7 @@ async def run_demo():
         )
 
         published_raw_article = await demo_pipeline.run_ingestion_service()
+        #print("published_raw_article", published_raw_article)
         published_processed_article = await demo_pipeline.run_normalization_service(published_raw_article)
         #print("published_processed_article: ", published_processed_article)
         published_inference_article = await demo_pipeline.run_inference_service(published_processed_article)
