@@ -68,8 +68,11 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
 
 ![Overview Structure](/images/Structure.png)
 
-### Monitoring Structure
+### Server Monitoring Overview
 ![Monitoring Structure](/images/Monitoring.png)
+
+### Data Pipeline Overview
+![Overview Structure](/images/Data_pipeline.png)
 
 ### Database Overview
 #### PostgresSQL: The Relational Backbone of the application
@@ -119,33 +122,33 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
   - **(:Source)-[:PUBLISHED]->(:News)**
   - **(:News)-[:TAGGED_WITH]->(:Key Phrase)**
 
-### Dual Engine RAG Overview
-![RAG Workflow](/images/RAG.png)
-
 ### Inference Overview
 
 The project utilizes a custom inference approach using Hugging face Transformers (for PyTorch models) and ONNX Runtime (for ONNX models) for high performance model execution. The PyTorch model can be converted to ONNX by the written script. Rather than relying on high level pipeline and abstractions, the preprocessing (tokenization) and post-processing (logits transformation) are implemented manually to ensure the control over the inference lifecycle
 
-| Task                      | Model                         | Format         | Task                                                                                           |
-|:--------------------------|:------------------------------|:---------------|:-----------------------------------------------------------------------------------------------|
-| Topic Classification      | Fine-tuned DistilBERT         | ONNX INT8      | Categorizing news into 8 topics (Politics, Economy, Tech, etc.)                                |
-| Sentiment Analysis        | distilbert-base-uncased-sst-2 | ONNX INT8      | Binary classification (Positive/Negative) to calculate "Global Temperature" metrics.           |
-| News Entities Recognition | gliner-bi-base-v2             | PyTorch FP32   | Identifying and categorize 4 entity types including Person, Location, Event, and Organization. |
-| Summarization             | distilbart-cnn-12-6           | PyTorch FP32   | Generating summary from long-form article text                                                 |
+| Task                      | Model                              | Format         | Task                                                                                                                                                                                                                              |
+|:--------------------------|:-----------------------------------|:---------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Topic Classification      | Fine-tuned DistilBERT              | ONNX INT8      | Categorizing news into 8 topics (Politics, Economy, Tech, etc.)                                                                                                                                                                   |
+| Sentiment Analysis        | distilbert-base-uncased-sst-2      | ONNX INT8      | Binary classification (Positive/Negative) to calculate "Global Temperature" metrics.                                                                                                                                              |
+| News Entities Recognition | gliner-bi-base-v2                  | PyTorch FP32   | Identifying and categorize 4 entity types including Person, Location, Event, and Organization.                                                                                                                                    |
+| Summarization             | distilbart-cnn-12-6                | PyTorch FP32   | Generating summary from long-form article text                                                                                                                                                                                    |
+| Keyphrase Extraction      | KeyBERT (all-MiniLM-L6-v2) + spaCy | PyTorch FP32   | Extracting relevant and diverse 1–4 word keyphrases using KeyBERT semantic similarity and MMR (Maximal Marginal Relevance), enriched with named entities and filtered, normalized, and deduplicated to return the top 10 phrases. |
 
-### Data Flow Overview
-![Overview Structure](/images/Flow_v2.png)
-The platform follows a clean, event-driven data pipeline that moves news articles from raw ingestion to fully analyzed and searchable content. The entire flow is **asynchronous and decoupled** thanks to **NATS** messaging, allowing independent scaling of each stage.
-1. **Raw Ingestion** — RSS Scrapper periodically fetches articles from RSS sources and publishes them as raw events to the `news.raw` NATS topic.
-2. **Enrichment** — The Data Enrichment service consumes data from `news.raw` and performs language detection, deduplication, text cleaning, and metadata extraction, then publishes the improved articles to the `news.enriched` topic.
-3. **AI Analysis** — The Inference Bridge consumes from `news.enriched` and sends data to the Inference Layer for processing. Analyzed results are published to the `news.ai` topic.
-4. **Storage** — The PostgresBridge and ElasticBridge consume the results and persist them:
-  - **PostgreSQL (Structured metadata)** — First, PostgresBridge consumes data from `news.enriched` and sends it to PostgresLayer for persistence. Later, it also consumes from `news.ai` to update the PostgreSQL data with new inference data.
-  - **Neo4j (Relational data)** — First, Neo4jBridge consumes data from `news.enriched` and sends it to Neo4jLayer for persistence. Later, it also consumes from `news.ai` to update the Neo4j data with new inference data.
-  - **ElasticSearch (Inference data)** — ElasticBridge consumes data from `news.ai`and sends it to ElasticLayer for persistence. (Kibana dashboards for visualization)
+### Dual Engine RAG Overview
+![RAG Workflow](/images/RAG.png)
+
+#### Purpose & Use case
+Two independent RAG pathways are built to achieve total coverage over complex intelligence feeds:
+- **The Vector & Network Pathway (Neo4j):** Built to answer relational questions. It excels at multi-hop analysis—uncovering hidden connections between changing actors, locations, and events, even if those connections span across completely different articles.
+- **The Lexical & Metadata Pathway (Elasticsearch):** Built to answer precise situational questions. It excels at scanning thousands of words of raw text for precise tracking, while simultaneously filtering metrics like real-time temporal windows (e.g., now-24h) and sentiment scores.
+#### Used Models
+- **nomic-embed-text:** Generates dense vector embeddings on processed fields (title + summary + entities)
+- **BAAI/bge-reranker-large:** Improves search/retrieval quality
+- **Llama 3.2 3B:** Generates Local Inference
 
 
-### Optimization & Evaluation Overview
+### Optimization & Evaluation
+
 #### Fine-Tuning
 - The DistilBERT model was fine-tuned on a balanced multi-class news classification dataset containing 8 categories.
 - **Dataset**:
@@ -158,6 +161,7 @@ The platform follows a clean, event-driven data pipeline that moves news article
   - Weight Decay: 0.01 | Warmup Ratio: 0.1 \
   - Optimizer: AdamW | Scheduler: Linear | Evaluation Strategy: Per Epoch\
   - Hardware: AMD Ryzen 5 PRO 5650GE (CPU)
+  
 #### Evaluation
 - **distilbert-base-uncased-sst-2**
   - The sentiment classifier was evaluated on a validation dataset of 3,000 samples using both the original PyTorch FP32 model and the quantized ONNX INT8 model.
@@ -166,22 +170,14 @@ The platform follows a clean, event-driven data pipeline that moves news article
   - The topic classifier was evaluated on a validation dataset of 6,000 samples using both the original PyTorch FP32 model and the quantized ONNX INT8 model.
   - **Dataset (Total Samples: 6000)**: Economy (982), Entertainment(655), Health(648), Politics(641), Science(145), Sports(915), Technology(982) and World(1032)
 
-### Dual Engine RAG
-#### Purpose & Use case
-Two independent RAG pathways are built to achieve total coverage over complex intelligence feeds:
-- **The Vector & Network Pathway (Neo4j):** Built to answer relational questions. It excels at multi-hop analysis—uncovering hidden connections between changing actors, locations, and events, even if those connections span across completely different articles.
-- **The Lexical & Metadata Pathway (Elasticsearch):** Built to answer precise situational questions. It excels at scanning thousands of words of raw text for precise tracking, while simultaneously filtering metrics like real-time temporal windows (e.g., now-24h) and sentiment scores.
-#### Used Models
-- **nomic-embed-text:** Generates dense vector embeddings on processed fields (title + summary + entities)
-- **BAAI/bge-reranker-large:** Improves search/retrieval quality
-- **Llama 3.2 3B:** Generates Local Inference
-## Model Benchmarking & Performance Comparison
-### DistilBERT Fine-Tuning
+#### Result
+
+##### 1. DistilBERT Fine-Tuning
 | Accuracy | Weighted F1 Score | Eval Loss |
 |----------|-------------------|-----------|
 | 80.07%   | 79.90%            | 0.675     |
 
-### ONNX INT8 Models Evaluation
+##### 2. ONNX INT8 Models Evaluation
 | distilbert-base-uncased-sst-2 | Accuracy | F1 Score |
 |-------------------------------|----------|----------|
 | PyTorch FP32                  | 83.33%   | 0.8315   |
@@ -193,7 +189,7 @@ Two independent RAG pathways are built to achieve total coverage over complex in
 | PyTorch FP32          | 76.32%   | 0.75     |
 | ONNX INT8             | 75.85%   | 0.7415   |
 
-### Comprehensive 3B-Class Model Evaluation Matrix
+##### 3. Comprehensive 3B-Class Model Evaluation Matrix
 - To ensure maximum factual accuracy and operational efficiency, some small language models (SLMs) are benchmarked locally via Ollama using the exact same user query and retrieved context dossiers.
 - **Test Query**: Analyze the security implications regarding the UNRWA compound incident in East Jerusalem over the last 24 hours. Who are the key organizations and people tied to this development?
 
@@ -205,6 +201,7 @@ Two independent RAG pathways are built to achieve total coverage over complex in
 | **SmolLM 3 3B**       | **125.87s**    | Moderate          | **Medium**         | **Context Bleeding.** Included unrelated geopolitical actors (Haiti context) into the Jerusalem report.        |
 | **Ministral 3 3B**    | **149.49s**    | **Excellent**     | **None**           | **Best Analyst Prose.** Highly rigorous, explicitly disqualified unrelated entities, but 2x slower than Llama. |
 | **Phi-3.5 Mini 3.8B** | **411.50s**    | Moderate          | **Medium**         | **Too Slow / Over-Confidence.** Extrapolated unmentioned entities (Arab League/EU) via outside knowledge.      |
+
 
 **==============================Model: LLAMA 3.2 3B============================**
 ```
