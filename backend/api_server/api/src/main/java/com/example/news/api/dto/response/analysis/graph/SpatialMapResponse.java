@@ -16,4 +16,6 @@ public class SpatialMapResponse {
     private double longitude;
     private int count;
     private Double avgSentiment;
+    private String country;
+    private String countryCode;
 }

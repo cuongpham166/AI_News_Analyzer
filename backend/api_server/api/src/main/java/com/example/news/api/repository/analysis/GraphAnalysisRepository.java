@@ -77,7 +77,7 @@ public class GraphAnalysisRepository {
                 .toList();
     }
 
-    public List<GeopoliticalHotspotResponse> getGeopoliticalHotspotWithRelativeInterval (String intervalUnit, int amount){
+    /*public List<GeopoliticalHotspotResponse> getGeopoliticalHotspotWithRelativeInterval (String intervalUnit, int amount){
         long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
         long startEpoch = rangeResult[0];
         long endEpoch = rangeResult[1];
@@ -95,8 +95,32 @@ public class GraphAnalysisRepository {
                 .all()
                 .stream()
                 .toList();
-    }
+    }*/
 
+    public List<GeopoliticalHotspotResponse> getGeopoliticalHotspotWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getGeopoliticalHotspotQueryNew())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(GeopoliticalHotspotResponse.class)
+                .mappedBy((typeSystem, record) -> new GeopoliticalHotspotResponse(
+                        record.get("location").asString(),
+                        record.get("topic").asString(),
+                        record.get("articleCount").asInt(),
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("aliases").asList(Value::asString),
+                        record.get("latitude").asDouble(),
+                        record.get("longitude").asDouble(),
+                        record.get("country").asString(),
+                        record.get("countryCode").asString()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
     public List<NarrativeBridgeResponse> getNarrativeBridgeWithRelativeInterval (String intervalUnit, int amount){
         long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
         long startEpoch = rangeResult[0];
@@ -174,7 +198,9 @@ public class GraphAnalysisRepository {
                         record.get("latitude").asDouble(),
                         record.get("longitude").asDouble(),
                         record.get("count").asInt(),
-                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble()
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("country").asString(),
+                        record.get("countryCode").asString()
                 ))
                 .all()
                 .stream()

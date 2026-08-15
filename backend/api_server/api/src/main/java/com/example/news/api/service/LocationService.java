@@ -1,18 +1,19 @@
 package com.example.news.api.service;
-import com.example.news.api.dto.response.news.DetailedNewsResponse;
 import com.example.news.api.entity.EntityEntity;
 import com.example.news.api.entity.LocationCoordinatesEntity;
-import com.example.news.api.repository.EntityRepository;
-import com.example.news.api.repository.EntityTypeRepository;
+import com.example.news.api.repository.entity.EntityRepository;
+import com.example.news.api.repository.entity.EntityTypeRepository;
 import com.example.news.api.repository.GraphDataRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.news.api.repository.LocationCoordinatesRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.springframework.http.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
@@ -44,96 +45,240 @@ public class LocationService {
         this.graphDataRepository = graphDataRepository;
     }
 
-    public void syncLocationCoordinatesEntity(){
+    public void syncCoordinationDataFromPostgres(){
+        List<LocationCoordinatesEntity> locations = locationRepository.findAll();
+        for (LocationCoordinatesEntity location : locations) {
+            graphDataRepository.syncCoordinationDataFromPostgres(
+                    location.getLocationName(),
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    location.getCountry(),
+                    location.getCountryCode()
+            );
+            log.info(
+                    "Synced location to Neo4j: {} -> {}, {} ({}, {})",
+                    location.getLocationName(),
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    location.getCountry(),
+                    location.getCountryCode()
+            );
+        }
+    }
+    public void syncLocationToLocationCoordinatesTable(){
         List<String> locationNames = getAllLocationEntity();
         List<LocationCoordinatesEntity> locationCoordinatesList = new ArrayList<>();
-
-        for (String locationName : locationNames) {
-            locationCoordinatesList.add(getOrCreateCoordinates(locationName));
-            try {
-                Thread.sleep(2500); // Wait 2.5 seconds between requests
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+        for (String originalLocationName : locationNames) {
+            Optional<LocationCoordinatesEntity> geocoded = locationRepository.findByLocationName(originalLocationName);
+            Optional<EntityEntity> foundEntity = entityRepository.findByValue(originalLocationName);
+            if (geocoded.isEmpty() && foundEntity.isPresent()) {
+                LocationCoordinatesEntity newEntity = new LocationCoordinatesEntity();
+                newEntity.setId(foundEntity.get().getId());
+                newEntity.setLocationName(originalLocationName);
+                newEntity.setLongitude(0.0);
+                newEntity.setLatitude(0.0);
+                newEntity.setCountry("Unknown");
+                newEntity.setCountryCode("XX");
+                locationCoordinatesList.add(newEntity);
             }
         }
+        locationRepository.saveAll(locationCoordinatesList);
+    }
 
-        try{
-            locationRepository.saveAll(locationCoordinatesList);
-            for (LocationCoordinatesEntity locationCoordinate: locationCoordinatesList){
-                if(Objects.equals(locationCoordinate.getLocationName(), "UN Headquarters") ||
-                    Objects.equals(locationCoordinate.getLocationName(), "United Nations headquarters")
-                ){
-                    graphDataRepository.updateUnitedNationsCoordinates(
-                            locationCoordinate.getLatitude(),
-                            locationCoordinate.getLongitude()
+    @Async
+    public void syncLocationCoordinatesEntity() {
+
+        List<String> locationNames = getAllLocationEntity();
+
+        for (String originalLocationName : locationNames) {
+
+            Optional<LocationCoordinatesEntity> geocoded = getOrCreateCoordinates(originalLocationName);
+
+            if (geocoded.isEmpty()) {
+                log.warn("Skipping location because geocoding failed: {}",originalLocationName);
+                sleepBetweenRequests();
+                continue;
+            }
+
+            LocationCoordinatesEntity geocodedLocation = geocoded.get();
+
+            Optional<LocationCoordinatesEntity> existing =
+                    locationRepository.findByLocationName(
+                            originalLocationName
                     );
-                }else{
+
+            LocationCoordinatesEntity location;
+
+            if (existing.isPresent()) {
+
+                location = existing.get();
+                location.setLatitude(geocodedLocation.getLatitude());
+                location.setLongitude(geocodedLocation.getLongitude());
+                location.setCountry(geocodedLocation.getCountry());
+                location.setCountryCode(geocodedLocation.getCountryCode());
+
+                log.info("Updating existing location: {}",originalLocationName);
+
+            } else {
+                location = geocodedLocation;
+                log.info("Creating new location: {}",originalLocationName);
+            }
+
+            try {
+
+                locationRepository.save(location);
+
+                if (Objects.equals(originalLocationName,"UN Headquarters")
+                        || Objects.equals(originalLocationName,"United Nations headquarters")) {
+
+                    graphDataRepository.updateUnitedNationsCoordinates(
+                            location.getLatitude(),
+                            location.getLongitude(),
+                            location.getCountry(),
+                            location.getCountryCode()
+                    );
+
+                } else {
                     graphDataRepository.updateCoordinates(
-                        locationCoordinate.getLocationName(),
-                        locationCoordinate.getLatitude(),
-                        locationCoordinate.getLongitude()
+                            originalLocationName,
+                            location.getLatitude(),
+                            location.getLongitude(),
+                            location.getCountry(),
+                            location.getCountryCode()
                     );
                 }
+
+                log.info(
+                        "Successfully synchronized location: {} -> {}, {} ({})",
+                        originalLocationName,
+                        location.getLatitude(),
+                        location.getLongitude(),
+                        location.getCountryCode()
+                );
+
+            } catch (Exception e) {
+
+                log.error(
+                        "Failed to save/update location: {}",
+                        originalLocationName,
+                        e
+                );
             }
-            log.info("Coordinates: {}", locationCoordinatesList);
-        }catch (Exception e) {
-            log.error("Failed to save location coordinates", e);
+
+            sleepBetweenRequests();
+        }
+
+        log.info("Location synchronization finished.");
+    }
+
+    private void sleepBetweenRequests() {
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Location synchronization interrupted.");
         }
     }
 
-    public List<String> getAllLocationEntity(){
+    public List<String> getAllLocationEntity() {
         Optional<Long> foundId = entityTypeRepository.findIdByName("location");
-        if(foundId.isPresent()){
+        if (foundId.isPresent()) {
             Long entityTypeId = foundId.get();
             return entityRepository.findValuesByEntityTypeId(entityTypeId);
         }
         return new ArrayList<>();
     }
 
-    private LocationCoordinatesEntity getOrCreateCoordinates(String locationName) {
-        String tempLocationName = locationName;
-        String formatedLocationName = locationName.trim().toLowerCase();
+    private Optional<LocationCoordinatesEntity> getOrCreateCoordinates(
+            String originalLocationName) {
 
-        if (locationName.trim().isEmpty()) {
-            return new LocationCoordinatesEntity("Unknown", 0.0, 0.0);
+        if (originalLocationName == null || originalLocationName.trim().isEmpty()) {
+            return Optional.empty();
         }
 
-        switch (formatedLocationName) {
+        String tempLocationName =originalLocationName;
+
+        String formattedLocationName = originalLocationName.trim().toLowerCase();
+
+        String searchLocationName = originalLocationName;
+
+        switch (formattedLocationName) {
             case "un headquarters":
             case "united nations headquarters":
-                locationName = "United Nations Headquarters";
+                searchLocationName = "United Nations Headquarters";
                 break;
         }
 
-        return fetchFromExternalGeocodingApi(locationName,tempLocationName);
+        return fetchFromExternalGeocodingApi(searchLocationName,tempLocationName);
     }
 
 
-    private LocationCoordinatesEntity fetchFromExternalGeocodingApi(String locationName, String tempLocationName) {
+    private Optional<LocationCoordinatesEntity>
+    fetchFromExternalGeocodingApi(
+            String searchLocationName,
+            String originalLocationName) {
+
         try {
-            String url = "https://nominatim.openstreetmap.org/search?q="
-                    + URLEncoder.encode(locationName, StandardCharsets.UTF_8)
-                    + "&format=json&limit=1";
+
+            String url = "https://nominatim.openstreetmap.org/search?q="+ URLEncoder.encode(searchLocationName,StandardCharsets.UTF_8)
+                            + "&format=json"
+                            + "&limit=1"
+                            + "&addressdetails=1";
+
             HttpHeaders headers = new HttpHeaders();
-            headers.set("User-Agent", "Spring-Boot-Analytics-App");
+            headers.set(HttpHeaders.USER_AGENT,"MyNewsAnalyticsApp/1.0 (contact: cuongpham@gmail.com)");
+
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            var response = restTemplate.exchange(url, HttpMethod.GET, entity, JsonNode.class);
+            var response = restTemplate.exchange(url,HttpMethod.GET,entity,JsonNode.class);
             JsonNode body = response.getBody();
-            if (body != null && body.isArray() && !body.isEmpty()) {
-                JsonNode firstMatch = body.get(0);
-                double lat = firstMatch.get("lat").asDouble();
-                double lon = firstMatch.get("lon").asDouble();
-                if(locationName.equals("United Nations Headquarters")){
-                    return new LocationCoordinatesEntity(tempLocationName, lat, lon);
-                }
-                return new LocationCoordinatesEntity(locationName, lat, lon);
+
+            if (body == null|| !body.isArray() || body.isEmpty()) {
+                log.warn("No geocoding result for: {}",searchLocationName);
+
+                return Optional.empty();
             }
+
+            JsonNode firstMatch = body.get(0);
+            JsonNode latNode = firstMatch.path("lat");
+            JsonNode lonNode = firstMatch.path("lon");
+
+            if (latNode.isMissingNode()
+                    || lonNode.isMissingNode()) {
+
+                log.warn(
+                        "Geocoding result has no coordinates: {}",
+                        searchLocationName
+                );
+
+                return Optional.empty();
+            }
+
+            double latitude = latNode.asDouble();
+            double longitude = lonNode.asDouble();
+
+
+            JsonNode address = firstMatch.path("address");
+            String country = address.path("country").asText("Unknown");
+            String countryCode = address.path("country_code").asText("XX").toUpperCase();
+
+            return Optional.of(new LocationCoordinatesEntity(
+                            originalLocationName,
+                            latitude,
+                            longitude,
+                            country,
+                            countryCode
+                    )
+            );
+
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            log.warn("Nominatim rate limit reached for: {}",searchLocationName);
+            return Optional.empty();
+
         } catch (Exception e) {
-            log.error("Failed to fetch geocode for location: {}", locationName, e);
+            log.error("Failed to fetch geocode for location: {}",searchLocationName,e);
+            return Optional.empty();
         }
-        return new LocationCoordinatesEntity(locationName, 0.0, 0.0);
     }
 
 }

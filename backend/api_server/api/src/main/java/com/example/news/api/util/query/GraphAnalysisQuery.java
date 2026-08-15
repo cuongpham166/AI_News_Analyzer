@@ -45,10 +45,10 @@ public class GraphAnalysisQuery {
         // Interactive Map (Choropleth)
         return """
             MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)-[:COVERS]->(t:Topic)
-            WHERE n.publish_date >= datetime({epochMillis: $startEpoch}) 
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
                 AND n.publish_date <= datetime({epochMillis: $endEpoch})
-            RETURN 
-                l.name AS location, 
+            RETURN
+                l.name AS location,
                 t.name AS topic, 
                 count(n) AS articleCount, 
                 round(avg(n.sentiment), 2) AS avgSentiment
@@ -57,6 +57,39 @@ public class GraphAnalysisQuery {
         """;
     }
 
+    public String getGeopoliticalHotspotQueryNew() {
+        return """
+            MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)-[:COVERS]->(t:Topic)
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+                AND n.publish_date <= datetime({epochMillis: $endEpoch})
+                AND l.latitude <> 0.0
+                AND l.longitude <> 0.0
+            WITH
+                l.name AS location,
+                t.name AS topic,
+                count(n) AS articleCount,
+                round(avg(n.sentiment), 2) AS avgSentiment,
+                l.latitude AS latitude,
+                l.longitude as longitude,
+                head(collect(DISTINCT l.name)) AS primaryLocation,
+                collect(DISTINCT l.name) AS aliases,
+                l.country AS country,
+                l.countryCode AS countryCode
+            RETURN
+                location,
+                topic,
+                articleCount,
+                avgSentiment,
+                latitude,
+                longitude,
+                primaryLocation,
+                aliases,
+                country,
+                countryCode
+            ORDER BY articleCount DESC
+            LIMIT 50
+        """;
+    }
     public String getNarrativeBridgeQuery() {
         // Dynamic Word Cloud
         return """
@@ -124,14 +157,18 @@ public class GraphAnalysisQuery {
                 head(collect(DISTINCT l.name)) AS primaryLocation,
                 collect(DISTINCT l.name) AS aliases,
                 count(n) AS totalCount,
-                sum(n.sentiment) AS totalSentimentSum
+                sum(n.sentiment) AS totalSentimentSum,
+                l.country AS country,
+                l.countryCode AS countryCode
             RETURN 
                 primaryLocation AS location,
                 aliases,
                 latitude,
                 longitude,
                 totalCount AS count,
-                round((totalSentimentSum / totalCount), 2) AS avgSentiment
+                round((totalSentimentSum / totalCount), 2) AS avgSentiment,
+                country,
+                countryCode
             ORDER BY count DESC
             LIMIT 50
         """;

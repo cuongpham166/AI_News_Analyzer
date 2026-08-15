@@ -7,9 +7,11 @@ import com.example.news.api.dto.internal.InferenceNews;
 import com.example.news.api.dto.response.analysis.*;
 import com.example.news.api.dto.response.analysis.graph.*;
 import com.example.news.api.dto.response.analysis.index.*;
+import com.example.news.api.dto.response.analysis.jpa.MetaDataDistributionResponse;
 import com.example.news.api.service.LocationService;
 import com.example.news.api.service.analysis.GraphAnalysisService;
 import com.example.news.api.service.analysis.IndexAnalysisService;
+import com.example.news.api.service.analysis.JpaAnalysisService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +24,18 @@ public class AnalysisController {
     private final GraphAnalysisService graphAnalysisService;
     private final IndexAnalysisService indexAnalysisService;
     private final LocationService locationService;
+    private final JpaAnalysisService jpaAnalysisService;
+
     public AnalysisController(
             GraphAnalysisService graphAnalysisService,
             IndexAnalysisService indexAnalysisService,
-            LocationService locationService
+            LocationService locationService,
+            JpaAnalysisService jpaAnalysisService
     ) {
         this.graphAnalysisService = graphAnalysisService;
         this.indexAnalysisService = indexAnalysisService;
         this.locationService = locationService;
+        this.jpaAnalysisService = jpaAnalysisService;
     }
 
     @Operation(summary = "Visualizes strong directional entity pairings and connection pathways using flow-based Sankey diagrams.")
@@ -264,5 +270,19 @@ public class AnalysisController {
     ){
         SentimentVolumeTimelineResponse data = indexAnalysisService.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @GetMapping("/metadata")
+    public ResponseEntity<ApiResponse<MetaDataDistributionResponse>> getMetaDataDistribution(){
+        MetaDataDistributionResponse data = jpaAnalysisService.getMetaDataDistribution();
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @GetMapping("sync_location")
+    public ResponseEntity<String> syncLocationCoordinatesEntity(){
+        //locationService.syncLocationCoordinatesEntity();
+        locationService.syncCoordinationDataFromPostgres();
+        return ResponseEntity.accepted()
+                .body("Location synchronization started.");
     }
 }

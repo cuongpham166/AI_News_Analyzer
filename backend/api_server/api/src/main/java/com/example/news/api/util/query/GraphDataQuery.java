@@ -24,4 +24,15 @@ public class GraphDataQuery {
                 l.longitude = $longitude
         """;
     }
+
+    public String syncCoordinationDataFromPostgres(){
+        return """
+        MATCH (l:Location {name: $name})
+        SET l.latitude = $latitude,
+            l.longitude = $longitude,
+            l.country = $country,
+            l.countryCode = $countryCode
+        RETURN l
+        """;
+    }
 }

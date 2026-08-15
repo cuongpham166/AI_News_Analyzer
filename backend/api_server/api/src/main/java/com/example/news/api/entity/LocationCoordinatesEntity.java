@@ -26,14 +26,22 @@ public class LocationCoordinatesEntity {
     @Column(nullable = false)
     private Double longitude;
 
+    @Column(nullable = false)
+    private String country;
+
+    @Column(name = "country_code", nullable = false)
+    private String countryCode;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     public LocationCoordinatesEntity() {}
 
-    public LocationCoordinatesEntity(String locationName, Double latitude, Double longitude) {
+    public LocationCoordinatesEntity(String locationName, Double latitude, Double longitude, String country, String countryCode) {
         this.locationName = locationName;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.country = country;
+        this.countryCode = countryCode;
     }
 }
