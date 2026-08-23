@@ -13,6 +13,7 @@
     "@mantine/core": "^9.0.2",
     "@mantine/dates": "^9.5.1",
     "@mantine/hooks": "^9.0.2",
+    "@mantine/notifications": "^9.5.1",
     "@phosphor-icons/react": "^2.1.10",
     "@recharts/devtools": "^0.0.11",
     "@tanstack/react-query": "^5.101.4",

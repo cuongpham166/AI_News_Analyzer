@@ -1,4 +1,7 @@
-import type { GlobalTrendType } from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalTrendsType.ts';
+import type {
+  GlobalTimelineBucket,
+  GlobalTrendType,
+} from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalTrendsType.ts';
 
 export interface TopicGrowthChartData {
   date: string;
@@ -7,9 +10,9 @@ export interface TopicGrowthChartData {
 }
 
 export const getTopicGrowthData = (
-  data: GlobalTrendType,
+  data: GlobalTimelineBucket[],
 ): TopicGrowthChartData[] => {
-  return data.timeline.map((item) => ({
+  return data.map((item) => ({
     date: item.date,
     articleCount: item.articleCount,
     topics: item.topTopics,

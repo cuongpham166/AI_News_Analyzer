@@ -2,23 +2,34 @@ import { Box, Grid, Stack, Title, Text, SegmentedControl } from '@mantine/core';
 import DashboardCard from '@/components/generic/DashboardCard';
 import ConnectionNetwork from '@/components/NetworkLab/PowerCouples/components/ConnectionNetwork';
 import ConnectionSentiment from '@/components/NetworkLab/PowerCouples/components/ConnectionSentiment';
+import ConnectionStability from '@/components/NetworkLab/PowerCouples/components/ConnectionStability';
 import { useState } from 'react';
-import PowerCoupleData from '@/shared/test_data/PowerCoupleData.ts';
-const PowerCouplesCard = () => {
-  const [view, setView] = useState<
-    'relationships' | 'sentiment'
-  >('sentiment');
+import type { PowerCouple } from '@/shared/types/analysis/network_lab/PowerCouple.ts';
+
+interface Props {
+  powerCouple?: PowerCouple[];
+}
+const PowerCouplesCard = ({ powerCouple }: Props) => {
+  const [view, setView] = useState<'relationships' | 'sentiment' | 'stability'>(
+    'relationships',
+  );
 
   const loadView = () => {
     switch (view) {
       case 'relationships':
-        return <ConnectionNetwork data={PowerCoupleData.data} />;
-        case 'sentiment':
-          return <ConnectionSentiment data={PowerCoupleData.data} />;
+        return (
+          <ConnectionNetwork powerCouple={powerCouple}/>
+        );
+      case 'sentiment':
+        return (
+          <ConnectionSentiment powerCouple={powerCouple}/>
+        );
+        case 'stability':
+          return <ConnectionStability powerCouple={powerCouple} />;
       default:
         return <></>;
     }
-  }
+  };
   return (
     <DashboardCard
       title='Power Connections'
@@ -30,6 +41,7 @@ const PowerCouplesCard = () => {
           data={[
             { label: 'Relationships', value: 'relationships' },
             { label: 'Sentiment', value: 'sentiment' },
+            { label: 'Stability', value: 'stability' },
           ]}
         />
       }

@@ -1,48 +1,45 @@
 import DashboardSection from '@/components/generic/DashboardSection';
-import type { AllianceNetwork } from '@/shared/types/analysis/AllianceNetwork.ts';
-import { Box, Flex } from '@mantine/core';
+import type { AllianceNetwork } from '@/shared/types/analysis/network_lab/AllianceNetwork.ts';
+import { Box, Group, Select, Text } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
-import { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
-import EmptyChartState
-  from '@/components/NetworkLab/OrganizationConnections/components/OrganizationCoverage/components/EmptyChartState.tsx';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import { ThemeColors } from '@/shared/constants/Colors.ts';
+import {
+  TOP_N_OPTIONS,
+  truncateLabel,
+} from '@/components/NetworkLab/PowerCouples/components/powerCouples.utils.ts';
+
 interface OrganizationCoverageProps {
-  data: AllianceNetwork[];
+  allianceNetwork?: AllianceNetwork[];
   height?: number;
 }
 
-function hasVariation(
-  data: AllianceNetwork[],
-  selector: (item: AllianceNetwork) => number,
-) {
-  return new Set(data.map(selector)).size > 1;
-}
-
 const OrganizationCoverage = ({
-  data,
+  allianceNetwork,
   height = 450,
 }: OrganizationCoverageProps) => {
 
-  const hasCoverageVariation = hasVariation(
-    data,
-    (item) => item.sharedArticles,
-  );
+  const hasData = allianceNetwork && allianceNetwork.length > 0;
+  const [limit, setLimit] = useState('10');
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData) {
+      return undefined;
+    }
 
-
-  const chartOption = useMemo<EChartsOption>(() => {
-    const sorted = [...data].sort(
-      (a, b) => b.sharedArticles - a.sharedArticles,
-    );
+    const sorted = [...allianceNetwork]
+      .sort((a, b) => b.sharedArticles - a.sharedArticles)
+      .slice(0, Number(limit));
 
     const getPairLabel = (item: AllianceNetwork) =>
-      `${item.orgA} ↔ ${item.orgB}`;
-
+      truncateLabel(item.orgA, 28);
 
     return {
       animationDuration: 500,
 
       grid: {
-        left: 280,
+        left: 0,
         right: 40,
         top: 20,
         bottom: 40,
@@ -104,20 +101,37 @@ const OrganizationCoverage = ({
           },
         },
       ],
-
     };
-
-
-  }, [data]);
+  }, [allianceNetwork, hasData, limit]);
   return (
     <DashboardSection
       title='Shared coverage'
       description='See which organizations are most closely connected through shared articles.'
+      actions={
+        <Group gap='sm'>
+          <Text size='sm' c={ThemeColors.primary} fw={500}>
+            Show:
+          </Text>
+          <Select
+            value={limit}
+            onChange={(value) => setLimit(value ?? '10')}
+            data={TOP_N_OPTIONS}
+            w={120}
+            allowDeselect={false}
+          />
+        </Group>
+      }
       children={
-        <Flex direction='column' h='100%'>
-          <EChartContainer option={chartOption} height={height} />
-          <Box mt='auto'></Box>
-        </Flex>
+        <Box style={{ flex: 1, minHeight: 0 }}>
+          {hasData && chartOption ? (
+            <EChartContainer option={chartOption} height={height} />
+          ) : (
+            <EmptyDataCard
+              title='No data available'
+              description='No organization coverage data were found.'
+            />
+          )}
+        </Box>
       }
     />
   );

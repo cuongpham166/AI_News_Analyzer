@@ -1,128 +1,109 @@
-import type { PublisherFocus } from '@/shared/types/analysis/PublisherFocus.ts';
-import React, { useMemo } from 'react';
+import type { PublisherFocus } from '@/shared/types/analysis/media_bias/PublisherFocus.ts';
+import React, { useEffect, useMemo, useState } from 'react';
 import DashboardCard from '@/components/generic/DashboardCard';
-import { Box, Flex } from '@mantine/core';
+import { Box, Flex, Group, Select, Text } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import type { EChartsOption } from 'echarts';
+import {
+  NEWS_SOURCES_NAMES,
+  NEWS_SOURCES,
+} from '@/shared/constants/NewsSources.ts';
+import { ThemeColors } from '@/shared/constants/Colors.ts';
+import { GRID_CONFIG } from '@/shared/utils/chartConfig.ts';
 
 interface PublisherFocusChartProps {
-  data: PublisherFocus[];
+  publisherFocus?: PublisherFocus[];
   height?: number | string;
 }
 
-const PublisherFocusChart = ({ data, height = 450 }:PublisherFocusChartProps) => {
-  const chartOption = useMemo(() => {
-    if (!data.length) {
-      return {
-        title: {
-          text: 'No publisher coverage data',
-          left: 'center',
-          top: 'middle',
-        },
-      };
+const PublisherFocusChart = ({
+  publisherFocus,
+  height = 450,
+}: PublisherFocusChartProps) => {
+
+  const hasData = publisherFocus && publisherFocus.length > 0;
+  const [selectedPublisher, setSelectedPublisher] = useState<string>('DW');
+  const TOP_N = 10;
+
+  const selectOptions = useMemo(
+    () =>
+      [...NEWS_SOURCES]
+        .sort((a, b) =>
+          NEWS_SOURCES_NAMES[a].localeCompare(NEWS_SOURCES_NAMES[b]),
+        )
+        .map((item) => ({
+          label: NEWS_SOURCES_NAMES[item],
+          value: item,
+        })),
+    [],
+  );
+
+
+  const onChangePublisher = (publisher: string) => {
+      setSelectedPublisher(publisher);
+  };
+
+  const selectedPublisherData = useMemo(() => {
+    if (!hasData) {
+      return [];
     }
 
-    const TOP_N = 7;
-    const organizationTotals = new Map<string, number>();
+    return publisherFocus
+      .filter((item) => item.publisher === selectedPublisher)
+      .sort((a, b) => b.coverageVolume - a.coverageVolume)
+      .slice(0, TOP_N);
+  }, [hasData, publisherFocus, selectedPublisher]);
 
-    data.forEach((item) => {
-      organizationTotals.set(
-        item.organization,
-        (organizationTotals.get(item.organization) ?? 0) + item.coverageVolume,
-      );
-    });
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!selectedPublisherData.length) {
+      return undefined;
+    }
 
-    const topOrganizations = [...organizationTotals.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, TOP_N)
-      .map(([organization]) => organization);
+    const organizations = selectedPublisherData.map(
+      (item) => item.organization,
+    );
 
-    const topSet = new Set(topOrganizations);
-
-    const groupedData = new Map<string, Map<string, number>>();
-
-    data.forEach((item) => {
-      const organization = topSet.has(item.organization)
-        ? item.organization
-        : 'Other';
-
-      if (!groupedData.has(item.publisher)) {
-        groupedData.set(item.publisher, new Map());
-      }
-
-      const publisherData = groupedData.get(item.publisher)!;
-
-      publisherData.set(
-        organization,
-        (publisherData.get(organization) ?? 0) + item.coverageVolume,
-      );
-    });
-
-    const publishers = [...groupedData.keys()];
-
-    const organizations = [...topOrganizations, 'Other'];
-
-
-    const series = organizations.map((organization) => ({
-      name: organization,
-      type: 'bar',
-      stack: 'coverage',
-      barMaxWidth: 40,
-      data: publishers.map(
-        (publisher) => groupedData.get(publisher)?.get(organization) ?? 0,
-      ),
-      emphasis: {
-        focus: 'series',
-      },
-      itemStyle: {
-        borderColor: 'transparent',
-        borderWidth: 1,
-      },
-    }));
+    const volumes = selectedPublisherData.map((item) => item.coverageVolume);
 
     return {
       animationDuration: 500,
-      grid: {
-        left: 80,
-        right: 50,
-        top: 30,
-        bottom: 80,
-      },
+
+      grid: GRID_CONFIG,
 
       tooltip: {
         trigger: 'item',
 
         formatter: (params: any) => {
-          const publisher = publishers[params.dataIndex];
-
-          const organization = params.seriesName;
-
-          const value = groupedData.get(publisher)?.get(organization) ?? 0;
+          const item = selectedPublisherData[params.dataIndex];
 
           return `
-          <strong>${organization}</strong><br/>
-          Publisher: ${publisher}<br/>
-          Coverage volume: <strong>${value}</strong>
-        `;
+            <strong>${item.organization}</strong>
+            <div style="margin-top: 6px">
+              Publisher:
+              ${NEWS_SOURCES_NAMES[item.publisher]}
+            </div>
+            <div>
+              Coverage volume:
+              <strong>${item.coverageVolume}</strong>
+            </div>
+          `;
         },
-      },
-
-      legend: {
-        type: 'scroll',
-        bottom: 0,
-        left: 'center',
-
-        data: organizations,
       },
 
       xAxis: {
         type: 'value',
 
-        name: 'Coverage volume',
+        name: 'Articles',
         nameLocation: 'middle',
         nameGap: 30,
 
         min: 0,
         minInterval: 1,
+
+        axisLabel: {
+          color: '#64748B',
+        },
 
         splitLine: {
           lineStyle: {
@@ -135,28 +116,77 @@ const PublisherFocusChart = ({ data, height = 450 }:PublisherFocusChartProps) =>
       yAxis: {
         type: 'category',
         inverse: true,
-
-        data: publishers,
+        data: organizations,
 
         axisTick: {
           show: false,
         },
+
+        axisLine: {
+          show: false,
+        },
+
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+        },
       },
 
-      series,
+      series: [
+        {
+          name: 'Coverage',
+          type: 'bar',
+          data: volumes,
+          barMaxWidth: 30,
+          itemStyle: {
+            borderRadius: [0, 4, 4, 0],
+          },
+          emphasis: {
+            focus: 'series',
+          },
+          label: {
+            show: true,
+            position: 'right',
+            fontWeight: 600,
+            formatter: '{c}',
+          },
+        },
+      ],
     };
-  }, [data]);
+  }, [selectedPublisherData]);
+
   return (
     <DashboardCard
       title='Publisher Focus'
-      description='Compare the organizations most frequently covered by each publisher and identify differences in coverage concentration.'
-      children={
-        <Flex direction='column' h='100%'>
-          <EChartContainer option={chartOption} height={height} />
-          <Box mt='auto'></Box>
-        </Flex>
+      description='Top organizations covered by each publisher based on article volume.'
+      headerActions={
+        <Group gap='xs'>
+          <Text size='sm' c={ThemeColors.primary} fw={500}>
+            View by:
+          </Text>
+          <Select
+            placeholder='Select Publisher'
+            value={selectedPublisher}
+            onChange={onChangePublisher}
+            data={selectOptions}
+            w={180}
+            size='sm'
+            allowDeselect={false}
+          />
+        </Group>
       }
-    />
+    >
+      <Box style={{ flex: 1, minHeight: 0 }}>
+        {hasData && chartOption ? (
+          <EChartContainer option={chartOption} height={height} />
+        ) : (
+          <EmptyDataCard
+            title='No data available'
+            description='No publisher coverage data were found for this publisher.'
+          />
+        )}
+      </Box>
+    </DashboardCard>
   );
 };
 

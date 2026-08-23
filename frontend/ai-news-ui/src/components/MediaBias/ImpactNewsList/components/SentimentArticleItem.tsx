@@ -9,14 +9,14 @@ import {
   Text,
   ThemeIcon,
 } from '@mantine/core';
-import type { ImpactArticle } from '@/shared/types/analysis/ImpactArticles.ts';
+import type { ImpactArticle } from '@/shared/types/analysis/media_bias/ImpactArticles.ts';
 import {
-  ArrowCircleDownIcon,
-  ArrowCircleUpIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
   ArrowSquareOutIcon,
 } from '@phosphor-icons/react';
 import { NEWS_TOPIC_COLORS } from '@/shared/constants/NewsTopics.ts';
-import { NEWS_SOURCES_COLORS } from '@/shared/constants/NewsSources.ts';
+import { NEWS_SOURCES_COLORS, NEWS_SOURCES_NAMES } from '@/shared/constants/NewsSources.ts';
 import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
 
 interface SentimentArticleItemProps {
@@ -29,7 +29,7 @@ const SentimentArticleItem = ({
 }: SentimentArticleItemProps) => {
   const isPositive = article.sentiment_label === 'positive';
   const sentimentColor = isPositive ? 'green' : 'red';
-  const SentimentIcon = isPositive ? ArrowCircleUpIcon : ArrowCircleDownIcon; ;
+  const SentimentIcon = isPositive ? ThumbsUpIcon : ThumbsDownIcon;
   const publishedAt = new Date(article.publish_date * 1000);
 
   const formattedDate = publishedAt.toLocaleDateString(undefined, {
@@ -44,7 +44,7 @@ const SentimentArticleItem = ({
   });
   return (
     <Paper
-      p='md'
+      p='sm'
       radius='md'
       withBorder
       style={{
@@ -54,17 +54,16 @@ const SentimentArticleItem = ({
       onClick={() => onClick?.(article)}
     >
       <Group align='flex-start' gap='md' wrap='nowrap'>
-        <ThemeIcon
-          size={40}
-          radius='xl'
-          variant='light'
-          color={NEWS_SENTIMENT_COLORS[article.sentiment_label]}
+        <Box
           style={{
+            width: 4,
+            alignSelf: 'stretch',
+            minHeight: 72,
+            borderRadius: 4,
+            backgroundColor: NEWS_SENTIMENT_COLORS[article.sentiment_label],
             flexShrink: 0,
           }}
-        >
-          <SentimentIcon size={20} />
-        </ThemeIcon>
+        />
 
         <Stack
           gap={6}
@@ -73,51 +72,34 @@ const SentimentArticleItem = ({
             minWidth: 0,
           }}
         >
-          <Flex
-            justify='flex-start'
-            align='center'
-            direction='row'
-            wrap='wrap'
-            gap='sm'
-          >
-            <Text fw={600} size='sm' lineClamp={2}>
+          <Stack gap={4}>
+            <Text fw={600} size='sm' c='gray.9' lh={1.4} lineClamp={2}>
               {article.title}
             </Text>
-            <Text size='xs' c='dimmed'>
+
+            <Text size='xs' c='gray.6'>
               {formattedDate} · {formattedTime}
             </Text>
-          </Flex>
+          </Stack>
 
           {article.summary && (
-            <Text size='xs' c='dimmed' lineClamp={2}>
+            <Text size='sm' c='gray.7' lh={1.5} lineClamp={2}>
               {article.summary}
             </Text>
           )}
 
-          <Group gap='xs' mt={2} wrap='wrap'>
+          <Group gap={6} mt={2} wrap='wrap'>
             <Badge
               size='xs'
-              variant='filled'
-              color={NEWS_SENTIMENT_COLORS[article.sentiment_label]}
-            >
-              {article.sentiment_label}
-            </Badge>
-
-            <Badge
-              size='xs'
-              variant='filled'
-              color={NEWS_SOURCES_COLORS[article.source]}
-            >
-              {article.source}
-            </Badge>
-
-            <Badge
-              size='xs'
-              variant='filled'
+              variant='light'
               color={NEWS_TOPIC_COLORS[article.topic]}
             >
               {article.topic}
             </Badge>
+
+            <Text size='xs' c='gray.6'>
+              {NEWS_SOURCES_NAMES[article.source]}
+            </Text>
           </Group>
         </Stack>
 
@@ -126,16 +108,17 @@ const SentimentArticleItem = ({
           href={article.link}
           target='_blank'
           rel='noopener noreferrer'
-          size={30}
+          size={32}
           radius='md'
           variant='subtle'
           color='gray'
           onClick={(event) => event.stopPropagation()}
           style={{
             flexShrink: 0,
+            transition: 'background-color 150ms ease, color 150ms ease',
           }}
         >
-          <ArrowSquareOutIcon size={15} />
+          <ArrowSquareOutIcon size={16} />
         </ThemeIcon>
       </Group>
     </Paper>

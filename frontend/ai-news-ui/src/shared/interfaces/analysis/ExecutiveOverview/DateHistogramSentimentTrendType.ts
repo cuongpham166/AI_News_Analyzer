@@ -1,3 +1,5 @@
+import type { GlobalTrends } from '@/shared/types/analysis';
+
 export interface TimelineBucket {
   timestamp: string;
   articleCount: number;
@@ -10,8 +12,6 @@ export interface DateHistogramSentimentTrendType {
 }
 
 export interface DateHistogramSentimentResponse {
-  success: boolean;
-  message: string;
-  data: DateHistogramSentimentTrendType;
-  timestamp: number;
+  sentimentVolumeTimeline: DateHistogramSentimentTrendType;
+  globalTrend: GlobalTrends;
 }

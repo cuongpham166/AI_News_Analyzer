@@ -1,4 +1,4 @@
-import type { EchoChamber } from '@/shared/types/analysis/EchoChamber.ts';
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
 import { useMemo } from 'react';
 import DashboardSection from '@/components/generic/DashboardSection';
 import { Box, Flex } from '@mantine/core';

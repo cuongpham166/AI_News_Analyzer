@@ -8,5 +8,12 @@ export interface DashboardInterval {
   setInterval: (interval: Interval) => void;
 }
 
+export interface RequestInterval {
+  intervalUnit: string;
+  amount: number;
+  calendarInterval?: string;
+  topN?: number;
+  isPositive?:boolean
+}
 
-
+export type CalendarInterval = 'day' | 'month' | 'year';

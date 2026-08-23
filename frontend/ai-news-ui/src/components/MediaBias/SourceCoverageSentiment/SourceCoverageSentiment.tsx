@@ -1,12 +1,18 @@
 import DashboardCard from '@/components/generic/DashboardCard';
-import MediaBiasData from '@/shared/test_data/MediaBiasData.ts';
 import SourceCoverageSentimentChart from './components/SourceCoverageSentimentChart';
-const SourceCoverageSentiment = () => {
+import type { SourceCoverage } from '@/shared/types/analysis/media_bias/SourceCoverage.ts';
+
+interface Props {
+  sourceCoverage?: SourceCoverage[];
+}
+const SourceCoverageSentiment = ({ sourceCoverage }:Props) => {
   return (
     <DashboardCard
       title='Source Coverage & Sentiment'
-      description='Compare topic coverage across sources and the average sentiment associated with each source-topic combination.'
-      children={<SourceCoverageSentimentChart data={MediaBiasData.data} />}
+      description='Explore article volume by topic and source, with sentiment details available on hover.'
+      children={
+        <SourceCoverageSentimentChart sourceCoverage={sourceCoverage}/>
+      }
     />
   );
 };

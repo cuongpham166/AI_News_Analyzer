@@ -1,4 +1,7 @@
-import type { GlobalTrendType } from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalTrendsType.ts';
+import type {
+  GlobalTimelineBucket,
+  GlobalTrendType,
+} from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalTrendsType.ts';
 
 export interface TopicShareChartData {
   date: string;
@@ -6,9 +9,9 @@ export interface TopicShareChartData {
 }
 
 export const getTopicShareData = (
-  data: GlobalTrendType,
+  data: GlobalTimelineBucket[],
 ): TopicShareChartData[] => {
-  return data.timeline.map((item) => {
+  return data.map((item) => {
     const total = Object.values(item.topTopics).reduce(
       (sum, count) => sum + count,
       0,

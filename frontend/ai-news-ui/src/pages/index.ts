@@ -1,6 +1,6 @@
 import DetailedNewsPage from '@/pages/news/DetailedNewsPage.tsx';
 import OverviewPage from '@/pages/analysis/OverviewPage.tsx';
-import DiscoveryPage from '@/pages/analysis/DiscoveryPage.tsx';
+import RiskMapPage from '@/pages/analysis/RiskMapPage.tsx';
 import NotFoundPage from '@/pages/NotFoundPage.tsx';
 import NetworkLabPage from '@/pages/analysis/NetworkLabPage.tsx';
 import MediaBiasPage from '@/pages/analysis/MediaBiasPage.tsx';
@@ -9,7 +9,7 @@ export {
   DetailedNewsPage,
   OverviewPage,
   NetworkLabPage,
-  DiscoveryPage,
+  RiskMapPage,
   NotFoundPage,
   MediaBiasPage,
   NewsPage,

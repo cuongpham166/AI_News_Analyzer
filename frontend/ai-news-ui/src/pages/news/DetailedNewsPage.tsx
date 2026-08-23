@@ -13,7 +13,7 @@ import {
 import Taskbar from '@/components/generic/Taskbar';
 import DetailedNewsData from '@/shared/test_data/DetailedNewsData.ts';
 import { ArrowCircleLeftIcon, HouseIcon } from '@phosphor-icons/react';
-import type { DetailedNews } from '@/shared/types/DetailedNews.ts';
+import type { DetailedNews } from '@/shared/types/news/DetailedNews.ts';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
 import {
   DetailedNewsHeader,

@@ -1,36 +1,31 @@
 import DashboardSection from '@/components/generic/DashboardSection';
-import type { EchoChamber } from '@/shared/types/analysis/EchoChamber.ts';
-import { useMemo } from 'react';
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
+import React, { useMemo } from 'react';
 import {
   getArticleCount,
   truncate,
 } from '@/components/MediaBias/ContentDuplication/components/contentDuplication.utils.ts';
-import { Box, Center, Flex, Stack, Text } from '@mantine/core';
+import { Box, Stack, Text } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
-import EmptyContentState from '@/components/MediaBias/ContentDuplication/components/EmptyContentState.tsx';
 import ContentClusterList from '@/components/MediaBias/ContentDuplication/components/ContentClusterList.tsx';
-interface PublisherPropagationProps {
-  data: EchoChamber[];
+import type { EChartsOption } from 'echarts';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
+
+interface Props {
+  echoChamber?: EchoChamber[];
   height?: number;
 }
-const NarrativeSpreadChart = ({
-  data,
-  height = 500,
-}: PublisherPropagationProps) => {
+const NarrativeSpreadChart = ({echoChamber, height = 500 }: Props) => {
   const propagationData = useMemo(() => {
-    return data.filter(
+    if(!echoChamber) {
+      return []
+    }
+    return echoChamber.filter(
       (item) => item.publishers.length > 1 && getArticleCount(item) > 1,
     );
-  }, [data]);
+  }, [echoChamber]);
 
-  if (data.length === 0) {
-    return (
-      <EmptyContentState
-        height={height}
-        message='No content clusters are available.'
-      />
-    );
-  }
+  const hasData = echoChamber && echoChamber.length > 0;
 
   if (propagationData.length === 0) {
     return (
@@ -39,13 +34,15 @@ const NarrativeSpreadChart = ({
           No cross-publisher propagation is currently detected. Showing the
           underlying stories and their publishers instead.
         </Text>
-        <ContentClusterList data={data} />
+        <ContentClusterList data={echoChamber ? echoChamber : []} />
       </Stack>
     );
   }
 
-
-  const chartOption = useMemo(() => {
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData) {
+      return undefined;
+    }
     const storyNodes = propagationData.map((item) => ({
       name: item.contentHash,
 
@@ -183,18 +180,23 @@ const NarrativeSpreadChart = ({
         },
       ],
     };
-  }, [propagationData]);
-
+  }, [hasData, propagationData]);
 
   return (
     <DashboardSection
       title='Publisher Propagation'
       description='Trace how shared stories spread across publishers and reveal connections between content sources.'
       children={
-        <Flex direction='column' h='100%'>
-          <EChartContainer option={chartOption} height={height} />
-          <Box mt='auto'></Box>
-        </Flex>
+        <Box style={{ flex: 1, minHeight: 0 }}>
+          {hasData && chartOption ? (
+            <EChartContainer option={chartOption} height={height} />
+          ) : (
+            <EmptyDataCard
+              title='No data available'
+              description='No news data were found for this selection.'
+            />
+          )}
+        </Box>
       }
     />
   );

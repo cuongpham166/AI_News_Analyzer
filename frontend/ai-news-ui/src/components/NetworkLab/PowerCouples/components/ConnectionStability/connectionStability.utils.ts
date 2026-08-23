@@ -1,4 +1,4 @@
-import type { PowerCouple } from '@/shared/types/analysis/PowerCouple.ts';
+import type { PowerCouple } from '@/shared/types/analysis/network_lab/PowerCouple.ts';
 
 export const getConnectionStabilityData = (data: PowerCouple[]) => {
   return data.map((d) => ({

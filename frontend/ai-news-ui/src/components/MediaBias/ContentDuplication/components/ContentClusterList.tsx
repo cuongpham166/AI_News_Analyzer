@@ -5,13 +5,13 @@ import {
   Table,
   Text,
 } from '@mantine/core';
-import type { EchoChamber } from '@/shared/types/analysis/EchoChamber.ts';
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
 import { useState } from 'react';
 import { NEWS_SOURCES_COLORS } from '@/shared/constants/NewsSources.ts';
 
 const ContentClusterList = ({ data }: { data: EchoChamber[] }) => {
   const [activePage, setActivePage] = useState(1);
-  const rowsPerPage = 5;
+  const rowsPerPage = 6;
   const paginatedData = data.slice(
     (activePage - 1) * rowsPerPage,
     activePage * rowsPerPage,
@@ -42,7 +42,7 @@ const ContentClusterList = ({ data }: { data: EchoChamber[] }) => {
           {rows.map((item) => (
             <Table.Tr key={`${item.contentHash}-${item.publisher}`}>
               <Table.Td>
-                <Text size='sm' fw={500} lineClamp={2} maw={600}>
+                <Text size='sm' fw={500} lineClamp={3} maw={600}>
                   {item.sampleTitle}
                 </Text>
               </Table.Td>

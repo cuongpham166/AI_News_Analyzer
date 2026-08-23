@@ -1,23 +1,32 @@
 import {
-  Box,
-  Center,
   Grid,
   Group,
   SegmentedControl,
-  Stack,
   Text,
-  Title,
 } from '@mantine/core';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
-import MetricCard from '@/components/generic/MetricCard';
 import DeepVelocityChart from '@/components/Overview/DeepVelocity/components/DeepVelocityChart';
-import deepVelocityData from '@/shared/test_data/DeepVelocityData.ts';
 import {calculateMomentumScore,calculateTrendDirection} from '@/shared/utils/calculateDeepVelocityMetrics.ts';
 import { useMemo, useState } from 'react';
 import DashboardCard from '@/components/generic/DashboardCard';
-function DeepVelocityCard() {
+import type { DeepVelocity } from '@/shared/types/analysis';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
+
+interface Props {
+  data?: DeepVelocity[];
+}
+function DeepVelocityCard({ data }:Props) {
+  const hasData = (data?.length ?? 0) > 0;
+
+  const [selectedTrendDirection, setSelectedTrendDirection] =
+    useState<string>('Rising');
+
   const chartData = useMemo(() => {
-    return deepVelocityData.data.map((item) => ({
+    if (!data?.length) {
+      return [];
+    }
+
+    return data.map((item) => ({
       entity: item.entity,
       currentMentions: item.currentMentions,
       previousMentions: item.previousMentions,
@@ -31,17 +40,23 @@ function DeepVelocityCard() {
         item.previousMentions,
       ),
     }));
-  }, []);
+  }, [data]);
 
-  const [selectedTrendDirection, setSelectedTrendDirection] =
-    useState<string>('Rising');
+  const filteredData =
+    selectedTrendDirection === 'All'
+      ? chartData
+      : chartData.filter(
+          (item) => item.trendDirection === selectedTrendDirection,
+        );
 
-  const filteredData = useMemo(() => {
-    if (selectedTrendDirection === 'All') return chartData;
-    return chartData.filter(
-      (item) => item.trendDirection === selectedTrendDirection,
+  if (!hasData) {
+    return (
+      <EmptyDataCard
+        title='No data available'
+        description='No velocity data were found for this selection.'
+      />
     );
-  }, [chartData, selectedTrendDirection]);
+  }
 
   return (
     <Grid gutter='md'>
@@ -54,9 +69,10 @@ function DeepVelocityCard() {
               <Text size='sm' c={ThemeColors.primary} fw={500}>
                 Trend Direction:
               </Text>
+
               <SegmentedControl
                 value={selectedTrendDirection}
-                onChange={(val) => setSelectedTrendDirection(val)}
+                onChange={setSelectedTrendDirection}
                 data={[
                   { label: 'All', value: 'All' },
                   { label: 'Rising', value: 'Rising' },

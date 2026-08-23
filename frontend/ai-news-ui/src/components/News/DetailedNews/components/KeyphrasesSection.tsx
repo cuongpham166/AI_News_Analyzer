@@ -1,4 +1,4 @@
-import type { DetailedNews } from '@/shared/types/DetailedNews.ts';
+import type { DetailedNews } from '@/shared/types/news/DetailedNews.ts';
 import { Badge, Group, Stack, Text } from '@mantine/core';
 
 const KeyphrasesSection = ({

@@ -1,4 +1,4 @@
-import type { News } from '@/shared/types/News.ts';
+import type { News } from '@/shared/types/news/News.ts';
 import { Badge, Box, Button, Group, Stack, Text } from '@mantine/core';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 

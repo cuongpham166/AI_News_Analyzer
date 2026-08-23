@@ -1,5 +1,5 @@
 import type Response from '@/shared/types/Response.ts';
-import type { News } from '@/shared/types/News.ts';
+import type { News } from '@/shared/types/news/News.ts';
 
 const ListNewsData: Response<News[]> = {
   success: true,

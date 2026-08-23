@@ -1,4 +1,4 @@
-import type { DetailedNews } from '@/shared/types/DetailedNews.ts';
+import type { DetailedNews } from '@/shared/types/news/DetailedNews.ts';
 import { Box, Paper, Stack, Text, Title } from '@mantine/core';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
 

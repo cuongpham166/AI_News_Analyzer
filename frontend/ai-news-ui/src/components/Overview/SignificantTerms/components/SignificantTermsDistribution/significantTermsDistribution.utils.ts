@@ -1,6 +1,6 @@
 import type { SignificantTerms } from '@/shared/types/analysis';
 
-export interface SignificantTermsDistribution {
+export interface SignificantTermsDistributionType {
   docCount: number;
   score: number;
   size: number;
@@ -11,15 +11,15 @@ export interface SignificantTermsDistribution {
 
 export const getSignificantTermsDistributionData = (
   data: SignificantTerms[],
-): SignificantTermsDistribution[] => {
+): SignificantTermsDistributionType[] => {
   return data.map((item) => {
     return {
       docCount: item.docCount,
       score: item.score,
       size: item.score * Math.log1p(item.docCount),
-      term:item.term,
-      historicalSharePercentage:item.historicalSharePercentage,
-      type:item.entityType
+      term: item.term,
+      historicalSharePercentage: item.historicalSharePercentage,
+      type: item.entityType,
     };
   });
 };

@@ -1,15 +1,15 @@
-import { Box, Grid, SegmentedControl, Title } from '@mantine/core';
-import MetricCard from '@/components/generic/MetricCard';
-import { ThemeColors } from '@/shared/constants/Colors.ts';
+import {SegmentedControl} from '@mantine/core';
 import DashboardCard from '@/components/generic/DashboardCard';
 import { useState } from 'react';
 import OrganizationCoverage from '@/components/NetworkLab/OrganizationConnections/components/OrganizationCoverage';
 import OrganizationSentiment from '@/components/NetworkLab/OrganizationConnections/components/OrganizationSentiment';
 import OrganizationNetwork from '@/components/NetworkLab/OrganizationConnections/components/OrganizationNetwork';
-import AllianceNetworkData from '@/shared/test_data/AllianceNetworkData.ts';
+import type { AllianceNetwork } from '@/shared/types/analysis/network_lab/AllianceNetwork.ts';
 
-
-function OrganizationConnections() {
+interface Props {
+  allianceNetwork?: AllianceNetwork[];
+}
+function OrganizationConnections({ allianceNetwork }:Props) {
   const [view, setView] = useState<'coverage' | 'sentiment' | 'network'>(
     'coverage',
   );
@@ -17,11 +17,17 @@ function OrganizationConnections() {
   const loadView = () => {
     switch (view) {
       case 'coverage':
-        return <OrganizationCoverage data={AllianceNetworkData.data} />;
+        return (
+          <OrganizationCoverage allianceNetwork={allianceNetwork}/>
+        );
       case 'sentiment':
-        return <OrganizationSentiment data={AllianceNetworkData.data} />;
+        return (
+          <OrganizationSentiment allianceNetwork={allianceNetwork} />
+        );
       case 'network':
-        return <OrganizationNetwork data={AllianceNetworkData.data} />;
+        return (
+          <OrganizationNetwork allianceNetwork={allianceNetwork}/>
+        );
       default:
         return <></>;
     }

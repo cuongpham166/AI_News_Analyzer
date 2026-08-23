@@ -1,62 +1,88 @@
 import DashboardSection from '@/components/generic/DashboardSection';
-import { Box, Flex, Group, SegmentedControl, Text } from '@mantine/core';
+import {
+  Box,
+  Flex,
+  Group,
+  SegmentedControl,
+  Select,
+  Text,
+} from '@mantine/core';
 import type { SignificantTerms } from '@/shared/types/analysis';
 import {
   getSignificantTermsDistributionData,
-  type SignificantTermsDistribution,
+  type SignificantTermsDistributionType,
 } from '@/components/Overview/SignificantTerms/components/SignificantTermsDistribution/significantTermsDistribution.utils.ts';
 import EChartContainer from '@/components/generic/EChartContainer';
 import React, { useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import {NEWS_ENTITY_COLORS, NEWS_ENTITIES} from '@/shared/constants/NewsEntities.ts';
-import SignificantTermsDistributionLegend
-  from '@/components/Overview/SignificantTerms/components/SignificantTermsDistribution/components/SignificantTermsDistributionLegend.tsx';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
 import {
   SECTION_CONFIG
 } from '@/components/Overview/SignificantTerms/components/SignificantTermsInsight/significantTermsInsight.config.ts';
+import SignificantTermsLegend from '@/components/Overview/SignificantTerms/components/SignificantTermsLegend.tsx';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import { GRID_CONFIG } from '@/shared/utils/chartConfig.ts';
+
 interface SignificantTermsDistributionProps {
-  data: SignificantTerms[];
+  data?: SignificantTerms[];
   height?: number | string;
 }
 
-const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDistributionProps) => {
+const SignificantTermsDistribution = ({
+  data,
+  height = 450,
+}: SignificantTermsDistributionProps) => {
   const [metric, setMetric] = useState<
     'all' | 'person' | 'organization' | 'event' | 'location'
   >('all');
 
-  const distributionData: SignificantTermsDistribution[] =
-    getSignificantTermsDistributionData(data);
+  const terms = data ?? [];
 
-  const filteredSignificantTermsDistributionData =
+  const filteredTerms =
     metric === 'all'
-      ? distributionData
-      : distributionData.filter((term) => term.type === metric);
+      ? terms
+      : terms.filter((term) => term.entityType === metric);
 
-  const chartOption = useMemo<EChartsOption>(() => {
-    const sizes = filteredSignificantTermsDistributionData.map(
-      (item) => item.size,
-    );
+  const hasData = filteredTerms.length > 0;
+
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData) {
+      return undefined;
+    }
+
+    const distributionData: SignificantTermsDistributionType[] =
+      getSignificantTermsDistributionData(filteredTerms);
+
+    if (distributionData.length === 0) {
+      return undefined;
+    }
+
+    const sizes = distributionData.map((item) => item.size);
     const maxSize = Math.max(...sizes);
 
     const getBubbleSize = (size: number) => {
       if (!maxSize) return 10;
+
       const normalized = Math.log1p(size) / Math.log1p(maxSize);
+
       return 8 + normalized * 32;
     };
 
+    const groups = new Map<string, SignificantTermsDistributionType[]>();
 
-    const groups = new Map<string, SignificantTermsDistribution[]>();
-    filteredSignificantTermsDistributionData.forEach((item) => {
+    distributionData.forEach((item) => {
       const key = `${item.docCount}-${item.score}`;
+
       if (!groups.has(key)) {
         groups.set(key, []);
       }
+
       groups.get(key)!.push(item);
     });
 
     const createSeriesData = (type: string) => {
-      return filteredSignificantTermsDistributionData
+      return distributionData
         .filter((item) => item.type === type)
         .map((item) => {
           const key = `${item.docCount}-${item.score}`;
@@ -68,7 +94,6 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
           let x = item.docCount;
           let y = item.score;
 
-          // Spread overlapping points around their actual position.
           if (count > 1) {
             const angle = (index / count) * Math.PI * 2;
 
@@ -78,7 +103,6 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
 
           return {
             value: [x, y, item.size],
-
             originalData: item,
           };
         });
@@ -89,7 +113,8 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
         trigger: 'item',
 
         formatter: (params: any) => {
-          const item = params.data.originalData as SignificantTermsDistribution;
+          const item = params.data
+            .originalData as SignificantTermsDistributionType;
 
           return `
             <strong>${item.term}</strong><br/>
@@ -101,6 +126,8 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
           `;
         },
       },
+
+      grid:GRID_CONFIG,
 
       xAxis: {
         type: 'value',
@@ -130,7 +157,8 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
         },
       })),
     };
-  }, [filteredSignificantTermsDistributionData]);
+  }, [filteredTerms, hasData]);
+
   return (
     <DashboardSection
       title='Significant Terms Distribution'
@@ -140,7 +168,8 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
           <Text size='sm' c={ThemeColors.primary} fw={500}>
             View by:
           </Text>
-          <SegmentedControl
+
+          <Select
             value={metric}
             onChange={(val) =>
               setMetric(
@@ -151,15 +180,24 @@ const SignificantTermsDistribution = ({ data, height = 450 }:SignificantTermsDis
           />
         </Group>
       }
-      children={
-        <Flex direction='column' h='100%'>
-          <EChartContainer option={chartOption} height={height} />
-          <Box mt='auto'>
-            <SignificantTermsDistributionLegend />
-          </Box>
-        </Flex>
-      }
-    />
+    >
+      <Flex direction='column' h='100%' gap='sm'>
+        {hasData && chartOption ? (
+          <>
+            <Box style={{ flex: 1, minHeight: 0 }}>
+              <EChartContainer option={chartOption} height={height} />
+            </Box>
+            <SignificantTermsLegend />
+          </>
+        ) : (
+          <EmptyDataCard
+            title='No data available'
+            description='No significant terms were found for this selection.'
+            height={height}
+          />
+        )}
+      </Flex>
+    </DashboardSection>
   );
 };
 

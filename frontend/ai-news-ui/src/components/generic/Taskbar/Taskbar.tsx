@@ -2,7 +2,6 @@ import React, { type ReactNode, useState } from 'react';
 import Searchbar from '../Searchbar';
 import { Button, Group, NativeSelect, NumberInput, Stack, Title, Box, Select, Text } from '@mantine/core';
 import { ThemeColors } from '@/shared/constants/Colors';
-
 import { ArrowRightIcon, CaretDownIcon } from '@phosphor-icons/react';
 import { useDashboardIntervalStore } from '@/stores/dashboard.store.ts';
 import type { Interval } from '@/shared/types/DashboardInterval.ts';
@@ -11,8 +10,15 @@ type Props = {
 };
 
 const Taskbar: React.FC<Props> = ({ taskbarTitle }) => {
-  const interval = useDashboardIntervalStore((s) => s.interval);
-  const updateInterval = useDashboardIntervalStore((s) => s.updateInterval);
+  const interval = useDashboardIntervalStore((state) => state.interval);
+
+  const updateInterval = useDashboardIntervalStore(
+    (state) => state.updateInterval,
+  );
+
+  const applyInterval = useDashboardIntervalStore(
+    (state) => state.applyInterval,
+  );
 
   const onChangeNumberInterval = (value: number | string) => {
     updateInterval({
@@ -22,22 +28,19 @@ const Taskbar: React.FC<Props> = ({ taskbarTitle }) => {
 
   const onChangeTypeInterval = (value: Interval['intervalUnit'] | null) => {
     if (!value) return;
-
     updateInterval({
       intervalUnit: value,
     });
   };
 
   const onChangeGlobalInterval = () => {
-    // TODO:
-    // Reload dashboard data
+    applyInterval();
   };
 
   return (
     <Box>
-      <Group justify='space-between' align='flex-start' wrap='nowrap'>
-        {/* Dashboard Identity */}
-        <Stack gap={4}>
+      <Group justify='space-between' align='flex-start' wrap='wrap' gap='lg'>
+        <Stack gap={2}>
           <Title order={2} fw={700} c={ThemeColors.text}>
             {taskbarTitle}
           </Title>
@@ -47,8 +50,9 @@ const Taskbar: React.FC<Props> = ({ taskbarTitle }) => {
           </Text>
         </Stack>
 
-        {/* Dashboard Controls */}
         <Stack gap='xs' align='flex-end'>
+          <Searchbar />
+
           <Group gap='xs' align='center'>
             <Text size='sm' fw={500} c={ThemeColors.textSecondary}>
               Analyze
@@ -83,10 +87,9 @@ const Taskbar: React.FC<Props> = ({ taskbarTitle }) => {
               rightSection={<ArrowRightIcon size={14} />}
               onClick={onChangeGlobalInterval}
             >
-              Update
+              Apply
             </Button>
           </Group>
-          <Searchbar />
         </Stack>
       </Group>
     </Box>

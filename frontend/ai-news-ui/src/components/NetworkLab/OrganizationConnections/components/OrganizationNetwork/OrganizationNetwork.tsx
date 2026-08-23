@@ -1,86 +1,230 @@
 import DashboardSection from '@/components/generic/DashboardSection';
-import type { AllianceNetwork } from '@/shared/types/analysis/AllianceNetwork.ts';
-import { Box, Flex } from '@mantine/core';
+import type { AllianceNetwork } from '@/shared/types/analysis/network_lab/AllianceNetwork.ts';
+import { Box, Flex, Group, Select, Text } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
-import { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
+import { NEWS_ENTITY_COLORS } from '@/shared/constants/NewsEntities.ts';
+import { ThemeColors } from '@/shared/constants/Colors.ts';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
 
 interface OrganizationNetworkProps {
-  data: AllianceNetwork[];
+  allianceNetwork?: AllianceNetwork[];
   height?: number;
 }
 
-const OrganizationNetwork = ({ data, height = 450 }:OrganizationNetworkProps) => {
-  const chartOption = useMemo<EChartsOption>(() => {
-    const nodeMap = new Map<string, {
-        id: string;
-        name: string;
-        value: number;
-      }>();
+const TOP_N_OPTIONS = [
+  { value: '5', label: 'Top 5' },
+  { value: '10', label: 'Top 10' },
+  { value: '20', label: 'Top 20' },
+];
 
-    for (const item of data) {
-      if (!nodeMap.has(item.orgA)) {
-        nodeMap.set(item.orgA, {
-          id: item.orgA,
-          name: item.orgA,
-          value: 0,
-        });
-      }
+const truncateLabel = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) {
+    return value;
+  }
 
-      if (!nodeMap.has(item.orgB)) {
-        nodeMap.set(item.orgB, {
-          id: item.orgB,
-          name: item.orgB,
-          value: 0,
-        });
-      }
+  return `${value.slice(0, maxLength - 1)}…`;
+};
 
-      nodeMap.get(item.orgA)!.value += item.sharedArticles;
-      nodeMap.get(item.orgB)!.value += item.sharedArticles;
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const OrganizationNetwork = ({
+  allianceNetwork, height = 450,
+}: OrganizationNetworkProps) => {
+  const [limit, setLimit] = useState('10');
+  const hasData = allianceNetwork && allianceNetwork.length > 0;
+
+  const chartOption = useMemo<EChartsOption|undefined>(() => {
+    if(!hasData) {
+      return undefined;
+    }
+    const relationships = allianceNetwork
+      .slice()
+      .sort((a, b) => b.sharedArticles - a.sharedArticles)
+      .slice(0, Number(limit));
+
+    if (!relationships.length) {
+      return undefined;
     }
 
-    const nodes = [...nodeMap.values()];
+    const organizationStrength = new Map<string, number>();
 
-    const links = data.map((item) => ({
-      source: item.orgA,
-      target: item.orgB,
-      value: item.sharedArticles,
+    const connections = new Map<string, number>();
 
-      lineStyle: {
-        width: Math.max(1, Math.min(8, item.sharedArticles)),
-      },
-    }));
+    for (const relationship of relationships) {
+      const { orgA, orgB, sharedArticles } = relationship;
+
+      organizationStrength.set(
+        orgA,
+        (organizationStrength.get(orgA) ?? 0) + sharedArticles,
+      );
+
+      organizationStrength.set(
+        orgB,
+        (organizationStrength.get(orgB) ?? 0) + sharedArticles,
+      );
+
+      connections.set(orgA, (connections.get(orgA) ?? 0) + 1);
+
+      connections.set(orgB, (connections.get(orgB) ?? 0) + 1);
+    }
+
+    const maxOrganizationStrength = Math.max(
+      ...organizationStrength.values(),
+      1,
+    );
+
+    const organizations = [
+      ...new Set(relationships.flatMap((item) => [item.orgA, item.orgB])),
+    ];
+
+    const nodes = organizations.map((organization) => {
+      const normalizedStrength =
+        (organizationStrength.get(organization) ?? 0) / maxOrganizationStrength;
+
+      return {
+        id: organization,
+        name: organization,
+        symbolSize: 20 + normalizedStrength * 30,
+        itemStyle: {
+          color: NEWS_ENTITY_COLORS['organization'],
+          borderColor: '#fff',
+          borderWidth: 2,
+        },
+      };
+    });
+
+    const maxSharedArticles = Math.max(
+      ...relationships.map((item) => item.sharedArticles),
+      1,
+    );
+
+    const links = relationships.map((relationship) => {
+      const normalizedStrength =
+        relationship.sharedArticles / maxSharedArticles;
+
+      return {
+        source: relationship.orgA,
+        target: relationship.orgB,
+        value: relationship.sharedArticles,
+        avgSentiment: relationship.avgSentiment,
+        relationship,
+        lineStyle: {
+          width: 1 + normalizedStrength * 5,
+          opacity: 0.7,
+        },
+      };
+    });
 
     return {
-      animationDuration: 700,
+      animationDuration: 800,
 
       tooltip: {
+        trigger: 'item',
+        confine: true,
+
         formatter: (params: any) => {
           if (params.dataType === 'node') {
+            const name = params.data.name;
+
             return `
-            <strong>${params.data.name}</strong><br/>
-            Connection weight: ${params.data.value}
-          `;
+              <div style="
+                min-width: 190px;
+                line-height: 1.5;
+              ">
+                <div style="
+                  font-weight: 600;
+                  margin-bottom: 6px;
+                ">
+                  ${escapeHtml(name)}
+                </div>
+
+                <div>
+                  Connections:
+                  <strong>
+                    ${connections.get(name) ?? 0}
+                  </strong>
+                </div>
+
+                <div>
+                  Shared articles:
+                  <strong>
+                    ${organizationStrength.get(name) ?? 0}
+                  </strong>
+                </div>
+              </div>
+            `;
           }
 
           if (params.dataType === 'edge') {
-            const item = data.find(
-              (d) =>
-                (d.orgA === params.data.source &&
-                  d.orgB === params.data.target) ||
-                (d.orgA === params.data.target &&
-                  d.orgB === params.data.source),
-            );
+            const relationship = params.data.relationship as AllianceNetwork;
 
-            if (!item) return '';
+            if (!relationship) {
+              return '';
+            }
 
             return `
-            <strong>${item.orgA}</strong><br/>
-            ${item.orgB}<br/>
-            <br/>
-            Shared articles: ${item.sharedArticles}<br/>
-            Avg. sentiment: ${item.avgSentiment.toFixed(2)}
-          `;
+              <div style="
+                min-width: 230px;
+                line-height: 1.5;
+              ">
+                <div style="
+                  font-weight: 600;
+                  margin-bottom: 4px;
+                ">
+                  ${escapeHtml(relationship.orgA)}
+                </div>
+
+                <div style="
+                  color: #6B7280;
+                  margin-bottom: 10px;
+                ">
+                  ↕
+                  ${escapeHtml(relationship.orgB)}
+                </div>
+
+                <div style="
+                  border-top:
+                    1px solid #E5E7EB;
+                  padding-top: 8px;
+                ">
+                  <div style="
+                    display: flex;
+                    justify-content:
+                      space-between;
+                    gap: 24px;
+                  ">
+                    <span>
+                      Shared articles
+                    </span>
+
+                    <strong>
+                      ${relationship.sharedArticles}
+                    </strong>
+                  </div>
+
+                  <div style="
+                    display: flex;
+                    justify-content:
+                      space-between;
+                    gap: 24px;
+                  ">
+                    <span>
+                      Avg. sentiment
+                    </span>
+
+                    <strong>${relationship.avgSentiment.toFixed(2)}</strong>
+                  </div>
+                </div>
+              </div>
+            `;
           }
 
           return '';
@@ -90,35 +234,41 @@ const OrganizationNetwork = ({ data, height = 450 }:OrganizationNetworkProps) =>
       series: [
         {
           type: 'graph',
+
           layout: 'force',
 
           data: nodes,
-
           links,
 
           roam: true,
           draggable: true,
 
           force: {
-            repulsion: 350,
-            gravity: 0.05,
-            edgeLength: 140,
-            friction: 0.1,
-          },
+            repulsion:
+              Number(limit) >= 20 ? 450 : Number(limit) >= 10 ? 350 : 300,
 
-          symbolSize: (value: number) =>
-            Math.max(24, Math.min(60, 20 + value * 4)),
+            edgeLength: Number(limit) >= 20 ? [120, 200] : [100, 180],
+
+            gravity: 0.1,
+
+            layoutAnimation: true,
+          },
 
           label: {
             show: true,
             position: 'right',
-            formatter: '{b}',
+
+            formatter: (params: any) =>
+              truncateLabel(params.data.name, Number(limit) >= 20 ? 20 : 28),
+
+            fontSize: Number(limit) >= 20 ? 10 : 11,
+
+            color: '#374151',
           },
 
           lineStyle: {
-            color: 'source',
-            opacity: 0.6,
-            curveness: 0.05,
+            opacity: 0.7,
+            curveness: 0.08,
           },
 
           emphasis: {
@@ -126,26 +276,52 @@ const OrganizationNetwork = ({ data, height = 450 }:OrganizationNetworkProps) =>
 
             lineStyle: {
               width: 4,
+              opacity: 1,
             },
 
             label: {
               show: true,
+              position: 'right',
+              formatter: (params: any) => params.data.name,
+              fontSize: 12,
+              fontWeight: 600,
             },
           },
         },
       ],
-
     };
-  }, [data]);
+  }, [allianceNetwork, hasData, limit]);
 
   return (
     <DashboardSection
       title='Organization network'
       description='Explore how organizations connect through shared coverage.'
+      actions={
+        <Group gap='sm'>
+          <Text size='sm' c={ThemeColors.primary} fw={500}>
+            Show:
+          </Text>
+          <Select
+            value={limit}
+            onChange={(value) => setLimit(value ?? '10')}
+            data={TOP_N_OPTIONS}
+            w={120}
+            allowDeselect={false}
+          />
+        </Group>
+      }
       children={
         <Flex direction='column' h='100%'>
-          <EChartContainer option={chartOption} height={height} />
-          <Box mt='auto'></Box>
+          <Box style={{ flex: 1, minHeight: 0 }}>
+            {hasData && chartOption ? (
+              <EChartContainer option={chartOption} height={height} />
+            ) : (
+              <EmptyDataCard
+                title='No data available'
+                description='No organization network data were found.'
+              />
+            )}
+          </Box>
         </Flex>
       }
     />

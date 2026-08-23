@@ -1,4 +1,4 @@
-import type { DetailedNews } from '@/shared/types/DetailedNews.ts';
+import type { DetailedNews } from '@/shared/types/news/DetailedNews.ts';
 import { Anchor, Badge, Group, Stack, Title,Text } from '@mantine/core';
 import { ArrowSquareOutIcon, ArticleIcon } from '@phosphor-icons/react';
 

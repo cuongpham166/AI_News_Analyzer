@@ -1,6 +1,6 @@
 export const NEWS_SENTIMENTS = ['positive', 'negative'];
 
 export const NEWS_SENTIMENT_COLORS: Record<string, string> = {
-  positive: '#22C55E',
-  negative: '#EF4444',
+  positive: '#16A34A',
+  negative: '#DC2626',
 };

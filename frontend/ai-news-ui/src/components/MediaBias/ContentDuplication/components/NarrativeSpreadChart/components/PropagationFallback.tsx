@@ -1,4 +1,4 @@
-import type { EchoChamber } from '@/shared/types/analysis/EchoChamber.ts';
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
 import { Box, Flex, Stack, Text } from '@mantine/core';
 import { useMemo } from 'react';
 import ContentDistribution

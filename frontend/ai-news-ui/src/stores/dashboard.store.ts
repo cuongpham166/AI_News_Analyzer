@@ -6,7 +6,10 @@ import type {
 
 interface DashboardIntervalStore {
   interval: Interval;
+  appliedInterval: Interval;
+
   updateInterval: (updates: Partial<Interval>) => void;
+  applyInterval: () => void;
 }
 
 const defaultInterval: Interval = {
@@ -14,13 +17,25 @@ const defaultInterval: Interval = {
   amount: 6,
 };
 
-export const useDashboardIntervalStore = create<DashboardIntervalStore>((set) => ({
-  interval: defaultInterval,
-  updateInterval: (updates) =>
-    set((state) => ({
-      interval: {
-        ...state.interval,
-        ...updates,
-      },
-    })),
-}));
+export const useDashboardIntervalStore = create<DashboardIntervalStore>(
+  (set) => ({
+    interval: defaultInterval,
+
+    appliedInterval: defaultInterval,
+
+    updateInterval: (updates) =>
+      set((state) => ({
+        interval: {
+          ...state.interval,
+          ...updates,
+        },
+      })),
+
+    applyInterval: () =>
+      set((state) => ({
+        appliedInterval: {
+          ...state.interval,
+        },
+      })),
+  }),
+);

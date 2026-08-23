@@ -3,8 +3,12 @@ import { SegmentedControl } from '@mantine/core';
 import React, { useState } from 'react';
 import DuplicationChart from '@/components/MediaBias/ContentDuplication/components/DuplicationChart';
 import NarrativeSpreadChart from '@/components/MediaBias/ContentDuplication/components/NarrativeSpreadChart';
-import EchoChamberData from '@/shared/test_data/EchoChamberData.ts';
-const ContentDuplication = () => {
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
+
+interface Props {
+  echoChamber?: EchoChamber[];
+}
+const ContentDuplication = ({ echoChamber }:Props) => {
   const [view, setView] = useState<'duplication' | 'narrative'>('duplication');
   return (
     <DashboardCard
@@ -22,13 +26,13 @@ const ContentDuplication = () => {
       }
       children={
         view === 'narrative' ? (
-          <NarrativeSpreadChart data={EchoChamberData.data} />
+          <NarrativeSpreadChart echoChamber={echoChamber}/>
         ) : (
-          <DuplicationChart data={EchoChamberData.data} />
+          <DuplicationChart echoChamber={echoChamber} />
         )
       }
     />
   );
-}
+};
 
 export default ContentDuplication

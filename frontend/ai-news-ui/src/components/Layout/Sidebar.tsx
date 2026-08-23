@@ -20,7 +20,7 @@ function Sidebar() {
     { icon: GaugeIcon, label: 'Overview', url: '/' },
     { icon: ShareNetworkIcon, label: 'Network Lab', url: '/network_lab' },
     { icon: ArticleIcon, label: 'Media Bias', url: '/media_bias' },
-    { icon: GlobeIcon, label: 'Risk & Map', url: '/discovery' },
+    { icon: GlobeIcon, label: 'Risk & Map', url: '/risk_map' },
     { icon: NewspaperIcon, label: 'Detailed', url: '/detailed_news' },
     { icon: NewspaperIcon, label: 'News', url: '/news' },
     { icon: UserIcon, label: 'Profile' },

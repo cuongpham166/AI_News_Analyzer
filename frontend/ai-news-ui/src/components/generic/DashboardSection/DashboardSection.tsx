@@ -18,9 +18,11 @@ function DashboardSection({
     <Stack gap='md' h='100%'>
       <Group justify='space-between' align='flex-start' wrap='nowrap'>
         <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-          <Title order={6} fw={600} c={ThemeColors.text}>
-            {title}
-          </Title>
+          {title && (
+            <Title order={6} fw={600} c={ThemeColors.text}>
+              {title}
+            </Title>
+          )}
 
           {description && (
             <Text size='xs' c={ThemeColors.textSecondary}>
@@ -32,7 +34,7 @@ function DashboardSection({
         {actions && <Box style={{ flexShrink: 0 }}>{actions}</Box>}
       </Group>
 
-      {children}
+      <Box style={{ flex: 1, minHeight: 0 }}>{children}</Box>
     </Stack>
   );
 }

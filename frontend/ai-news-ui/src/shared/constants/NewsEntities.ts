@@ -7,7 +7,7 @@ export const NEWS_ENTITIES = [
 
 export const NEWS_ENTITY_COLORS: Record<string, string> = {
   organization: '#2563EB',
-  event: '#F59E0B',
-  person: '#EF4444',
-  location: '#10B981',
+  event: '#F97316',
+  person: '#9333EA',
+  location: '#0D9488',
 };

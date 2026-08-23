@@ -1,42 +1,39 @@
 import {
   getArticleCount,
-  getPublisherCount,
   hasCrossPublisherPropagation,
 } from '@/components/MediaBias/ContentDuplication/components/contentDuplication.utils.ts';
 import DashboardSection from '@/components/generic/DashboardSection';
-import type { EchoChamber } from '@/shared/types/analysis/EchoChamber.ts';
-import { useMemo } from 'react';
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
+import React, { useMemo } from 'react';
 import { Box, Center, Flex, Stack, Text } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
-import ContentDistribution
-  from '@/components/MediaBias/ContentDuplication/components/DuplicationChart/components/ContentDistribution.tsx';
-import EmptyContentState from '@/components/MediaBias/ContentDuplication/components/EmptyContentState.tsx';
 import ContentClusterList from '@/components/MediaBias/ContentDuplication/components/ContentClusterList.tsx';
+import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import type { EChartsOption } from 'echarts';
+
 interface RepeatedContentProps {
-  data: EchoChamber[];
+  echoChamber?: EchoChamber[];
   height?: number;
 }
 
+const DuplicationChart = ({
+  echoChamber, height = 420,
+}: RepeatedContentProps) => {
+  const hasData = echoChamber && echoChamber.length > 0;
 
-const DuplicationChart = ({ data, height = 420 }: RepeatedContentProps) => {
   const duplicated = useMemo(() => {
-    return data
+    if (!hasData) {
+      return []
+    }
+    return echoChamber
       .filter(hasCrossPublisherPropagation)
       .map((item) => ({
         ...item,
         articleCount: getArticleCount(item),
       }))
       .sort((a, b) => b.articleCount - a.articleCount);
-  }, [data]);
+  }, [echoChamber, hasData]);
 
-  if (data.length === 0) {
-    return (
-      <EmptyContentState
-        height={height}
-        message='No content clusters are available.'
-      />
-    );
-  }
 
   if (duplicated.length === 0) {
     return (
@@ -45,12 +42,16 @@ const DuplicationChart = ({ data, height = 420 }: RepeatedContentProps) => {
           No cross-publisher duplicates are currently detected. Showing the
           underlying content clusters instead.
         </Text>
-        <ContentClusterList data={data} />
+        <ContentClusterList data={echoChamber ? echoChamber : []} />
       </Stack>
     );
   }
 
-  const chartOption = useMemo(() => {
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData) {
+      return undefined;
+    }
+
     return {
       animationDuration: 500,
 
@@ -133,17 +134,23 @@ const DuplicationChart = ({ data, height = 420 }: RepeatedContentProps) => {
         },
       ],
     };
-  }, [duplicated]);
+  }, [duplicated, hasData]);
 
   return (
     <DashboardSection
       title='Repeated Content'
       description='See which stories appear multiple times and how widely they are duplicated across publishers.'
       children={
-        <Flex direction='column' h='100%'>
-          <EChartContainer option={chartOption} height={height} />
-          <Box mt='auto'></Box>
-        </Flex>
+        <Box style={{ flex: 1, minHeight: 0 }}>
+          {hasData && chartOption  ? (
+            <EChartContainer option={chartOption} height={height} />
+          ) : (
+            <EmptyDataCard
+              title='No data available'
+              description='No news data were found for this selection.'
+            />
+          )}
+        </Box>
       }
     />
   );

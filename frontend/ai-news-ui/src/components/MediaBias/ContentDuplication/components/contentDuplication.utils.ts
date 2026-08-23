@@ -1,4 +1,4 @@
-import type { EchoChamber } from '@/shared/types/analysis/EchoChamber.ts';
+import type { EchoChamber } from '@/shared/types/analysis/media_bias/EchoChamber.ts';
 
 export const getArticleCount = (item: EchoChamber) =>
   item.publishers.reduce((sum, publisher) => sum + publisher.articleCount, 0);

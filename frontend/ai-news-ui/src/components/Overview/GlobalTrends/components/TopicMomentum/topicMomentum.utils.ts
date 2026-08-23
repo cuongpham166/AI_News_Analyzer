@@ -1,4 +1,4 @@
-import type { GlobalTrendType } from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalTrendsType.ts';
+import type { GlobalTimelineBucket, GlobalTrendType } from '@/shared/interfaces/analysis/ExecutiveOverview/GlobalTrendsType.ts';
 
 export interface TopicMomentumPoint {
   topic: string;
@@ -10,14 +10,14 @@ export interface TopicMomentumPoint {
 }
 
 export const getTopicMomentumData = (
-  data: GlobalTrendType,
+  data: GlobalTimelineBucket[],
 ): TopicMomentumPoint[] => {
-  if (data.timeline.length < 2) {
+  if (data.length < 2) {
     return [];
   }
 
-  const current = data.timeline[data.timeline.length - 1];
-  const previous = data.timeline[data.timeline.length - 2];
+  const current = data[data.length - 1];
+  const previous = data[data.length - 2];
 
   const currentTopics = current.topTopics;
   const previousTopics = previous.topTopics;
@@ -47,7 +47,7 @@ export const getTopicMomentumData = (
       previousValue,
       growthRate,
       share,
-      isNew
+      isNew,
     };
   });
 };

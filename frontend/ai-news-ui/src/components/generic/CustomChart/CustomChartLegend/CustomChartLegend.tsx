@@ -7,15 +7,10 @@ type Props = {
   legendName:string
 };
 
-const CustomChartLegend = ({
-  children,
-  legendName,
-}: CustomChartLegendProps) => {
+const CustomChartLegend = ({ children, legendName }: Props) => {
   return (
-    <Stack gap='sm'>
-      <Text size='xs' fw={700} tt='uppercase' c={ThemeColors.textSecondary}>
-        {legendName}
-      </Text>
+    <Stack gap={6}>
+
 
       {children}
     </Stack>

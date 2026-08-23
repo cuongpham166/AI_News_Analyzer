@@ -13,10 +13,10 @@ export const NEWS_TOPICS = [
 export const NEWS_TOPIC_COLORS: Record<string, string> = {
   world: '#2563EB',
   politics: '#7C3AED',
-  science: '#06B6D4',
-  economy: '#F59E0B',
-  health: '#10B981',
-  sports: '#84CC16',
-  entertainment: '#EC4899',
-  technology: '#6366F1',
+  science: '#0891B2',
+  economy: '#B45309',
+  health: '#059669',
+  sports: '#65A30D',
+  entertainment: '#DB2777',
+  technology: '#4F46E5',
 };
