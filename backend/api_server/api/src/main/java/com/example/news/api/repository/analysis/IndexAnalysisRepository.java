@@ -43,9 +43,9 @@ public class IndexAnalysisRepository {
         return esClient.search(searchRequest, Void.class);
     }
 
-    private SearchResponse<Void> executeGlobalEntityTrendsSearch (long startEpoch,long endEpoch, String intervalUnit) throws IOException {
-        CalendarInterval intervalEnum = this.aggInterval.mapInterval(intervalUnit);
-        SearchRequest searchRequest = indexAnalysisQuery.getGlobalEntitiesTrendsRequest(startEpoch,endEpoch,intervalEnum);
+    private SearchResponse<Void> executeGlobalEntityTrendsSearch (long startEpoch,long endEpoch,  CalendarInterval calendarInterval) throws IOException {
+        //CalendarInterval intervalEnum = this.aggInterval.mapInterval(intervalUnit);
+        SearchRequest searchRequest = indexAnalysisQuery.getGlobalEntitiesTrendsRequest(startEpoch,endEpoch,calendarInterval);
         return esClient.search(searchRequest, Void.class);
     }
 
@@ -64,8 +64,8 @@ public class IndexAnalysisRepository {
         return esClient.search(searchRequest,ObjectNode.class);
     }
 
-    private SearchResponse<ObjectNode>  executeMediaPulseOverviewSearch(long startEpoch,long endEpoch) throws IOException {
-        SearchRequest searchRequest = indexAnalysisQuery.getMediaPulseOverviewRequest(startEpoch, endEpoch);
+    private SearchResponse<ObjectNode>  executeMediaPulseOverviewSearch() throws IOException {
+        SearchRequest searchRequest = indexAnalysisQuery.getMediaPulseOverviewRequest();
         return esClient.search(searchRequest,ObjectNode.class);
     }
 
@@ -114,11 +114,12 @@ public class IndexAnalysisRepository {
     }
 
 
-    public GlobalEntityTrendsResponse getGlobalEntityWithRelativeInterval (String intervalUnit, int amount) throws IOException {
+    public GlobalEntityTrendsResponse getGlobalEntityWithRelativeInterval (String intervalUnit, int amount,String calendarInterval) throws IOException {
         long[] result = this.aggInterval.computeEpochRangeRelative(intervalUnit,amount);
         long startEpoch = result[0];
         long endEpoch   = result[1];
-        SearchResponse<Void> response = executeGlobalEntityTrendsSearch(startEpoch,endEpoch,intervalUnit);
+        CalendarInterval interval = parseCalendarInterval(calendarInterval);
+        SearchResponse<Void> response = executeGlobalEntityTrendsSearch(startEpoch,endEpoch,interval);
         return indexAnalysisMapper.mapEntityAnalysis(response);
     }
 
@@ -172,11 +173,8 @@ public class IndexAnalysisRepository {
     }
 
 
-    public MediaPulseOverviewResponse getMediaPulseOverviewWithRelativeInterval (String intervalUnit, int amount) throws IOException {
-        long[] result = this.aggInterval.computeEpochRangeRelative(intervalUnit,amount);
-        long startEpoch = result[0];
-        long endEpoch   = result[1];
-        SearchResponse<ObjectNode> response = executeMediaPulseOverviewSearch(startEpoch, endEpoch);
+    public MediaPulseOverviewResponse getMediaPulseOverviewWithRelativeInterval () throws IOException {
+        SearchResponse<ObjectNode> response = executeMediaPulseOverviewSearch();
         return indexAnalysisMapper.mapMediaPulseOverview(response);
     }
 

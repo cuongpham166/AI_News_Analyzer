@@ -8,6 +8,8 @@ import java.util.Map;
 import com.example.news.api.dto.internal.DiscoveryLinkRecord;
 import com.example.news.api.dto.internal.analysis.GraphLink;
 import com.example.news.api.dto.internal.analysis.GraphNode;
+import com.example.news.api.dto.internal.event.EventMomentumTimeline;
+import com.example.news.api.dto.internal.news.GeopoliticalHotspotTopic;
 import com.example.news.api.dto.response.analysis.GraphResponse;
 import com.example.news.api.dto.response.analysis.graph.*;
 import com.example.news.api.util.etc.GraphNodeAccumulator;
@@ -61,7 +63,7 @@ public class GraphAnalysisRepository {
         long startEpoch = rangeResult[0];
         long endEpoch = rangeResult[1];
 
-        return neo4jClient.query(graphAnalysisQuery.getEventTrackerQuery())
+        return neo4jClient.query(graphAnalysisQuery.getEventTrackerQueryNew())
                 .bind(startEpoch).to("startEpoch")
                 .bind(endEpoch).to("endEpoch")
                 .fetchAs(EventTrackerResponse.class)
@@ -70,7 +72,13 @@ public class GraphAnalysisRepository {
                         record.get("location").asString(),
                         record.get("strength").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
-                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble()
+                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble(),
+
+                        record.get("countryCode").asString(),
+                        record.get("country").asString(),
+                        record.get("latitude").asDouble(),
+                        record.get("longitude").asDouble(),
+                        record.get("aliases").asList(Value::asString)
                 ))
                 .all()
                 .stream()
@@ -108,9 +116,16 @@ public class GraphAnalysisRepository {
                 .fetchAs(GeopoliticalHotspotResponse.class)
                 .mappedBy((typeSystem, record) -> new GeopoliticalHotspotResponse(
                         record.get("location").asString(),
-                        record.get("topic").asString(),
                         record.get("articleCount").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+
+                        record.get("topics").asList(topic ->
+                                new GeopoliticalHotspotTopic(
+                                        topic.get("name").asString(),
+                                        topic.get("articleCount").asInt()
+                                )
+                        ),
+
                         record.get("aliases").asList(Value::asString),
                         record.get("latitude").asDouble(),
                         record.get("longitude").asDouble(),
@@ -121,6 +136,56 @@ public class GraphAnalysisRepository {
                 .stream()
                 .toList();
     }
+
+    public GeopoliticalMetricsResponse getGeopoliticalMetricsWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+        return neo4jClient.query(graphAnalysisQuery.getGeopoliticalMetricsQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(GeopoliticalMetricsResponse.class)
+                .mappedBy((typeSystem, record) -> new GeopoliticalMetricsResponse(
+                        record.get("totalArticles").asInt(),
+                        record.get("hotspots").asInt(),
+                        record.get("countries").asInt(),
+                        record.get("avgSentiment").isNull()
+                                ? 0.0
+                                : record.get("avgSentiment").asDouble()
+                ))
+                .one()
+                .orElse(new GeopoliticalMetricsResponse(
+                        0,
+                        0,
+                        0,
+                        0.0
+                ));
+    }
+
+    public EventTrackerMetricsResponse getEventTrackerMetricsWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+        return neo4jClient.query(graphAnalysisQuery.getEventTrackerMetricsQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(EventTrackerMetricsResponse.class)
+                .mappedBy((typeSystem, record) -> new EventTrackerMetricsResponse(
+                        record.get("eventsTracked").asInt(),
+                        record.get("totalEventCoverage").asInt(),
+                        record.get("avgSentiment").isNull()
+                                ? 0.0
+                                : record.get("avgSentiment").asDouble()
+                ))
+                .one()
+                .orElse(new EventTrackerMetricsResponse(
+                        0,
+                        0,
+                        0.0
+                ));
+    }
+
+
     public List<NarrativeBridgeResponse> getNarrativeBridgeWithRelativeInterval (String intervalUnit, int amount){
         long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
         long startEpoch = rangeResult[0];
@@ -226,7 +291,7 @@ public class GraphAnalysisRepository {
                 .toList();
     }
 
-    public List<MediaBiasResponse> getMediaBiasWithRelativeInterval (String intervalUnit, int amount){
+    public List<SourceCoverageResponse> getMediaBiasWithRelativeInterval (String intervalUnit, int amount){
         long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
         long startEpoch = rangeResult[0];
         long endEpoch = rangeResult[1];
@@ -234,8 +299,8 @@ public class GraphAnalysisRepository {
         return neo4jClient.query(graphAnalysisQuery.getMediaBiasQuery())
                 .bind(startEpoch).to("startEpoch")
                 .bind(endEpoch).to("endEpoch")
-                .fetchAs(MediaBiasResponse.class)
-                .mappedBy((typeSystem, record) -> new MediaBiasResponse(
+                .fetchAs(SourceCoverageResponse.class)
+                .mappedBy((typeSystem, record) -> new SourceCoverageResponse(
                         record.get("source").asString(),
                         record.get("topic").asString(),
                         record.get("volume").asInt(),
@@ -371,5 +436,69 @@ public class GraphAnalysisRepository {
                 .toList();
     }
 
+    public List<CountryRiskResponse> getCountryRiskWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
 
+        return neo4jClient.query(graphAnalysisQuery.getCountryRiskQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(CountryRiskResponse.class)
+                .mappedBy((typeSystem, record) -> new CountryRiskResponse(
+                        record.get("country").asString(),
+                        record.get("countryCode").asString(),
+                        record.get("articleCount").asInt(),
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("coveragePercent").isNull() ? 0.0 : record.get("coveragePercent").asDouble()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+
+    public List<EventRiskRadarResponse> getEventRiskRadarWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getEventRiskRadarQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(EventRiskRadarResponse.class)
+                .mappedBy((typeSystem, record) -> new EventRiskRadarResponse(
+                        record.get("event").asString(),
+                        record.get("frequency").asInt(),
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+    public List<EventMomentumResponse> getEventMomentumWithRelativeInterval (String intervalUnit, int amount){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getEventMomentumQuery())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .fetchAs(EventMomentumResponse.class)
+                .mappedBy((typeSystem, record) -> new EventMomentumResponse(
+                        record.get("event").asString(),
+                        record.get("timeline").asList(timeline ->
+                                new EventMomentumTimeline(
+                                        timeline.get("date").asString(),
+                                        timeline.get("volume").asInt()
+                                )
+                        ),
+                        record.get("totalVolume").asInt()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
 }

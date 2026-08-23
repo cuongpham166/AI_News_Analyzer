@@ -40,7 +40,7 @@ public class IndexAnalysisQuery {
         );
     }
 
-    public SearchRequest getGlobalEntitiesTrendsRequest (long startEpoch,long endEpoch, CalendarInterval intervalEnum) throws IOException {
+    public SearchRequest getGlobalEntitiesTrendsRequest (long startEpoch,long endEpoch, CalendarInterval calendarInterval) throws IOException {
         return SearchRequest.of(s -> s
                 .index("news")
                 .size(0)
@@ -58,7 +58,7 @@ public class IndexAnalysisQuery {
                 .aggregations("trends_entities_over_time", a -> a
                         .dateHistogram(d -> d
                                 .field("publish_date")
-                                .calendarInterval(intervalEnum)
+                                .calendarInterval(calendarInterval)
                         )
                         .aggregations("entities", nested -> nested
                                 .nested(n -> n.path("entities"))
@@ -80,6 +80,7 @@ public class IndexAnalysisQuery {
     }
 
     public SearchRequest getImpactArticlesRequest (long startEpoch,long endEpoch, int topN, boolean isPositive) throws IOException {
+        String sentimentLabel = isPositive ? "positive" : "negative";
         return SearchRequest.of(s -> s
                 .index("news")
                 .size(topN)
@@ -90,12 +91,19 @@ public class IndexAnalysisQuery {
                                 .gte(JsonData.of(startEpoch))
                                 .lte(JsonData.of(endEpoch))
                         ))
+                        .filter(f -> f.term(t -> t
+                                .field("sentiment_label")
+                                .value(sentimentLabel)
+                        ))
                 ))
                 .sort(so -> so.field(f -> f
                         .field("sentiment")
-                        .order(isPositive ? SortOrder.Desc : SortOrder.Asc)
+                        .order(SortOrder.Desc)
                 ))
-                .sort(so -> so.field(f -> f.field("publish_date").order(SortOrder.Desc)))
+                .sort(so -> so.field(f -> f
+                        .field("publish_date")
+                        .order(SortOrder.Desc)
+                ))
         );
     }
 
@@ -206,7 +214,37 @@ public class IndexAnalysisQuery {
         );
     }
 
-    public SearchRequest getMediaPulseOverviewRequest(long startEpoch, long endEpoch) throws IOException {
+    public SearchRequest getMediaPulseOverviewRequest() throws IOException {
+        return SearchRequest.of(s -> s
+                .index("news")
+                .size(0)
+                .aggregations("total_articles", a -> a
+                        .valueCount(vc -> vc.field("link"))
+                )
+
+                .aggregations("unique_stories", a -> a
+                        .cardinality(c -> c.field("content_hash"))
+                )
+                .aggregations("nested_entities", a -> a
+                        .nested(n -> n.path("entities"))
+                        .aggregations("by_entity_type", typeAgg -> typeAgg
+                                .terms(t -> t
+                                        .field("entities.entity_type")
+                                        .size(10)
+                                )
+                                .aggregations("top_values", valAgg -> valAgg
+                                        .terms(t -> t
+                                                .field("entities.value.keyword")
+                                                .size(15)
+                                        )
+                                )
+                        )
+                )
+
+        );
+    }
+
+    /*public SearchRequest getMediaPulseOverviewRequest(long startEpoch, long endEpoch) throws IOException {
         return SearchRequest.of(s -> s
                 .index("news")
                 .size(0)
@@ -243,7 +281,7 @@ public class IndexAnalysisQuery {
                 )
 
         );
-    }
+    }*/
 
     public SearchRequest getSignificantTermsAggregationRequest(long startEpoch, long endEpoch) throws IOException {
         //Weighted Word Cloud / Tag Cloud: Font size represents the score or doc_count returned by the aggregation.

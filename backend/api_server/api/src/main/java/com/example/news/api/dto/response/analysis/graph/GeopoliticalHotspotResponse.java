@@ -1,5 +1,6 @@
 package com.example.news.api.dto.response.analysis.graph;
 
+import com.example.news.api.dto.internal.news.GeopoliticalHotspotTopic;
 import lombok.*;
 
 import java.util.List;
@@ -11,9 +12,10 @@ import java.util.List;
 @ToString
 public class GeopoliticalHotspotResponse {
     private String location;
-    private String topic;
     private int articleCount;
     private Double avgSentiment;
+
+    private List<GeopoliticalHotspotTopic> topics;
 
     private List<String> aliases;
     private double latitude;

@@ -48,6 +48,16 @@ public class GraphAnalysisService {
     }
 
     @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getEventTrackerMetricsWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<EventTrackerMetricsResponse> getEventTrackerMetricsWithRelativeInterval (String intervalUnit, int amount){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getEventTrackerMetricsWithRelativeInterval(intervalUnit,amount),
+                ioExecutor
+        );
+    }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
     @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getGeopoliticalHotspotWithRelativeIntervalFallback")
     @TimeLimiter(name = "Neo4jGraph")
     public CompletableFuture<List<GeopoliticalHotspotResponse>> getGeopoliticalHotspotWithRelativeInterval (String intervalUnit, int amount){
@@ -56,6 +66,17 @@ public class GraphAnalysisService {
                 ioExecutor
         );
     }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getGeopoliticalMetricsWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<GeopoliticalMetricsResponse> getGeopoliticalMetricsWithRelativeInterval (String intervalUnit, int amount){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getGeopoliticalMetricsWithRelativeInterval(intervalUnit,amount),
+                ioExecutor
+        );
+    }
+
 
     @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
     @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getNarrativeBridgeWithRelativeIntervalFallback")
@@ -110,7 +131,7 @@ public class GraphAnalysisService {
     @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
     @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getMediaBiasWithRelativeIntervalFallback")
     @TimeLimiter(name = "Neo4jGraph")
-    public CompletableFuture<List<MediaBiasResponse>> getMediaBiasWithRelativeInterval (String intervalUnit, int amount){
+    public CompletableFuture<List<SourceCoverageResponse>> getMediaBiasWithRelativeInterval (String intervalUnit, int amount){
         return CompletableFuture.supplyAsync(
                 () -> graphAnalysisRepository.getMediaBiasWithRelativeInterval(intervalUnit, amount),
                 ioExecutor
@@ -164,6 +185,36 @@ public class GraphAnalysisService {
     public CompletableFuture<List<EntityPolarizationResponse>> getEntityPolarizationWithRelativeInterval (String intervalUnit, int amount){
         return CompletableFuture.supplyAsync(
                 () -> graphAnalysisRepository.getEntityPolarizationWithRelativeInterval(intervalUnit, amount),
+                ioExecutor
+        );
+    }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getCountryRiskWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<List<CountryRiskResponse>> getCountryRiskWithRelativeInterval (String intervalUnit, int amount){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getCountryRiskWithRelativeInterval(intervalUnit, amount),
+                ioExecutor
+        );
+    }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getEventRiskRadarWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<List<EventRiskRadarResponse>> getEventRiskRadarWithRelativeInterval (String intervalUnit, int amount){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getEventRiskRadarWithRelativeInterval(intervalUnit, amount),
+                ioExecutor
+        );
+    }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getEventMomentumWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<List<EventMomentumResponse>> getEventMomentumWithRelativeInterval (String intervalUnit, int amount){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getEventMomentumWithRelativeInterval(intervalUnit, amount),
                 ioExecutor
         );
     }
@@ -228,7 +279,7 @@ public class GraphAnalysisService {
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
-    private CompletableFuture<List<MediaBiasResponse>> getMediaBiasWithRelativeIntervalFallback(
+    private CompletableFuture<List<SourceCoverageResponse>> getMediaBiasWithRelativeIntervalFallback(
             String intervalUnit, int amount, Throwable t
     ) {
         showFallbackLog(t);
@@ -265,6 +316,43 @@ public class GraphAnalysisService {
     }
 
     private CompletableFuture<List<EntityPolarizationResponse>> getEntityPolarizationWithRelativeIntervalFallback(
+            String intervalUnit, int amount, Throwable t
+    ) {
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    private  CompletableFuture<GeopoliticalMetricsResponse> getGeopoliticalMetricsWithRelativeIntervalFallback(
+            String intervalUnit, int amount, Throwable t
+    ) {
+        GeopoliticalMetricsResponse defaultResult = new GeopoliticalMetricsResponse();
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(defaultResult);
+    }
+
+    private CompletableFuture<List<CountryRiskResponse>> getCountryRiskWithRelativeIntervalFallback(
+            String intervalUnit, int amount, Throwable t
+    ) {
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    private CompletableFuture<EventTrackerMetricsResponse> getEventTrackerMetricsWithRelativeIntervalFallback(
+            String intervalUnit, int amount, Throwable t
+    ) {
+        showFallbackLog(t);
+        EventTrackerMetricsResponse defaultResult = new EventTrackerMetricsResponse();
+        return CompletableFuture.completedFuture(defaultResult);
+    }
+
+    private CompletableFuture<List<EventRiskRadarResponse>> getEventRiskRadarWithRelativeIntervalFallback(
+            String intervalUnit, int amount, Throwable t
+    ) {
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    private CompletableFuture<List<EventRiskRadarResponse>> getEventMomentumWithRelativeIntervalFallback(
             String intervalUnit, int amount, Throwable t
     ) {
         showFallbackLog(t);

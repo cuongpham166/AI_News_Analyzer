@@ -47,10 +47,10 @@ public class IndexAnalysisService {
     @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
     @CircuitBreaker(name = "ElasticIndex", fallbackMethod = "getGlobalEntityWithRelativeIntervalFallback")
     @TimeLimiter(name = "ElasticIndex")
-    public CompletableFuture<GlobalEntityTrendsResponse> getGlobalEntityWithRelativeInterval (String intervalUnit, int amount){
+    public CompletableFuture<GlobalEntityTrendsResponse> getGlobalEntityWithRelativeInterval (String intervalUnit, int amount,String calendarInterval){
         return CompletableFuture.supplyAsync(() ->{
             try{
-                return indexAnalysisRepository.getGlobalEntityWithRelativeInterval(intervalUnit, amount);
+                return indexAnalysisRepository.getGlobalEntityWithRelativeInterval(intervalUnit, amount,calendarInterval);
             }catch (IOException e) {
                 throw new CompletionException(e);
             }
@@ -114,10 +114,10 @@ public class IndexAnalysisService {
     @Cacheable(value = "analytics_short_ttl", keyGenerator = "methodKeyGenerator")
     @CircuitBreaker(name = "ElasticIndex", fallbackMethod = "getMediaPulseOverviewWithRelativeIntervalFallback")
     @TimeLimiter(name = "ElasticIndex")
-    public CompletableFuture<MediaPulseOverviewResponse> getMediaPulseOverviewWithRelativeInterval (String intervalUnit, int amount){
+    public CompletableFuture<MediaPulseOverviewResponse> getMediaPulseOverviewWithRelativeInterval (){
         return CompletableFuture.supplyAsync(() ->{
             try{
-                return indexAnalysisRepository.getMediaPulseOverviewWithRelativeInterval(intervalUnit, amount);
+                return indexAnalysisRepository.getMediaPulseOverviewWithRelativeInterval();
             }catch (IOException e) {
                 throw new CompletionException(e);
             }
@@ -181,6 +181,7 @@ public class IndexAnalysisService {
     private CompletableFuture<GlobalEntityTrendsResponse> getGlobalEntityWithRelativeIntervalFallback(
             String intervalUnit,
             int amount,
+            String calendarInterval,
             Throwable t
     ) {
         return CompletableFuture.completedFuture(new GlobalEntityTrendsResponse());

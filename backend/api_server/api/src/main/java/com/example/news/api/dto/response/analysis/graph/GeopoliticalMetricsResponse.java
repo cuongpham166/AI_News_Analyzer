@@ -7,9 +7,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class MediaBiasResponse {
-    private String source;
-    private String topic;
-    private int volume;
+public class GeopoliticalMetricsResponse {
+    private int totalArticles;
+    private int hotspots;
+    private int countries;
     private Double avgSentiment;
 }

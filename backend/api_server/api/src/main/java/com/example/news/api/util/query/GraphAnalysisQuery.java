@@ -41,23 +41,45 @@ public class GraphAnalysisQuery {
         """;
     }
 
-    public String getGeopoliticalHotspotQuery() {
-        // Interactive Map (Choropleth)
+    public String getEventTrackerQueryNew() {
+        //Timeline Map View
         return """
-            MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)-[:COVERS]->(t:Topic)
+            MATCH (e:Event)<-[:MENTIONS_EVENT]-(n:News)-[:MENTIONS_LOCATION]->(l:Location)
             WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
                 AND n.publish_date <= datetime({epochMillis: $endEpoch})
+                AND n.sentiment IS NOT NULL
+                AND l.latitude <> 0.0
+                AND l.longitude <> 0.0
             RETURN
+                e.name AS event,
                 l.name AS location,
-                t.name AS topic, 
-                count(n) AS articleCount, 
-                round(avg(n.sentiment), 2) AS avgSentiment
-            ORDER BY articleCount DESC
+                count(n) AS strength,
+                round(avg(n.sentiment), 2) AS avgSentiment,
+                round(stDev(n.sentiment), 2) AS volatility,
+                l.countryCode AS countryCode,
+                l.country AS country,
+                l.latitude AS latitude,
+                l.longitude AS longitude,
+                collect(DISTINCT l.name) AS aliases
+            ORDER BY strength DESC
             LIMIT 50
         """;
     }
 
-    public String getGeopoliticalHotspotQueryNew() {
+    public String getEventTrackerMetricsQuery() {
+        return """
+            MATCH (e:Event)<-[:MENTIONS_EVENT]-(n:News)
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+                AND n.publish_date <= datetime({epochMillis: $endEpoch})
+                AND n.sentiment IS NOT NULL
+            RETURN
+               count(DISTINCT e) AS eventsTracked,
+               count(DISTINCT n) AS totalEventCoverage,
+               round(avg(n.sentiment), 2) AS avgSentiment
+        """;
+    }
+
+    public String getGeopoliticalHotspotQuery() {
         return """
             MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)-[:COVERS]->(t:Topic)
             WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
@@ -67,7 +89,7 @@ public class GraphAnalysisQuery {
             WITH
                 l.name AS location,
                 t.name AS topic,
-                count(n) AS articleCount,
+                count(DISTINCT n) AS articleCount,
                 round(avg(n.sentiment), 2) AS avgSentiment,
                 l.latitude AS latitude,
                 l.longitude as longitude,
@@ -90,6 +112,124 @@ public class GraphAnalysisQuery {
             LIMIT 50
         """;
     }
+
+    public String getGeopoliticalMetricsQuery() {
+        return """
+            MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+                AND n.publish_date <= datetime({epochMillis: $endEpoch})
+                AND l.latitude <> 0.0
+                AND l.longitude <> 0.0
+                AND EXISTS {
+                    MATCH (n)-[:COVERS]->(:Topic)
+                }
+    
+            WITH
+                collect(DISTINCT n) AS articles,
+                count(DISTINCT l) AS hotspots,
+                count(DISTINCT l.countryCode) AS countries
+    
+            RETURN
+                size(articles) AS totalArticles,
+                hotspots,
+                countries,
+                CASE
+                    WHEN size(articles) = 0 THEN 0.0
+                    ELSE round(
+                         reduce(
+                                total = 0.0,
+                                article IN articles |
+                                total + coalesce(article.sentiment, 0.0)
+                         ) / size(articles),
+                         2
+                    )
+                END AS avgSentiment
+        """;
+    }
+
+    public String getGeopoliticalHotspotQueryNew() {
+        return """
+        MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)
+        WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+            AND n.publish_date <= datetime({epochMillis: $endEpoch})
+            AND l.latitude <> 0.0
+            AND l.longitude <> 0.0
+            AND EXISTS {
+                MATCH (n)-[:COVERS]->(:Topic)
+            }
+
+        WITH
+            l.countryCode AS countryCode,
+            l.country AS country,
+            l.latitude AS latitude,
+            l.longitude AS longitude,
+            collect(DISTINCT l.name) AS aliases,
+            collect(DISTINCT n) AS articles
+
+        WITH
+            countryCode,
+            country,
+            latitude,
+            longitude,
+            aliases,
+            articles,
+            size(articles) AS articleCount
+
+        UNWIND articles AS article
+        MATCH (article)-[:COVERS]->(t:Topic)
+
+        WITH
+            countryCode,
+            country,
+            latitude,
+            longitude,
+            aliases,
+            articles,
+            articleCount,
+            t.name AS topic,
+            count(DISTINCT article) AS topicArticleCount
+
+        ORDER BY topicArticleCount DESC
+
+        WITH
+            countryCode,
+            country,
+            latitude,
+            longitude,
+            aliases,
+            articles,
+            articleCount,
+            collect({
+                name: topic,
+                articleCount: topicArticleCount
+            }) AS topics
+
+        RETURN
+            head(aliases) AS location,
+            articleCount,
+            round(
+                reduce(
+                    total = 0.0,
+                    article IN articles |
+                    total + coalesce(article.sentiment, 0.0)
+                ) / CASE
+                    WHEN articleCount = 0 THEN 1.0
+                    ELSE articleCount
+                END,
+                2
+            ) AS avgSentiment,
+            topics,
+            aliases,
+            latitude,
+            longitude,
+            country,
+            countryCode
+
+        ORDER BY articleCount DESC
+        LIMIT 50
+    """;
+    }
+
     public String getNarrativeBridgeQuery() {
         // Dynamic Word Cloud
         return """
@@ -211,16 +351,18 @@ public class GraphAnalysisQuery {
     public String getCrisisAndRiskRadarQuery() {
         //Incident Risk Table with Location Badges.
         return """
-            MATCH (e:Event)<-[:MENTIONS_EVENT]-(n:News)-[:MENTIONS_ORGANIZATION]->(o:Organization),
-                (n)-[:MENTIONS_LOCATION]->(l:Location)
-            WHERE n.publish_date >= datetime({epochMillis: $startEpoch}) 
+            MATCH (e:Event)<-[:MENTIONS_EVENT]-(n:News)
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
                 AND n.publish_date <= datetime({epochMillis: $endEpoch})
+            OPTIONAL MATCH (n)-[:MENTIONS_ORGANIZATION]->(o:Organization)
+            OPTIONAL MATCH (n)-[:MENTIONS_LOCATION]->(l:Location)
             RETURN
                 e.name AS event,
-                o.name AS organization,
-                l.name AS location,
-                count(n) AS frequency,
-                round(avg(n.sentiment), 2) AS avgSentiment
+                collect(DISTINCT o.name) AS organizations,
+                collect(DISTINCT l.name) AS locations,
+                count(DISTINCT n) AS frequency,
+                round(avg(n.sentiment), 2) AS avgSentiment,
+                round(stDev(n.sentiment), 2) AS volatility
             ORDER BY frequency DESC
             LIMIT 50
         """;
@@ -293,7 +435,7 @@ public class GraphAnalysisQuery {
           AND n.sentiment IS NOT NULL
         WITH e, count(n) AS totalArticles, avg(n.sentiment) AS avgSentiment, stDev(n.sentiment) AS volatility
         WHERE totalArticles >= 1 AND volatility IS NOT NULL
-        RETURN 
+        RETURN
             coalesce(e['name'], e['title'], 'Unknown') AS entity,
             labels(e)[0] AS entityGroup,
             totalArticles,
@@ -302,6 +444,102 @@ public class GraphAnalysisQuery {
         ORDER BY polarizationScore DESC
         LIMIT 30
         """;
+    }
+
+    public String getCountryRiskQuery() {
+        return """
+        CALL {
+            MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)
+            WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+                AND n.publish_date <= datetime({epochMillis: $endEpoch})
+                AND l.latitude <> 0.0
+                AND l.longitude <> 0.0
+                AND l.country <> 'Unknown'
+                AND l.countryCode <> 'xx'
+
+            RETURN count(DISTINCT n) AS totalArticles
+        }
+
+        MATCH (l:Location)<-[:MENTIONS_LOCATION]-(n:News)
+        WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+            AND n.publish_date <= datetime({epochMillis: $endEpoch})
+            AND l.latitude <> 0.0
+            AND l.longitude <> 0.0
+            AND l.country <> 'Unknown'
+            AND l.countryCode <> 'xx'
+
+        WITH
+            l.countryCode AS countryCode,
+            head(collect(DISTINCT l.country)) AS country,
+            collect(DISTINCT n) AS articles,
+            totalArticles
+
+        WITH
+            countryCode,
+            country,
+            articles,
+            size(articles) AS articleCount,
+            totalArticles
+
+        RETURN
+            country,
+            countryCode,
+            articleCount,
+
+            CASE
+                WHEN articleCount = 0 THEN 0.0
+                ELSE round(
+                    reduce(
+                        total = 0.0,
+                        article IN articles |
+                        total + coalesce(article.sentiment, 0.0)
+                    ) / articleCount,
+                    2
+                )
+            END AS avgSentiment,
+
+            CASE
+                WHEN totalArticles = 0 THEN 0.0
+                ELSE round(
+                    toFloat(articleCount) / totalArticles * 100,
+                    2
+                )
+            END AS coveragePercent
+
+        ORDER BY articleCount DESC
+    """;
+    }
+
+
+    public String getEventRiskRadarQuery() {
+        return """
+        MATCH (e:Event)<-[:MENTIONS_EVENT]-(n:News)
+        WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+          AND n.publish_date <= datetime({epochMillis: $endEpoch})
+          AND n.sentiment IS NOT NULL
+        RETURN
+            e.name AS event,
+            count(n) AS frequency,
+            round(avg(n.sentiment), 2) AS avgSentiment,
+            round(coalesce(stDev(n.sentiment), 0.0), 2) AS volatility
+        ORDER BY frequency DESC
+        LIMIT 50
+    """;
+    }
+
+    public String getEventMomentumQuery() {
+        return """
+        MATCH (e:Event)<-[:MENTIONS_EVENT]-(n:News)
+        WHERE n.publish_date >= datetime({epochMillis: $startEpoch})
+          AND n.publish_date <= datetime({epochMillis: $endEpoch})
+        WITH e, date(n.publish_date) AS publishDate, count(n) AS dailyVolume
+        RETURN
+            e.name AS event,
+            collect({date: toString(publishDate), volume: dailyVolume}) AS timeline,
+            sum(dailyVolume) AS totalVolume
+        ORDER BY totalVolume DESC
+        LIMIT 10
+    """;
     }
 
 }
