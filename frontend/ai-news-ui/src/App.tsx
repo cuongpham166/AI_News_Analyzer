@@ -31,7 +31,7 @@ const App = () => {
             <Route path='/risk_map' element={<RiskMapPage />} />
             <Route path='/detailed_news' element={<DetailedNewsPage />} />
             <Route path='/news' element={<NewsPage />} />
-            <Route path='/news/:link' element={<DetailedNewsPage />} />
+            <Route path='/news/:Id' element={<DetailedNewsPage />} />
             <Route path='*' element={<NotFoundPage />} />
           </Routes>
         </Layout>

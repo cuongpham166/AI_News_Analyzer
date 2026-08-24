@@ -1,5 +1,7 @@
 import type { DetailedNews } from '@/shared/types/news/DetailedNews.ts';
 import { Badge, Stack, Text } from '@mantine/core';
+import { NEWS_TOPIC_COLORS } from '@/shared/constants/NewsTopics.ts';
+import { ArticleIcon } from '@phosphor-icons/react';
 
 const TopicSection = ({ topic }: DetailedNews['inference']['topic']) => {
   return (
@@ -8,7 +10,14 @@ const TopicSection = ({ topic }: DetailedNews['inference']['topic']) => {
         Topic
       </Text>
 
-      <Badge variant='light' color='blue' size='lg' w='fit-content'>
+      <Badge
+        variant='light'
+        color={NEWS_TOPIC_COLORS[topic.name]}
+        size='lg'
+        radius='sm'
+        w='fit-content'
+        leftSection={<ArticleIcon size={20} />}
+      >
         {topic.name}
       </Badge>
     </Stack>

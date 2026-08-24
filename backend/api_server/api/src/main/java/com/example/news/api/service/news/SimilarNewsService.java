@@ -28,53 +28,108 @@ public class SimilarNewsService {
         this.similarNewsRepository = similarNewsRepository;
     }
 
-    public List<SimilarNewsResponse> getSimilarNews(String currentArticleLink, int limit) {
-        List<SimilarNewsId> similarNewsIds = similarNewsRepository.findSimilarNewsIds(currentArticleLink,limit);
-        if (similarNewsIds.isEmpty()) return List.of();
+    public List<SimilarNewsResponse> getSimilarNews(
+            String currentArticleId,
+            int limit
+    ) {
+        List<SimilarNewsId> similarNewsIds =
+                similarNewsRepository.findSimilarNewsIds(
+                        currentArticleId,
+                        limit
+                );
 
-        List<String> targetLinks = similarNewsIds.stream()
-                .map(SimilarNewsId::link)
+        if (similarNewsIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> targetIds = similarNewsIds.stream()
+                .map(SimilarNewsId::id)
                 .toList();
 
-        try{
-            SearchResponse<SimilarNewsResponse> response = elasticsearchClient.search(s -> s
-                    .index("news_index")
-                    .query(q -> q
-                            .bool(b -> b
-                                    .filter(f -> f.terms(t -> t
-                                            .field("link")
-                                            .terms(v -> v.value
-                                                    (targetLinks.stream()
-                                                            .map(FieldValue::of)
-                                                            .toList()
-                                                    )
-                                            )
-                                    ))
-                            )
-                    ),
-                    SimilarNewsResponse.class
-            );
+        /*
+         * Keep Neo4j's ranking information.
+         *
+         * Merge function is only defensive protection in case
+         * duplicate IDs somehow reach this point.
+         */
+        Map<String, SimilarNewsId> scoreMap =
+                similarNewsIds.stream()
+                        .collect(Collectors.toMap(
+                                SimilarNewsId::id,
+                                Function.identity(),
+                                (first, second) -> first
+                        ));
 
-            Map<String, SimilarNewsResponse> docMap = response.hits().hits().stream()
-                    .map(Hit::source)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toMap(
-                            SimilarNewsResponse::getLink,
-                            Function.identity()
-                    ));
+        try {
+            SearchResponse<SimilarNewsResponse> response =
+                    elasticsearchClient.search(s -> s
+                                    .index("news")
+                                    .size(targetIds.size())
 
-            Map<String, Double> scoreMap = similarNewsIds.stream()
-                    .collect(Collectors.toMap(
-                            SimilarNewsId::link,
-                            SimilarNewsId::score
-                    ));
-            return targetLinks.stream()
-                    .map(docMap::get)
+                                    .source(src -> src
+                                            .filter(f -> f.includes(
+                                                    "language",
+                                                    "link",
+                                                    "publish_date",
+                                                    "summary",
+                                                    "title",
+                                                    "sentiment",
+                                                    "source",
+                                                    "sentiment_label"
+                                            ))
+                                    )
+
+                                    .query(q -> q
+                                            .ids(i -> i.values(targetIds))
+                                    ),
+
+                            SimilarNewsResponse.class
+                    );
+
+            /*
+             * Elasticsearch documents indexed with the same ID
+             * can be accessed through hit.id().
+             */
+            Map<String, SimilarNewsResponse> documentMap =
+                    response.hits().hits().stream()
+                            .filter(hit -> hit.id() != null)
+                            .filter(hit -> hit.source() != null)
+                            .collect(Collectors.toMap(
+                                    Hit::id,
+                                    Hit::source,
+                                    (first, second) -> first
+                            ));
+
+            /*
+             * Elasticsearch does not need to preserve Neo4j's order.
+             *
+             * targetIds is already ordered by Neo4j ranking.
+             */
+            return targetIds.stream()
+                    .map(id -> {
+                        SimilarNewsResponse document =
+                                documentMap.get(id);
+
+                        if (document == null) {
+                            return null;
+                        }
+
+                        SimilarNewsId similarity =
+                                scoreMap.get(id);
+
+                        document.setId(id);
+                        document.setSimilarScore(
+                                similarity.vectorScore()
+                        );
+                        document.setRankingScore(
+                                similarity.rankingScore()
+                        );
+
+                        return document;
+                    })
                     .filter(Objects::nonNull)
-                    .peek(doc -> doc.setSimilarScore(scoreMap.get(doc.getLink())))
                     .toList();
-
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return List.of();
         }

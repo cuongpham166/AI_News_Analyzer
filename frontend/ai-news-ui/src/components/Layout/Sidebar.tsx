@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Stack, Text, Button, NavLink } from '@mantine/core';
 import {
   GaugeIcon,
@@ -11,7 +11,7 @@ import {
   NewspaperIcon,
   ShareNetworkIcon,StackIcon
 } from '@phosphor-icons/react';
-import { ThemeColors } from '@/shared/constants/Colors';
+
 
 function Sidebar() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -21,17 +21,9 @@ function Sidebar() {
     { icon: ShareNetworkIcon, label: 'Network Lab', url: '/network_lab' },
     { icon: ArticleIcon, label: 'Media Bias', url: '/media_bias' },
     { icon: GlobeIcon, label: 'Risk & Map', url: '/risk_map' },
-    { icon: NewspaperIcon, label: 'Detailed', url: '/detailed_news' },
     { icon: NewspaperIcon, label: 'News', url: '/news' },
     { icon: UserIcon, label: 'Profile' },
   ];
-
-  const onMenuClick = (event) => {
-    const menuTitle = event.target.innerText;
-    const foundItem = menuData.filter((menu) => menu.label == menuTitle);
-    const url = foundItem[0]['url'];
-    navigate(url);
-  };
 
   return (
     <Stack

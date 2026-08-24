@@ -1,6 +1,7 @@
 import type { DetailedNews } from '@/shared/types/news/DetailedNews.ts';
-import { Box, Paper, Stack, Text, Title } from '@mantine/core';
+import { Blockquote, Box, Paper, Stack, Text, Title } from '@mantine/core';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
+import { InfoIcon } from '@phosphor-icons/react';
 
 interface DetailedNewsHeaderProps {
   article: DetailedNews;
@@ -14,29 +15,20 @@ const DetailedNewsContent = ({ article }: DetailedNewsHeaderProps) => {
 
   return (
     <Stack gap='lg'>
-      <Paper
-        p='lg'
-        radius='md'
-        withBorder
-        style={{
-          background: ThemeColors.secondary,
-          borderColor: ThemeColors.border,
-        }}
+      <Blockquote
+        color={ThemeColors.primary}
+        iconSize={38}
+        cite='– Summarized by distilbart-cnn-12-6 - '
+        icon={<InfoIcon size={20} />}
+        mt='xl'
       >
-        <Stack gap='xs'>
-          <Text size='sm' fw={600} c='dimmed'>
-            Summary
-          </Text>
-
-          <Text size='md' lh={1.65}>
-            {article.inference.summary.trim()}
-          </Text>
-        </Stack>
-      </Paper>
+        {article.inference.summary.trim()}
+      </Blockquote>
 
       {/* Article */}
       {paragraphs.map((paragraph, index) => {
-        const isHeading = paragraph.length < 80 && !paragraph.endsWith('.') && index > 0;
+        const isHeading =
+          paragraph.length < 80 && !paragraph.endsWith('.') && index > 0;
 
         if (isHeading) {
           return (

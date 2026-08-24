@@ -12,7 +12,7 @@ const KeyphrasesSection = ({
 
       <Group gap='xs'>
         {keyphrases.map((phrase) => (
-          <Badge key={phrase.id} variant='light' color='gray'>
+          <Badge key={phrase.id} variant='light' color='gray' radius='sm'>
             {phrase.value}
           </Badge>
         ))}
