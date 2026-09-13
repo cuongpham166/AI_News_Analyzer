@@ -6,9 +6,9 @@ import com.example.news.api.dto.response.analysis.MacroPulseOverviewResponse;
 import com.example.news.api.dto.response.analysis.TopRadarResponse;
 import com.example.news.api.dto.response.analysis.index.*;
 import com.example.news.api.dto.response.analysis.jpa.MetaDataDistributionResponse;
-import com.example.news.api.service.analysis.DashboardAnalysisService;
-import com.example.news.api.service.analysis.IndexAnalysisService;
-import com.example.news.api.service.analysis.JpaAnalysisService;
+import com.example.news.api.service.analysis.DashboardService;
+import com.example.news.api.service.analysis.IndexService;
+import com.example.news.api.service.analysis.JpaService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,24 +21,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/analysis/macro-pulse")
 public class MacroPulseController {
-    private final IndexAnalysisService indexAnalysisService;
-    private final JpaAnalysisService jpaAnalysisService;
-    private final DashboardAnalysisService dashboardAnalysisService;
+    private final IndexService indexService;
+    private final JpaService jpaService;
+    private final DashboardService dashboardService;
     public MacroPulseController (
-            IndexAnalysisService indexAnalysisService,
-            JpaAnalysisService jpaAnalysisService,
-            DashboardAnalysisService dashboardAnalysisService
+            IndexService indexService,
+            JpaService jpaService,
+            DashboardService dashboardService
     ){
-        this.indexAnalysisService = indexAnalysisService;
-        this.jpaAnalysisService = jpaAnalysisService;
-        this.dashboardAnalysisService = dashboardAnalysisService;
+        this.indexService = indexService;
+        this.jpaService = jpaService;
+        this.dashboardService = dashboardService;
     }
 
 
     @GetMapping("/dashboard/overview")
     public ResponseEntity<ApiResponse<MacroPulseOverviewResponse>> getMacroPulseOverviewDashboard(
     ){
-        MacroPulseOverviewResponse data = dashboardAnalysisService.getMacroPulseOverviewDashboard();
+        MacroPulseOverviewResponse data = dashboardService.getMacroPulseOverviewDashboard();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -46,14 +46,14 @@ public class MacroPulseController {
     public ResponseEntity<ApiResponse<MacroPulseDetailResponse>> getMacroPulseDetailDashboard
             (@RequestParam String intervalUnit,@RequestParam int amount,@RequestParam String calendarInterval)
     {
-        MacroPulseDetailResponse data = dashboardAnalysisService.getMacroPulseDetailDashboard(intervalUnit,amount,calendarInterval);
+        MacroPulseDetailResponse data = dashboardService.getMacroPulseDetailDashboard(intervalUnit,amount,calendarInterval);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
 
     @GetMapping("/metadata")
     public ResponseEntity<ApiResponse<MetaDataDistributionResponse>> getMetaDataDistribution(){
-        MetaDataDistributionResponse data = jpaAnalysisService.getMetaDataDistribution();
+        MetaDataDistributionResponse data = jpaService.getMetaDataDistribution();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -61,7 +61,7 @@ public class MacroPulseController {
     @GetMapping("/media-pulse-overview")
     public ResponseEntity<ApiResponse<MediaPulseOverviewResponse>> getMediaPulseOverviewWithRelativeInterval (
     ){
-        MediaPulseOverviewResponse data = indexAnalysisService.getMediaPulseOverviewWithRelativeInterval().join();
+        MediaPulseOverviewResponse data = indexService.getMediaPulseOverviewWithRelativeInterval().join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -72,7 +72,7 @@ public class MacroPulseController {
             @RequestParam int amount,
             @RequestParam String calendarInterval
     ){
-        GlobalTrendsResponse data = indexAnalysisService.getGlobalTrendsWithRelativeInterval(intervalUnit, amount,calendarInterval).join();
+        GlobalTrendsResponse data = indexService.getGlobalTrendsWithRelativeInterval(intervalUnit, amount,calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -83,7 +83,7 @@ public class MacroPulseController {
             @RequestParam int amount,
             @RequestParam String calendarInterval
     ){
-        GlobalEntityTrendsResponse data = indexAnalysisService.getGlobalEntityWithRelativeInterval(intervalUnit,amount,calendarInterval).join();
+        GlobalEntityTrendsResponse data = indexService.getGlobalEntityWithRelativeInterval(intervalUnit,amount,calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -93,7 +93,7 @@ public class MacroPulseController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<EntityVelocityResponse> data = indexAnalysisService.getEntityVelocityWithRelativeInterval(intervalUnit, amount).join();
+        List<EntityVelocityResponse> data = indexService.getEntityVelocityWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -103,7 +103,7 @@ public class MacroPulseController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<SignificantTermsAggregationResponse> data = indexAnalysisService.getSignificantTermsAggregationWithRelativeInterval(intervalUnit, amount).join();
+        List<SignificantTermsAggregationResponse> data = indexService.getSignificantTermsAggregationWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -113,7 +113,7 @@ public class MacroPulseController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        TopRadarResponse data = indexAnalysisService.getTopicRadarWithRelativeInterval(intervalUnit, amount).join();
+        TopRadarResponse data = indexService.getTopicRadarWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -124,7 +124,7 @@ public class MacroPulseController {
             @RequestParam int amount,
             @RequestParam String calendarInterval
     ){
-        SentimentVolumeTimelineResponse data = indexAnalysisService.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval).join();
+        SentimentVolumeTimelineResponse data = indexService.getSentimentVolumeTimelineWithRelativeInterval(intervalUnit, amount, calendarInterval).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 }

@@ -28,6 +28,7 @@ public class SecurityConfig {
 
                         //Public API Endpoints
                         .requestMatchers("/api/analysis/**").permitAll()
+                        .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/api/news/all").permitAll()
                         .requestMatchers("/api/news/detail").permitAll()
                         .requestMatchers("/api/news/similar").permitAll()

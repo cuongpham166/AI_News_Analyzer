@@ -56,12 +56,6 @@ public class NewsController {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
         userInteractionService.addJpaBookmark(newsId,userId);
-
-        CompletableFuture.runAsync(() -> userInteractionService.addGraphBookmark(userId, newsId))
-                .exceptionally(ex -> {
-                    System.err.println("Failed to sync bookmark to Neo4j: " + ex.getMessage());
-                    return null;
-                });
     }
 
     @DeleteMapping("/{newsId}/bookmark")
@@ -69,12 +63,6 @@ public class NewsController {
         Jwt jwt = authentication.getToken();
         String userId = jwt.getSubject();
         userInteractionService.removeJpaBookmark(newsId,userId);
-
-        CompletableFuture.runAsync(() -> userInteractionService.removeGraphBookmark(userId,newsId))
-                .exceptionally(ex -> {
-                    System.err.println("Failed to remove bookmark to Neo4j: " + ex.getMessage());
-                    return null;
-                });
     }
 
     @PostMapping("/{newsId}/reaction")
@@ -88,14 +76,11 @@ public class NewsController {
             ReactionType savedType = existingReaction.get().getType();
             if (savedType == reactionType) {
                 userInteractionService.removeJpaReaction(existingReaction.get());
-                CompletableFuture.runAsync(() -> userInteractionService.removeGraphReaction(userId, newsId));
             }else{
                 userInteractionService.addJpaReaction(newsId,userId,reactionType);
-                CompletableFuture.runAsync(() -> userInteractionService.addGraphReaction(userId, newsId, reactionType));
             }
         }else{
             userInteractionService.addJpaReaction(newsId,userId,reactionType);
-            CompletableFuture.runAsync(() -> userInteractionService.addGraphReaction(userId, newsId, reactionType));
         }
     }
 

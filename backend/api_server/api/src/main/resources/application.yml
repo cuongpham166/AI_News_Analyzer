@@ -1,12 +1,20 @@
 spring:
-  postgres:
+  application:
+    name: api
+
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
     url: ${POSTGRES_URL}
-    host: ${POSTGRES_HOST}
-    port: ${POSTGRES_PORT}
-    dbname: ${POSTGRES_DBNAME}
-    authentication:
-      username: ${POSTGRES_USER}
-      password: ${POSTGRES_PASSWORD}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
   neo4j:
     uri: ${NEO4J_URI}
@@ -17,6 +25,26 @@ spring:
 
   elasticsearch:
     uris: ${ELASTIC_URL}
+
+  clickhouse:
+    url: ${CLICKHOUSE_URL}
+    database: ${CLICKHOUSE_DATABASE}
+    username: ${CLICKHOUSE_USERNAME}
+    password: ${CLICKHOUSE_PASSWORD}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+server:
+  port: 8082
+
+keycloak:
+  url: ${KEYCLOAK_URL}
+  realm: ${KEYCLOAK_REALM}
+  client-id: ${KEYCLOAK_CLIENT_ID}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
 
 resilience4j:
   timelimiter:

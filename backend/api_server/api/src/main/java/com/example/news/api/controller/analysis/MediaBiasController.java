@@ -7,9 +7,9 @@ import com.example.news.api.dto.response.analysis.graph.SourceCoverageResponse;
 import com.example.news.api.dto.response.analysis.graph.PublisherFocusResponse;
 import com.example.news.api.dto.response.analysis.graph.TrendingKeywordClusterResponse;
 import com.example.news.api.dto.response.analysis.index.EchoChamberResponse;
-import com.example.news.api.service.analysis.DashboardAnalysisService;
-import com.example.news.api.service.analysis.GraphAnalysisService;
-import com.example.news.api.service.analysis.IndexAnalysisService;
+import com.example.news.api.service.analysis.DashboardService;
+import com.example.news.api.service.analysis.GraphService;
+import com.example.news.api.service.analysis.IndexService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,18 +22,18 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/analysis/media-bias")
 public class MediaBiasController {
-    private final GraphAnalysisService graphAnalysisService;
-    private final IndexAnalysisService indexAnalysisService;
-    private final DashboardAnalysisService dashboardAnalysisService;
+    private final GraphService graphService;
+    private final IndexService indexService;
+    private final DashboardService dashboardService;
 
     public MediaBiasController(
-            GraphAnalysisService graphAnalysisService,
-            IndexAnalysisService indexAnalysisService,
-            DashboardAnalysisService dashboardAnalysisService
+            GraphService graphService,
+            IndexService indexService,
+            DashboardService dashboardService
     ){
-        this.graphAnalysisService = graphAnalysisService;
-        this.indexAnalysisService = indexAnalysisService;
-        this.dashboardAnalysisService = dashboardAnalysisService;
+        this.graphService = graphService;
+        this.indexService = indexService;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/dashboard")
@@ -41,7 +41,7 @@ public class MediaBiasController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        MediaBiasResponse data = dashboardAnalysisService.getMediaBiasDashboard(intervalUnit, amount);
+        MediaBiasResponse data = dashboardService.getMediaBiasDashboard(intervalUnit, amount);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -51,7 +51,7 @@ public class MediaBiasController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<SourceCoverageResponse> data = graphAnalysisService.getMediaBiasWithRelativeInterval(intervalUnit, amount).join();
+        List<SourceCoverageResponse> data = graphService.getMediaBiasWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -61,7 +61,7 @@ public class MediaBiasController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<PublisherFocusResponse> data = graphAnalysisService.getPublisherFocusWithRelativeInterval(intervalUnit, amount).join();
+        List<PublisherFocusResponse> data = graphService.getPublisherFocusWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -71,7 +71,7 @@ public class MediaBiasController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<EchoChamberResponse> data = indexAnalysisService.getEchoChamberWithRelativeInterval(intervalUnit, amount).join();
+        List<EchoChamberResponse> data = indexService.getEchoChamberWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -82,7 +82,7 @@ public class MediaBiasController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<TrendingKeywordClusterResponse> data = graphAnalysisService.getTrendingKeywordClusterWithRelativeInterval(intervalUnit, amount).join();
+        List<TrendingKeywordClusterResponse> data = graphService.getTrendingKeywordClusterWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -94,7 +94,7 @@ public class MediaBiasController {
             @RequestParam int topN,
             @RequestParam boolean isPositive
     ){
-        List<InferenceNews> data = indexAnalysisService.getImpactArticlesWithRelativeInterval(intervalUnit,amount,topN,isPositive).join();
+        List<InferenceNews> data = indexService.getImpactArticlesWithRelativeInterval(intervalUnit,amount,topN,isPositive).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 }

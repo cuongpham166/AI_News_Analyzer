@@ -39,6 +39,27 @@ public class CacheConfig {
                         .recordStats()
                         .buildAsync()
         );
+
+        cacheManager.registerCustomCache(
+                "pipeline_db_metrics",
+                Caffeine.newBuilder()
+                        .initialCapacity(50)
+                        .maximumSize(200)
+                        .expireAfterWrite(2, TimeUnit.HOURS)
+                        .recordStats()
+                        .buildAsync()
+        );
+
+        cacheManager.registerCustomCache(
+                "application_db_metrics",
+                Caffeine.newBuilder()
+                        .initialCapacity(100)
+                        .maximumSize(500)
+                        .expireAfterWrite(5, TimeUnit.MINUTES)
+                        .recordStats()
+                        .buildAsync()
+        );
+
         return cacheManager;
     }
 }

@@ -18,7 +18,7 @@ import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Repository;
 
 import com.example.news.api.util.etc.IntervalConverter;
-import com.example.news.api.util.query.GraphAnalysisQuery;
+import com.example.news.api.util.query.graph.GraphAnalysisQuery;
 
 
 @Repository
@@ -50,6 +50,8 @@ public class GraphAnalysisRepository {
                         record.get("person").asString(),
                         record.get("organization").asString(),
                         record.get("strength").asInt(),
+                        record.get("positiveCoOccurrences").asInt(),
+                        record.get("negativeCoOccurrences").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
                         record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble()
                 ))
@@ -118,7 +120,7 @@ public class GraphAnalysisRepository {
                         record.get("location").asString(),
                         record.get("articleCount").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
-
+                        record.get("riskScore").isNull() ? 0.0 : record.get("riskScore").asDouble(),
                         record.get("topics").asList(topic ->
                                 new GeopoliticalHotspotTopic(
                                         topic.get("name").asString(),
@@ -284,6 +286,8 @@ public class GraphAnalysisRepository {
                         record.get("orgA").asString(),
                         record.get("orgB").asString(),
                         record.get("sharedArticles").asInt(),
+                        record.get("positiveArticles").asInt(),
+                        record.get("conflictArticles").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble()
                 ))
                 .all()
@@ -304,6 +308,8 @@ public class GraphAnalysisRepository {
                         record.get("source").asString(),
                         record.get("topic").asString(),
                         record.get("volume").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble()
                 ))
                 .all()
@@ -345,6 +351,8 @@ public class GraphAnalysisRepository {
                         record.get("topic").asString(),
                         record.get("keyPhrase").asString(),
                         record.get("coOccurrence").asInt(),
+                        record.get("positiveCoOccurrence").asInt(),
+                        record.get("negativeCoOccurrence").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble()
                 ))
                 .all()
@@ -367,6 +375,8 @@ public class GraphAnalysisRepository {
                         record.get("target").asString(),
                         record.get("targetGroup").asString(),
                         record.get("weight").asDouble(),
+                        record.get("positiveWeight").asInt(),
+                        record.get("negativeWeight").asInt(),
                         record.get("sentiment").isNull() ? 0.0 : record.get("sentiment").asDouble()
                 ))
                 .all()
@@ -428,6 +438,8 @@ public class GraphAnalysisRepository {
                         record.get("entity").asString(),
                         record.get("entityGroup").asString(),
                         record.get("totalArticles").asLong(),
+                        record.get("positiveCount").asLong(),
+                        record.get("negativeCount").asLong(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
                         record.get("polarizationScore").isNull() ? 0.0 : record.get("polarizationScore").asDouble()
                 ))
@@ -492,7 +504,9 @@ public class GraphAnalysisRepository {
                         record.get("timeline").asList(timeline ->
                                 new EventMomentumTimeline(
                                         timeline.get("date").asString(),
-                                        timeline.get("volume").asInt()
+                                        timeline.get("volume").asInt(),
+                                        timeline.get("positiveVolume").asInt(),
+                                        timeline.get("negativeVolume").asInt()
                                 )
                         ),
                         record.get("totalVolume").asInt()
@@ -501,4 +515,5 @@ public class GraphAnalysisRepository {
                 .stream()
                 .toList();
     }
+
 }

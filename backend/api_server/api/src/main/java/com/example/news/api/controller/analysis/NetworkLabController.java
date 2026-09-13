@@ -4,8 +4,8 @@ import com.example.news.api.dto.internal.ApiResponse;
 import com.example.news.api.dto.response.analysis.GraphResponse;
 import com.example.news.api.dto.response.analysis.NetworkLabResponse;
 import com.example.news.api.dto.response.analysis.graph.*;
-import com.example.news.api.service.analysis.DashboardAnalysisService;
-import com.example.news.api.service.analysis.GraphAnalysisService;
+import com.example.news.api.service.analysis.DashboardService;
+import com.example.news.api.service.analysis.GraphService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,15 +18,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/analysis/network-lab")
 public class NetworkLabController {
-    private final GraphAnalysisService graphAnalysisService;
-    private final DashboardAnalysisService dashboardAnalysisService;
+    private final GraphService graphService;
+    private final DashboardService dashboardService;
 
     public NetworkLabController(
-            GraphAnalysisService graphAnalysisService,
-            DashboardAnalysisService dashboardAnalysisService
+            GraphService graphService,
+            DashboardService dashboardService
     ){
-        this.graphAnalysisService = graphAnalysisService;
-        this.dashboardAnalysisService = dashboardAnalysisService;
+        this.graphService = graphService;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/dashboard")
@@ -34,7 +34,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        NetworkLabResponse data = dashboardAnalysisService.getNetworkLabDashboard(intervalUnit, amount);
+        NetworkLabResponse data = dashboardService.getNetworkLabDashboard(intervalUnit, amount);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -44,7 +44,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<AllianceNetworkResponse> data = graphAnalysisService.getAllianceNetworkWithRelativeInterval(intervalUnit, amount).join();
+        List<AllianceNetworkResponse> data = graphService.getAllianceNetworkWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -54,7 +54,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<PowerCouplesResponse> data = graphAnalysisService.getPowerCoupleWithRelativeInterval(intervalUnit,amount).join();
+        List<PowerCouplesResponse> data = graphService.getPowerCoupleWithRelativeInterval(intervalUnit,amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -64,7 +64,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<CoOccurrenceCellResponse> data = graphAnalysisService.getEntityCoOccurrenceMatrixWithRelativeInterval(intervalUnit, amount).join();
+        List<CoOccurrenceCellResponse> data = graphService.getEntityCoOccurrenceMatrixWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
 
     }
@@ -75,7 +75,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<EntityPolarizationResponse> data = graphAnalysisService.getEntityPolarizationWithRelativeInterval(intervalUnit, amount).join();
+        List<EntityPolarizationResponse> data = graphService.getEntityPolarizationWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -85,7 +85,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<InfluencerNetworkResponse> data = graphAnalysisService.getInfluencerNetworkWithRelativeInterval(intervalUnit, amount).join();
+        List<InfluencerNetworkResponse> data = graphService.getInfluencerNetworkWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -95,7 +95,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        GraphResponse data = graphAnalysisService.getEntitiesGraphWithRelativeInterval(intervalUnit, amount).join();
+        GraphResponse data = graphService.getEntitiesGraphWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -105,7 +105,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<NarrativeBridgeResponse> data = graphAnalysisService.getNarrativeBridgeWithRelativeInterval(intervalUnit, amount).join();
+        List<NarrativeBridgeResponse> data = graphService.getNarrativeBridgeWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -114,7 +114,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<EventRiskRadarResponse> data = graphAnalysisService.getEventRiskRadarWithRelativeInterval(intervalUnit, amount).join();
+        List<EventRiskRadarResponse> data = graphService.getEventRiskRadarWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -123,7 +123,7 @@ public class NetworkLabController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<EventMomentumResponse> data = graphAnalysisService.getEventMomentumWithRelativeInterval(intervalUnit, amount).join();
+        List<EventMomentumResponse> data = graphService.getEventMomentumWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 

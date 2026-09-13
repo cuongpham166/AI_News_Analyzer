@@ -11,5 +11,7 @@ public class TrendingKeywordClusterResponse {
     private String topic;
     private String keyPhrase;
     private int coOccurrence;
+    private int positiveCoOccurrence;
+    private int negativeCoOccurrence;
     private Double avgSentiment;
 }

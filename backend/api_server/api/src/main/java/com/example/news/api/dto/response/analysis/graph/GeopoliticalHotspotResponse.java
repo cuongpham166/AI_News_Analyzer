@@ -14,7 +14,7 @@ public class GeopoliticalHotspotResponse {
     private String location;
     private int articleCount;
     private Double avgSentiment;
-
+    private Double riskScore;
     private List<GeopoliticalHotspotTopic> topics;
 
     private List<String> aliases;

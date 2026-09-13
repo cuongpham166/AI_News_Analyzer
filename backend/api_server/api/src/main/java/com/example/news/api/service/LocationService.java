@@ -3,7 +3,7 @@ import com.example.news.api.entity.EntityEntity;
 import com.example.news.api.entity.LocationCoordinatesEntity;
 import com.example.news.api.repository.entity.EntityRepository;
 import com.example.news.api.repository.entity.EntityTypeRepository;
-import com.example.news.api.repository.GraphDataRepository;
+import com.example.news.api.repository.sync.SyncGraphDataRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,24 +31,24 @@ public class LocationService {
     private final LocationCoordinatesRepository locationRepository;
     private final EntityRepository entityRepository;
     private final EntityTypeRepository entityTypeRepository;
-    private final GraphDataRepository graphDataRepository;
+    private final SyncGraphDataRepository syncGraphDataRepository;
 
     public LocationService(
             LocationCoordinatesRepository locationRepository,
             EntityRepository entityRepository,
             EntityTypeRepository entityTypeRepository,
-            GraphDataRepository graphDataRepository
+            SyncGraphDataRepository syncGraphDataRepository
     ) {
         this.locationRepository = locationRepository;
         this.entityRepository = entityRepository;
         this.entityTypeRepository = entityTypeRepository;
-        this.graphDataRepository = graphDataRepository;
+        this.syncGraphDataRepository = syncGraphDataRepository;
     }
 
     public void syncCoordinationDataFromPostgres(){
         List<LocationCoordinatesEntity> locations = locationRepository.findAll();
         for (LocationCoordinatesEntity location : locations) {
-            graphDataRepository.syncCoordinationDataFromPostgres(
+            syncGraphDataRepository.syncCoordinationDataFromPostgres(
                     location.getLocationName(),
                     location.getLatitude(),
                     location.getLongitude(),
@@ -131,7 +131,7 @@ public class LocationService {
                 if (Objects.equals(originalLocationName,"UN Headquarters")
                         || Objects.equals(originalLocationName,"United Nations headquarters")) {
 
-                    graphDataRepository.updateUnitedNationsCoordinates(
+                    syncGraphDataRepository.updateUnitedNationsCoordinates(
                             location.getLatitude(),
                             location.getLongitude(),
                             location.getCountry(),
@@ -139,7 +139,7 @@ public class LocationService {
                     );
 
                 } else {
-                    graphDataRepository.updateCoordinates(
+                    syncGraphDataRepository.updateCoordinates(
                             originalLocationName,
                             location.getLatitude(),
                             location.getLongitude(),

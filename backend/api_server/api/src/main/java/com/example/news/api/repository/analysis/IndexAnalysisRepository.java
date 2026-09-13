@@ -1,7 +1,6 @@
 package com.example.news.api.repository.analysis;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -11,7 +10,7 @@ import com.example.news.api.dto.response.analysis.TopRadarResponse;
 import com.example.news.api.dto.response.analysis.index.*;
 import com.example.news.api.util.etc.IntervalConverter;
 import com.example.news.api.util.mapper.IndexAnalysisMapper;
-import com.example.news.api.util.query.IndexAnalysisQuery;
+import com.example.news.api.util.query.index.IndexAnalysisQuery;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Repository;
 
@@ -38,7 +37,6 @@ public class IndexAnalysisRepository {
     }
 
     private SearchResponse<Void> executeGlobalTrendsSearch (long startEpoch,long endEpoch, CalendarInterval calendarInterval) throws IOException {
-        //CalendarInterval intervalEnum = this.aggInterval.mapInterval(intervalUnit);
         SearchRequest searchRequest = indexAnalysisQuery.getGlobalTrendsRequest(startEpoch,endEpoch,calendarInterval);
         return esClient.search(searchRequest, Void.class);
     }
@@ -108,7 +106,6 @@ public class IndexAnalysisRepository {
         long startEpoch = result[0];
         long endEpoch   = result[1];
         CalendarInterval interval = parseCalendarInterval(calendarInterval);
-        //SearchResponse<Void> response = executeGlobalTrendsSearch(startEpoch,endEpoch,intervalUnit);
         SearchResponse<Void> response = executeGlobalTrendsSearch(startEpoch,endEpoch,interval);
         return indexAnalysisMapper.mapGlobalTrends(response);
     }

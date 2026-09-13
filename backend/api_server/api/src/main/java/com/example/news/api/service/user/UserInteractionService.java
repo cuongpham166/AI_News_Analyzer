@@ -5,10 +5,8 @@ import com.example.news.api.entity.NewsBookmarkEntity;
 import com.example.news.api.entity.NewsEntity;
 import com.example.news.api.entity.NewsReactionEntity;
 import com.example.news.api.repository.news.NewsRepository;
-import com.example.news.api.repository.user.graph.UserBookmarkGraphRepository;
-import com.example.news.api.repository.user.graph.UserReactionGraphRepository;
-import com.example.news.api.repository.user.jpa.UserBookmarkJpaRepository;
-import com.example.news.api.repository.user.jpa.UserReactionJpaRepository;
+import com.example.news.api.repository.user.UserBookmarkRepository;
+import com.example.news.api.repository.user.UserReactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,30 +16,24 @@ import java.util.UUID;
 
 @Service
 public class UserInteractionService {
-    private final UserBookmarkGraphRepository userBookmarkGraphRepository;
-    private final UserBookmarkJpaRepository userBookmarkJpaRepository;
-    private final UserReactionGraphRepository userReactionGraphRepository;
-    private final UserReactionJpaRepository userReactionJpaRepository;
+    private final UserBookmarkRepository userBookmarkRepository;
+    private final UserReactionRepository userReactionRepository;
     private final NewsRepository newsRepository;
 
     public UserInteractionService(
             NewsRepository newsRepository,
-            UserBookmarkGraphRepository userBookmarkGraphRepository,
-            UserBookmarkJpaRepository userBookmarkJpaRepository,
-            UserReactionGraphRepository userReactionGraphRepository,
-            UserReactionJpaRepository userReactionJpaRepository
+            UserBookmarkRepository userBookmarkRepository,
+            UserReactionRepository userReactionRepository
 
     ){
         this.newsRepository = newsRepository;
-        this.userBookmarkGraphRepository = userBookmarkGraphRepository;
-        this.userBookmarkJpaRepository = userBookmarkJpaRepository;
-        this.userReactionGraphRepository = userReactionGraphRepository;
-        this.userReactionJpaRepository = userReactionJpaRepository;
+        this.userBookmarkRepository = userBookmarkRepository;
+        this.userReactionRepository = userReactionRepository;
     }
 
     @Transactional
     public void addJpaBookmark (UUID newsId, String userId){
-        if (!userBookmarkJpaRepository.existsByNews_IdAndUserId(newsId, userId)) {
+        if (!userBookmarkRepository.existsByNews_IdAndUserId(newsId, userId)) {
             NewsEntity news = newsRepository.findById(newsId)
                     .orElseThrow(() -> new EntityNotFoundException("News not found"));
 
@@ -49,33 +41,25 @@ public class UserInteractionService {
             bookmark.setNews(news);
             bookmark.setUserId(userId);
 
-            userBookmarkJpaRepository.save(bookmark);
+            userBookmarkRepository.save(bookmark);
         }
     }
 
-    public void addGraphBookmark(String userId, UUID newsId) {
-        userBookmarkGraphRepository.syncBookmark(userId, newsId);
-    }
-
     public void removeJpaBookmark(UUID newsId, String userId){
-        userBookmarkJpaRepository
+        userBookmarkRepository
                 .findByNews_IdAndUserId(newsId,userId)
-                .ifPresent(userBookmarkJpaRepository::delete);
-    }
-
-    public void removeGraphBookmark(String userId, UUID newsId){
-        userBookmarkGraphRepository.removeBookmark(userId,newsId);
+                .ifPresent(userBookmarkRepository::delete);
     }
 
     public Long getReactionCount(UUID newsId, ReactionType reactionType){
-        return userReactionJpaRepository.countByNews_IdAndType(
+        return userReactionRepository.countByNews_IdAndType(
                 newsId,
                 reactionType
         );
     }
 
     public Optional<NewsReactionEntity> findNewsReaction(UUID newsId, String userId){
-        return userReactionJpaRepository.findByNews_IdAndUserId(newsId, userId);
+        return userReactionRepository.findByNews_IdAndUserId(newsId, userId);
     }
 
     @Transactional
@@ -83,27 +67,18 @@ public class UserInteractionService {
         NewsEntity news = newsRepository.findById(newsId)
                 .orElseThrow(() -> new EntityNotFoundException("News not found"));
 
-        NewsReactionEntity newsReactionEntity = userReactionJpaRepository
+        NewsReactionEntity newsReactionEntity = userReactionRepository
                 .findByNews_IdAndUserId(newsId, userId)
                 .orElseGet(NewsReactionEntity::new);
 
         newsReactionEntity.setNews(news);
         newsReactionEntity.setUserId(userId);
         newsReactionEntity.setType(reactionType);
-        userReactionJpaRepository.save(newsReactionEntity);
+        userReactionRepository.save(newsReactionEntity);
 
     }
 
     public void removeJpaReaction(NewsReactionEntity newsReactionEntity){
-        userReactionJpaRepository.delete(newsReactionEntity);
+        userReactionRepository.delete(newsReactionEntity);
     }
-
-    public void addGraphReaction(String userId, UUID newsId, ReactionType reactionType){
-        userReactionGraphRepository.syncReaction(userId, newsId, reactionType);
-    }
-
-    public void removeGraphReaction(String userId, UUID newsId){
-        userReactionGraphRepository.removeReaction(userId, newsId);
-    }
-
 }

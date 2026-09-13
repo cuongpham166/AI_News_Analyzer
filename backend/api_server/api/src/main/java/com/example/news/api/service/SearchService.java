@@ -3,7 +3,7 @@ package com.example.news.api.service;
 import java.io.IOException;
 import java.util.List;
 
-import com.example.news.api.repository.IndexSearchRepository;
+import com.example.news.api.repository.search.IndexSearchRepository;
 import org.springframework.stereotype.Service;
 
 import com.example.news.api.dto.internal.InferenceNews;

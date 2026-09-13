@@ -3,8 +3,8 @@ package com.example.news.api.controller.analysis;
 import com.example.news.api.dto.internal.ApiResponse;
 import com.example.news.api.dto.response.analysis.RiskMapResponse;
 import com.example.news.api.dto.response.analysis.graph.*;
-import com.example.news.api.service.analysis.DashboardAnalysisService;
-import com.example.news.api.service.analysis.GraphAnalysisService;
+import com.example.news.api.service.analysis.DashboardService;
+import com.example.news.api.service.analysis.GraphService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,15 +17,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/analysis/risk-map")
 public class RiskMapController {
-    private final GraphAnalysisService graphAnalysisService;
-    private final DashboardAnalysisService dashboardAnalysisService;
+    private final GraphService graphService;
+    private final DashboardService dashboardService;
 
     public RiskMapController(
-            GraphAnalysisService graphAnalysisService,
-            DashboardAnalysisService dashboardAnalysisService
+            GraphService graphService,
+            DashboardService dashboardService
     ){
-        this.graphAnalysisService = graphAnalysisService;
-        this.dashboardAnalysisService = dashboardAnalysisService;
+        this.graphService = graphService;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/dashboard")
@@ -33,7 +33,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        RiskMapResponse data = dashboardAnalysisService.getRiskMapDashboard(intervalUnit, amount);
+        RiskMapResponse data = dashboardService.getRiskMapDashboard(intervalUnit, amount);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -43,7 +43,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<GeopoliticalHotspotResponse> data = graphAnalysisService.getGeopoliticalHotspotWithRelativeInterval(intervalUnit, amount).join();
+        List<GeopoliticalHotspotResponse> data = graphService.getGeopoliticalHotspotWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -52,7 +52,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        GeopoliticalMetricsResponse data = graphAnalysisService.getGeopoliticalMetricsWithRelativeInterval(intervalUnit, amount).join();
+        GeopoliticalMetricsResponse data = graphService.getGeopoliticalMetricsWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -61,7 +61,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<CountryRiskResponse> data = graphAnalysisService.getCountryRiskWithRelativeInterval(intervalUnit, amount).join();
+        List<CountryRiskResponse> data = graphService.getCountryRiskWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -72,7 +72,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<SpatialMapResponse> data = graphAnalysisService.getSpatialMapWithRelativeInterval(intervalUnit, amount).join();
+        List<SpatialMapResponse> data = graphService.getSpatialMapWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -82,7 +82,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<EventTrackerResponse> data = graphAnalysisService.getEventTrackerWithRelativeInterval(intervalUnit,amount).join();
+        List<EventTrackerResponse> data = graphService.getEventTrackerWithRelativeInterval(intervalUnit,amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -91,7 +91,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        EventTrackerMetricsResponse data = graphAnalysisService.getEventTrackerMetricsWithRelativeInterval(intervalUnit,amount).join();
+        EventTrackerMetricsResponse data = graphService.getEventTrackerMetricsWithRelativeInterval(intervalUnit,amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
@@ -101,7 +101,7 @@ public class RiskMapController {
             @RequestParam String intervalUnit,
             @RequestParam int amount
     ){
-        List<CrisisAndRiskRadarResponse> data = graphAnalysisService.getCrisisAndRiskRadarWithRelativeInterval(intervalUnit, amount).join();
+        List<CrisisAndRiskRadarResponse> data = graphService.getCrisisAndRiskRadarWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 }

@@ -1,0 +1,158 @@
+organization:
+
+  United Nations:
+    - UN
+    - U.N.
+    - United Nation
+
+  World Health Organization:
+    - WHO
+    - W.H.O.
+    - World Health Organisation
+    - World Health Org
+    - World Health Org.
+
+  World Trade Organization:
+    - WTO
+    - W.T.O.
+    - World Trade Organisation
+    - World Trade Org
+    - World Trade Org.
+
+  International Monetary Fund:
+    - IMF
+    - I.M.F.
+
+  World Bank:
+    - WBG
+    - World Bank Group
+
+  North Atlantic Treaty Organization:
+    - NATO
+    - N.A.T.O.
+    - North Atlantic Treaty Organisation
+
+  European Union:
+    - EU
+    - E.U.
+
+  United Nations Educational, Scientific and Cultural Organization:
+    - UNESCO
+    - U.N.E.S.C.O.
+    - United Nations Educational, Scientific and Cultural Organisation
+
+  United Nations Children's Fund:
+    - UNICEF
+    - U.N.I.C.E.F.
+    - UN Children's Fund
+    - UN Children’s Fund
+
+  United Nations High Commissioner for Refugees:
+    - UNHCR
+    - U.N.H.C.R.
+    - UN Refugee Agency
+
+  World Food Programme:
+    - WFP
+    - W.F.P.
+    - World Food Program
+    - UN World Food Programme
+
+  Food and Agriculture Organization of the United Nations:
+    - FAO
+    - F.A.O.
+    - Food and Agriculture Organisation
+    - Food and Agriculture Organization
+
+  International Labour Organization:
+    - ILO
+    - I.L.O.
+    - International Labour Organisation
+
+  International Organization for Migration:
+    - IOM
+    - I.O.M.
+    - International Organisation for Migration
+
+  International Atomic Energy Agency:
+    - IAEA
+    - I.A.E.A.
+
+  Organisation for Economic Co-operation and Development:
+    - OECD
+    - O.E.C.D.
+    - Organization for Economic Cooperation and Development
+    - Organization for Economic Co-operation and Development
+
+  Organization of the Petroleum Exporting Countries:
+    - OPEC
+    - O.P.E.C.
+    - Organisation of the Petroleum Exporting Countries
+
+  Association of Southeast Asian Nations:
+    - ASEAN
+    - A.S.E.A.N.
+
+  African Union:
+    - AU
+    - A.U.
+
+  Organization of American States:
+    - OAS
+    - O.A.S.
+    - Organisation of American States
+
+  Médecins Sans Frontières:
+    - MSF
+    - M.S.F.
+    - Medecins Sans Frontieres
+    - Doctors Without Borders
+
+
+location:
+
+  Gaza:
+    - Gaza Strip
+    - Gaza Strip region
+
+  United Nations Headquarters:
+    - UN Headquarters
+    - U.N. Headquarters
+    - UN HQ
+    - U.N. HQ
+    - United Nations headquarters
+    - UN Headquarters
+
+  United States:
+    - US
+    - U.S.
+    - USA
+    - U.S.A.
+
+  United Kingdom:
+    - UK
+    - U.K.
+
+  United Arab Emirates:
+    - UAE
+    - U.A.E.
+
+  Russia:
+    - Russian Federation
+
+  South Korea:
+    - Republic of Korea
+    - ROK
+
+  North Korea:
+    - Democratic People's Republic of Korea
+    - DPRK
+
+  Iran:
+    - Islamic Republic of Iran
+
+  Syria:
+    - Syrian Arab Republic
+
+  Venezuela:
+    - Bolivarian Republic of Venezuela

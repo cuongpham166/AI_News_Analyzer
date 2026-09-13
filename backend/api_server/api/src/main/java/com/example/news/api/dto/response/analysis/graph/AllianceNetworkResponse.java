@@ -11,5 +11,7 @@ public class AllianceNetworkResponse {
     private String orgA;
     private String orgB;
     private int sharedArticles;
+    private int positiveArticles;
+    private int conflictArticles;
     private Double avgSentiment;
 }

@@ -1,8 +1,8 @@
 package com.example.news.api.dto.internal.analysis.macropulse;
 
-import com.example.news.api.dto.internal.entity.EntityTypeCount;
-import com.example.news.api.dto.internal.source.SourceNewsCount;
-import com.example.news.api.dto.internal.topic.TopicNewsCount;
+import com.example.news.api.dto.internal.news.entity.EntityTypeCount;
+import com.example.news.api.dto.internal.news.source.SourceNewsCount;
+import com.example.news.api.dto.internal.news.topic.TopicNewsCount;
 import lombok.*;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.example.news.api.repository.entity;
 
 
-import com.example.news.api.dto.internal.entity.EntityTypeCount;
+import com.example.news.api.dto.internal.news.entity.EntityTypeCount;
 import com.example.news.api.entity.EntityTypeEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -31,17 +31,27 @@ public class IndexAnalysisMapper {
 
     private Map<String, Long> extractTopTopics(DateHistogramBucket bucket){
         Aggregate agg = bucket.aggregations().get("top_topics");
-        Map<String, Long> topicsMap = new HashMap<>();
-        if(agg == null){
-            return new HashMap<>();
-        }
-        List<StringTermsBucket> topicBuckets = agg.sterms()
-                .buckets()
-                .array();
 
-        for (StringTermsBucket topicBucket : topicBuckets) {
-            topicsMap.put(topicBucket.key().stringValue(), topicBucket.docCount());
+        Map<String, Long> topicsMap = new LinkedHashMap<>();
+
+        if (agg == null) {
+            return topicsMap;
         }
+
+        List<StringTermsBucket> topicBuckets =
+                agg.sterms()
+                        .buckets()
+                        .array();
+
+        for (StringTermsBucket topicBucket :
+                topicBuckets) {
+
+            topicsMap.put(
+                    topicBucket.key().stringValue(),
+                    topicBucket.docCount()
+            );
+        }
+
         return topicsMap;
     }
 

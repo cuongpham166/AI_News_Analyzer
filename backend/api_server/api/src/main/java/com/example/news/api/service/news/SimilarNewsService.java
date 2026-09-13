@@ -1,12 +1,11 @@
 package com.example.news.api.service.news;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.example.news.api.dto.internal.SimilarNewsId;
 import com.example.news.api.dto.response.news.SimilarNewsResponse;
-import com.example.news.api.repository.news.SimilarNewsRepository;
+import com.example.news.api.repository.news.similarity.SimilarNewsRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

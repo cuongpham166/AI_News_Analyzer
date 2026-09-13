@@ -6,6 +6,8 @@ public record DiscoveryLinkRecord(
         String target,
         String targetGroup,
         Double weight,
+        int positiveWeight,
+        int negativeWeight,
         Double sentiment
 ) {
 }

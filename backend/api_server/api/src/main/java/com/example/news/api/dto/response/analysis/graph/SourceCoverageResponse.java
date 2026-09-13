@@ -11,5 +11,7 @@ public class SourceCoverageResponse {
     private String source;
     private String topic;
     private int volume;
+    private int positiveVolume;
+    private int negativeVolume;
     private Double avgSentiment;
 }

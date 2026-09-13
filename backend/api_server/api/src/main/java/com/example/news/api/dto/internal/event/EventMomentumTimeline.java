@@ -10,4 +10,6 @@ import lombok.*;
 public class EventMomentumTimeline {
     private String date;
     private int volume;
+    private int positiveVolume;
+    private int negativeVolume;
 }

@@ -1,7 +1,7 @@
 package com.example.news.api.service.news;
 
 import com.example.news.api.dto.response.news.RecommendedNewsResponse;
-import com.example.news.api.repository.news.RecommendedNewsRepository;
+import com.example.news.api.repository.news.recommendation.RecommendedNewsRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

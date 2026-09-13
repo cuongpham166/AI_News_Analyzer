@@ -32,4 +32,5 @@ public class KeycloakContext {
         log.info("getRealm called");
         return keycloak.realm(keycloakRealm);
     }
+
 }

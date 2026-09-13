@@ -9,8 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 @ToString
 public class GraphLink {
-    private String source;  // ID of the start node
-    private String target;  // ID of the end node
-    private double value;   // Connection strength (weight)
-    private double sentiment; // Mood of the relationship
+    private String source;
+    private String target;
+    private double value;
+    private double sentiment;
 }

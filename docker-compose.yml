@@ -86,26 +86,26 @@ services:
       - neo4j-logs:/logs
     networks:
       - esnet
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.2
-    container_name: keycloak
-    command: start-dev
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3
+    container_name: clickhouse
+    restart: unless-stopped
     ports:
-      - "8081:8080"
+      - "8123:8123"
+      - "9000:9000"
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_USERNAME}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
-
-      KC_DB: postgres
-      KC_DB_URL_HOST: postgres
-      KC_DB_URL_PORT: 5432
-      KC_DB_URL_DATABASE: keycloak_db
-      KC_DB_USERNAME: ${POSTGRES_USER}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-
-    depends_on:
-      - postgres
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+    healthcheck:
+      test: [ "CMD", "clickhouse-client", "--query", "SELECT 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - esnet
 
@@ -140,6 +140,8 @@ volumes:
   neo4j-data:
   neo4j-logs:
   grafana-data:
-  
+  clickhouse-data:
+  clickhouse-logs:
+
 networks:
   esnet:

@@ -1,5 +1,8 @@
 package com.example.news.api.util.etc;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -52,5 +55,40 @@ public class IntervalConverter {
         long start = cal.getTimeInMillis();
         return new long[]{start, end};
     }
+
+    public Instant[] computeDateRangeRelative(String intervalUnit,int amount) {
+        Instant end = Instant.now();
+
+        ZonedDateTime start =
+                end.atZone(ZoneOffset.UTC);
+
+        int negativeAmount = -Math.abs(amount);
+
+        switch (intervalUnit.trim().toLowerCase()) {
+            case "day":
+                start = start.plusDays(negativeAmount);
+                break;
+
+            case "week":
+                start = start.plusWeeks(negativeAmount);
+                break;
+
+            case "month":
+                start = start.plusMonths(negativeAmount);
+                break;
+
+            case "year":
+                start = start.plusYears(negativeAmount);
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported interval unit: " + intervalUnit
+                );
+        }
+
+        return new Instant[]{start.toInstant(),end};
+    }
+
 
 }

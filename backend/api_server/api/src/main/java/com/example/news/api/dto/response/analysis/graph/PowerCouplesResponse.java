@@ -11,6 +11,8 @@ public class PowerCouplesResponse {
     private String person;
     private String organization;
     private int strength;
+    private int positiveCoOccurrences;
+    private int negativeCoOccurrences;
     private Double avgSentiment;
     private Double volatility;
 }
