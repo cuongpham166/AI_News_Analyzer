@@ -3,6 +3,7 @@ from neo4j import GraphDatabase
 import ollama
 from datetime import datetime, timezone
 
+from ai.config.labels import sentiment_labels
 from ai.responses.ner_response import NerResult
 from ai.responses.saved_inference_response import SavedInferenceResponse
 
@@ -71,6 +72,7 @@ class GraphRepository:
             title=result_obj.title,
             publish_date=publish_date,
             sentiment=result_obj.sentiment.score if result_obj.sentiment else 0.0,
+            sentiment_label=result_obj.sentiment.label if result_obj.sentiment else 'N/A',
             language=result_obj.language,
             summary=result_obj.summarization
         )
@@ -112,6 +114,7 @@ class GraphRepository:
             "news_title": data_dict["news"]["title"],
             "news_publish_date": news_publish_date,
             "news_sentiment": data_dict["news"]["sentiment"],
+            "news_sentiment_label": data_dict["news"]["sentiment_label"],
             "news_summary": data_dict["news"]["summary"],
             "news_language": data_dict["news"]["language"],
             "news_embedding": news_embedding,

@@ -13,10 +13,23 @@ from data_pipeline.utils.table_sql_files import get_getter_query,get_creation_qu
 
 load_dotenv()
 insertion_query_folder_path = os.getenv("SQL_INSERTION_QUERY_FOLDER_PATH")
+getter_query_folder_path = os.getenv("SQL_GETTER_QUERY_FOLDER_PATH")
 
 class IngestionRepository:
     def __init__(self, conn):
         self.conn = conn
+
+    def get_rss_sources(self):
+        try:
+            sql_file = f"{getter_query_folder_path}get_rss_sources.sql"
+            with open(sql_file, "r") as f:
+                sql = f.read()
+            with self.conn.cursor() as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+        except psycopg.Error:
+            self.conn.rollback()
+            raise
 
     def register_article(self,candidate:ArticleCandidate) -> bool:
         canonical_url = canonicalize_url(candidate.link)

@@ -175,9 +175,9 @@ async def main():
         article_processor = ArticleProcessor(article_repo)
         article_consumer = ArticleConsumer(js, article_processor)
         await asyncio.gather(
-            article_consumer.retrieve_enriched_articles(),
+            article_consumer.retrieve_enriched_articles(), #IMPORTANT: Disable when recover_missing_data !!!
             article_consumer.retrieve_ai_articles(),
-            article_consumer.recover_missing_data(),
+            #article_consumer.recover_missing_data(),
         )
     finally:
         conn.close()

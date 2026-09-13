@@ -28,11 +28,18 @@ class Topic(BaseModel):
 class Keyphrase(BaseModel):
     name: str
 
+class Entities(BaseModel):
+    persons: List[Person] = []
+    organizations: List[Organization] = []
+    locations: List[Location] = []
+    events: List[Event] = []
+
 class News(BaseModel):
     link: str
     title: str
     publish_date: datetime
     sentiment: float
+    sentiment_label: str
     summary: str
     language: str
     newsId: UUID
@@ -44,11 +51,7 @@ class News(BaseModel):
             raise ValueError("Sentiment must be between -1 and 1")
         return value
 
-class Entities(BaseModel):
-    persons: List[Person] = []
-    organizations: List[Organization] = []
-    locations: List[Location] = []
-    events: List[Event] = []
+
 
 class InferenceArticle(BaseModel):
     source: Source

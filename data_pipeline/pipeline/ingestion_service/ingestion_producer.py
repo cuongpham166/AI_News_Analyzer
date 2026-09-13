@@ -1,5 +1,6 @@
 import asyncio
 import time
+import os
 import psycopg
 from psycopg.rows import dict_row
 
@@ -11,7 +12,7 @@ from data_pipeline.pipeline.ingestion_service.ingestion_processor import Ingesti
 from data_pipeline.pipeline.ingestion_service.ingestion_repository import IngestionRepository
 from data_pipeline.pipeline.ingestion_service.outbox_publisher import OutboxPublisher
 
-from data_pipeline.config.ingestion_config import get_rss_urls
+from data_pipeline.config.ingestion_config import get_test_rss_urls
 from data_pipeline.config.article_config import get_postgres_config
 
 from data_pipeline.logger.logger_factory import LoggerFactory
@@ -103,9 +104,6 @@ class IngestionProducer:
             )
 
 async def main():
-    rss_urls = get_rss_urls()
-    scraper = IngestionProcessor(rss_urls)
-
     config = get_postgres_config()
 
     producer_conn = psycopg.connect(
@@ -118,13 +116,21 @@ async def main():
         row_factory=dict_row,
     )
 
+    repository = IngestionRepository(
+        conn=producer_conn
+    )
+
+    rss_sources = repository.get_rss_sources()
+
+    rss_urls = [source["url"] for source in rss_sources]
+    #rss_urls = get_test_rss_urls()
+
+    scraper = IngestionProcessor(rss_urls)
+
     nc, js = await create_js()
 
     await ensure_stream(js)
 
-    repository = IngestionRepository(
-        conn=producer_conn
-    )
 
     producer = IngestionProducer(
         scraper=scraper,
@@ -139,9 +145,36 @@ async def main():
         poll_interval=1
     )
 
+    producer_task = asyncio.create_task(producer.run())
+    outbox_task = asyncio.create_task(outbox.run())
+
     try:
-        await asyncio.gather(producer.run(),outbox.run())
+        #await asyncio.gather(producer.run(),outbox.run())
+        await asyncio.gather(
+            producer_task,
+            outbox_task,
+        )
+
+    except asyncio.CancelledError:
+        raise
+
     finally:
+        producer_task.cancel()
+        outbox_task.cancel()
+
+        await asyncio.gather(
+            producer_task,
+            outbox_task,
+            return_exceptions=True,
+        )
+
+        # Now nothing can publish to NATS
+        await nc.drain()
+
+        outbox_conn.close()
+        producer_conn.close()
+        """
         producer_conn.close()
         outbox_conn.close()
         await nc.drain()
+        """

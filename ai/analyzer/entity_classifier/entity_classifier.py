@@ -6,6 +6,7 @@ from ai.responses.ner_response import NerResponse, NerResult, NerEntity
 
 from data_pipeline.logger.logger_factory import LoggerFactory
 from data_pipeline.logger.logger_names import LoggerName
+from ai.utils.entity_extractor.entity_normalizer import EntityNormalizer
 
 pytorch_model_dir = 'ai/models/ner/pytorch'
 
@@ -16,6 +17,7 @@ class EntityClassifier:
         self.model.to(self.device)
         self.model.eval()
         self.logger = LoggerFactory.get_logger(LoggerName.Inference.ENTITY)
+        self.entity_normalizer = EntityNormalizer()
 
     def save(self):
         self.model.save_pretrained("ai/models/ner/pytorch")
@@ -31,10 +33,18 @@ class EntityClassifier:
             ner_entities = []
             entities = self.model.predict_entities(article, entity_types, threshold=0.3)
             for entity in entities:
+                entity_type = entity["label"]
+                entity_text = entity["text"]
+
+                normalized_text = self.entity_normalizer.normalize(
+                    entity_text,
+                    entity_type,
+                )
+
                 ner_entities.append(
                     NerEntity(
-                        value=entity["text"],
-                        type=entity["label"]
+                        value=normalized_text,
+                        type=entity_type
                     )
                 )
 
