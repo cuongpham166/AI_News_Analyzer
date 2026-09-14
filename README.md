@@ -13,16 +13,24 @@ By leveraging a sophisticated dual-engine Hybrid RAG system, the platform shifts
 
 ## Key Capabilities
 
-* **Event-Driven Architecture:** Decoupled microservices communicating via a ultra-fast **NATS** messaging backbone for robust, scalable ingestion and asynchronous load balancing.
-* **Zero-Trust Edge Security & IAM:** Externalized authentication managed via a stateless **Keycloak Identity Server** (OAuth2/OIDC), with an **NGINX** perimeter reverse proxy handling secure SSL/TLS termination and masking internal port boundaries from the public web.
-* **Multi-Tier Protection & App-Level Rate Limiting**: Volumetric DDoS and connection spikes are mitigated at the network edge via **NGINX** connection pools, while resource-intensive API routes are fortified using a **Spring Boot + Bucket4j** multi-tenant Token Bucket configuration.
-* **Intelligent Ingestion & Cleaning:** Language detection, cross-source deduplication, text normalization, and structural metadata parsing.
-* **Local AI Inference:** Multi-stage text processing powered by **Hugging Face Transformers** and **ONNX Runtime** for low-latency sentiment profiling, Named Entity Recognition (NER), zero-shot classification, and deterministic summarization.
-* **Triple-Engine Storage Topography:**
-  * **Elasticsearch:** Inverted indexing for microsecond full-text phrase matching and time-series analytical trends.
-  * **PostgreSQL:** Relational integrity layer managing source registries, statistical system profiling, and system state storage.
-  * **Neo4j:** Native Knowledge Graph mapping deep multi-hop actor networks, organizational dependencies, and geopolitical entities.
+* **Event-Driven Architecture:** Decoupled microservices communicating through a high-throughput **NATS** messaging backbone, enabling resilient ingestion, asynchronous processing, and horizontal scalability.
+
+* **Zero-Trust Edge Security & IAM:** Externalized authentication managed through a stateless **Keycloak** Identity Server using OAuth2/OIDC, with **NGINX** providing the perimeter reverse proxy and SSL/TLS termination while isolating internal service boundaries from the public web.
+
+* **Multi-Tier Protection, Caching & Resilience:**: Application services use a combination of **Caffeine** for low-latency local caching, **Bucket4j** for multi-tenant Token Bucket rate limiting, and **Resilience4j** for fault-tolerance mechanisms such as circuit breakers, retries, time limiters, and bulkheads. **NGINX** provides an additional edge layer for handling connection and traffic spikes before requests reach the application services.
+
+* **Intelligent Ingestion & Cleaning:** Automated language detection, cross-source deduplication, text normalization, and structural metadata extraction prepare heterogeneous news content for downstream processing.
+
+* **Local AI Inference:** Multi-stage text processing powered by **Hugging Face Transformers** and **ONNX Runtime** for low-latency sentiment profiling, Named Entity Recognition (NER), zero-shot classification, keyphrases extraction and deterministic summarization.
+
+* **Four-Engine Storage Topology:**
+  * **PostgreSQL:** Relational integrity layer managing source registries, statistical system profiling, configuration, and system state.
+  * **Neo4j:** Native graph database for deep multi-hop relationship analysis across actors, organizations, and geopolitical entities.
+  * **Elasticsearch:** Inverted-index engine for low-latency full-text search, phrase matching, and selected legacy analytical workloads.
+  * **ClickHouse:** Column-oriented analytical engine for high-throughput aggregations, time-series analysis, statistical workloads, and scalable analysis across large datasets.
+
 * **Asynchronous Graph Enrichment:** A modular pipeline that establishes atomic database "anchors" (Source/News nodes) upon ingestion, then asynchronously backfills AI-extracted relational intelligence (Entities/Topics) straight into the graph fabric.
+
 * **Modern Interface:** High-performance React frontend reverse-proxied behind **NGINX** for browsing and visualizing AI-enriched intelligence assets.
 
 ## Key Features
@@ -75,13 +83,13 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
 ![Overview Structure](/images/Data_pipeline.png)
 
 ### Database Overview
-#### PostgresSQL: The Relational Backbone of the application
-- **Use Cases**: Structured Data Storage, Complex Aggregations, Data Integrity
+#### PostgresSQL: The Relational Backbone of the Application
+- **Use Cases**: Structured data storage, relational integrity, configuration and system state, source registries, and transactional operations.
 
 ![PostgresSQL Structure](/images/Final_DB_Diagram.png)
 
 #### ElasticSearch: The Search & Discovery Engine
-- **Use Cases**: Full-Text Search, Unstructured Data Discovery
+- **Use Cases**: Full-text search, phrase matching, unstructured content discovery, and selected legacy analytical queries.
 ```
 {
     "mappings": {
@@ -108,10 +116,11 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
 }
 ```
 
-#### Neo4j: Graph Data Model
-- **Use Cases:** 
-  - This is our Knowledge Graph. Instead of rows and columns, it stores data as "Nodes" (People, Topics, etc) and "Lines" (Connections).
-  - Mapping the "Discovery Layer." It finds hidden links between different people or organizations by tracking how often they appear together in the same news stories.
+#### Neo4j: The Knowledge Graph
+- **Use Cases**:
+  - Relationship discovery, multi-hop graph traversal, and network analysis.
+  - This is the Knowledge Graph. Instead of rows and columns, it stores data as Nodes (People, Topics, etc.) and Relationships (Connections).
+  - The graph forms the discovery layer of the platform, identifying relationships between people, organizations, events, locations, and topics by analyzing how entities co-occur across news stories.
 - **Nodes:** News, Event, Location, Organization, Person, Source, Topic, Keyphrase
 - **Relationships:**
   - **(:News)-[:COVERS]->(:Topic)**
@@ -120,7 +129,22 @@ Supports flexible, relative temporal window slicing (`now-24h`, `now-7d`, `now-3
   - **(:News)-[:MENTIONS_ORGANIZATION]->(:Organization)**
   - **(:News)-[:MENTIONS_PERSON]->(:Person)**
   - **(:Source)-[:PUBLISHED]->(:News)**
-  - **(:News)-[:TAGGED_WITH]->(:Key Phrase)**
+  - **(:News)-[:TAGGED_WITH]->(:Keyphrase)**
+
+#### ClickHouse: The Analytical Processing Engine
+- **Use Cases**:
+  - High-performance analytical queries, time-series aggregation, statistical analysis, trend analysis, sentiment timelines, topic distributions, and large-scale data exploration.
+  - The analytical model is centered around the **news_analytics_flat** table, which contains denormalized news attributes optimized for analytical queries:
+    - **Time**: publish_date
+    - **Source**: source_id, source_name
+    - **Sentiment**: sentiment, sentiment_label
+    - **Topics**: topic_id, topic_name
+    - **Language**: language
+    - **Content Hash**: content_hash
+    - **Entities**: Nested entity identifiers, names, and types
+    - **Keyphrases**: Nested keyphrase identifiers and values
+  - The table uses the **MergeTree** engine with monthly partitioning by publish_date and an ordering key beginning with publish_date, supporting efficient filtering and aggregation over time-based analytical workloads.
+
 
 ### Inference Overview
 
