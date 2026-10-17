@@ -3,6 +3,7 @@ export const NEWS_ENTITIES = [
   'organization',
   'location',
   'event',
+  'keyphrase',
 ];
 
 export const NEWS_ENTITY_COLORS: Record<string, string> = {
@@ -10,4 +11,5 @@ export const NEWS_ENTITY_COLORS: Record<string, string> = {
   event: '#F97316',
   person: '#9333EA',
   location: '#0D9488',
+  keyphrase: '#DB2777',
 };

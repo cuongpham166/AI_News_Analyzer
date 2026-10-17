@@ -2,65 +2,113 @@ import * as echarts from 'echarts';
 import worldGeoJson from '@/assets/maps/world.json'
 import EChartContainer from '@/components/generic/EChartContainer';
 import type { EChartsOption } from 'echarts';
-import React, { useMemo } from 'react';
-import type { GeopoliticalHotspot } from '@/shared/types/analysis/risk_map/GeopoliticalHotspot.ts';
+import React, { useCallback, useMemo } from 'react';
+import type {
+  GeopoliticalHotspot,
+  GeopoliticalTopic,
+} from '@/shared/types/analysis/risk_map/GeopoliticalHotspot.ts';
 import { Stack,Text } from '@mantine/core';
+
+import {
+  buildRichTooltip,
+} from '@/components/RiskMap/components/GeopoliticalHotspots/components/geopoliticalHotspotsChart.utils.ts';
+import { GEO_MAP_CONFIG } from '@/components/RiskMap/riskMap.utils.ts';
 
 echarts.registerMap('world', worldGeoJson);
 
-interface HotspotChartData {
+export interface HotspotChartData {
   name: string;
-  value: [number, number, number];
+  value: [number, number, number, number];
   location: string;
-  topic: string;
-  articleCount: number;
   country: string;
+  countryCode: string;
+  articleCount: number;
+  avgSentiment: number;
+  riskScore: number;
+  topics: GeopoliticalTopic[];
 }
 
 interface GeopoliticalHotspotsChartsProps {
   geoHotspot?: GeopoliticalHotspot[];
   height?: number | string;
+  onLocationClick?: (location: HotspotChartData) => void;
 }
 
 const GeopoliticalHotspotsCharts = (props: GeopoliticalHotspotsChartsProps) => {
-  const { geoHotspot, height = 500 } = props;
-  let seriesData = [];
+  const { geoHotspot, height = 500, onLocationClick } = props;
+  const hasData = Boolean(geoHotspot && geoHotspot.length > 0);
 
-  if (geoHotspot) {
-    seriesData = geoHotspot.map(
-      (item): HotspotChartData => ({
-        name: item.location,
-        value: [item.longitude, item.latitude, item.articleCount],
-        location: item.location,
-        topic: 'N/A',
-        articleCount: item.articleCount,
-        country: item.country,
-      }),
-    );
-  }
+  const seriesData = useMemo<HotspotChartData[]>(() => {
+    if (!geoHotspot) return [];
 
-  const chartOption = useMemo<EChartsOption>(() => {
+    return geoHotspot.map((item) => ({
+      name: item.location,
+      value: [item.longitude, item.latitude, item.articleCount, item.riskScore],
+      location: item.location,
+      country: item.country,
+      countryCode: item.countryCode,
+      articleCount: item.articleCount,
+      avgSentiment: item.avgSentiment,
+      riskScore: item.riskScore,
+      topics: item.topics ?? [],
+    }));
+  }, [geoHotspot]);
+
+  const handleChartClick = useCallback(
+    (params: any) => {
+      if (
+        params.componentType === 'series' &&
+        params.seriesType === 'scatter'
+      ) {
+        const clickedHotspot = params.data as HotspotChartData;
+        if (onLocationClick && clickedHotspot) {
+          onLocationClick(clickedHotspot);
+        }
+      }
+    },
+    [onLocationClick],
+  );
+
+  const onEvents = useMemo(
+    () => ({
+      click: handleChartClick,
+    }),
+    [handleChartClick],
+  );
+
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData) return undefined;
+
     return {
-      geo: {
-        map: 'world',
-        roam: true,
+      animationDuration: 600,
 
-        itemStyle: {
-          areaColor: '#e5e5e5',
-          borderColor: '#334155',
-          borderWidth: 0.5,
-        },
+      geo: GEO_MAP_CONFIG,
 
-        emphasis: {
-          itemStyle: {
-            areaColor: '#243047',
-          },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px;',
 
-          label: {
-            show: true,
-            color: '#ffffff',
-            fontWeight: 'bold',
-          },
+        formatter: (params: any) => buildRichTooltip(params),
+      },
+
+      visualMap: {
+        type: 'continuous',
+        min: 0,
+        max: 1,
+        dimension: 3,
+        calculable: true,
+        orient: 'vertical',
+        top: 'center',
+        left: 10,
+        text: ['High Risk', 'Low Risk'],
+        textStyle: { color: '#64748B', fontSize: 11 },
+        inRange: {
+          color: ['#10B981', '#F59E0B', '#EF4444'],
         },
       },
 
@@ -70,39 +118,38 @@ const GeopoliticalHotspotsCharts = (props: GeopoliticalHotspotsChartsProps) => {
           type: 'scatter',
           coordinateSystem: 'geo',
           data: seriesData,
-          symbolSize: (value: number[]) => {
-            return Math.max(8, Math.sqrt(value[2]) * 10);
+
+          symbolSize: (val: number[]) => {
+            const count = val[2] || 1;
+            return Math.max(10, Math.round(10 + Math.log2(count) * 4));
           },
 
           itemStyle: {
-            color: '#f97316',
             opacity: 0.85,
+            shadowBlur: 8,
+            shadowColor: 'rgba(0,0,0,0.3)',
+          },
+
+          emphasis: {
+            scale: true,
+            itemStyle: {
+              opacity: 1,
+              borderColor: '#FFFFFF',
+              borderWidth: 2,
+            },
           },
         },
       ],
-
-      tooltip: {
-        trigger: 'item',
-        formatter: (params) => {
-          const data = params.data as HotspotChartData;
-
-          return `
-        <div>
-          <strong>${data.location}</strong>
-          <div>${data.country}</div>
-          <br />
-          <div><strong>${data.articleCount}</strong> articles</div>
-          <div>Topic: ${data.topic}</div>
-        </div>
-      `;
-        },
-      },
     };
-  }, [seriesData]);
+  }, [hasData, seriesData]);
   return (
     <Stack>
-      <EChartContainer option={chartOption} height={height} />
-      <Text c='red.4'>Top 50 locations by article volume.</Text>
+      <EChartContainer
+        option={chartOption}
+        height={height}
+        onEvents={onEvents}
+      />
+      <Text c='red.4'>Top 100 locations by article volume.</Text>
     </Stack>
   );
 };

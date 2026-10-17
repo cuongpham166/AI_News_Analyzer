@@ -3,4 +3,5 @@ export interface GeopoliticalMetrics {
   hotspots: number;
   countries: number;
   avgSentiment: number;
+  avgRiskScore?: number;
 }

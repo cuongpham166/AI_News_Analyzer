@@ -4,9 +4,14 @@ import type { EChartsOption } from 'echarts';
 import DashboardSection from '@/components/generic/DashboardSection';
 import { Box, Flex } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
-import {NEWS_SOURCES_COLORS} from '@/shared/constants/NewsSources.ts';
+import {
+  NEWS_SOURCES_COLORS,
+  NEWS_SOURCES_FULL_NAMES,
+} from '@/shared/constants/NewsSources.ts';
 import SourceCoverageSentimentLegend from './components/SourceCoverageSentimentLegend.tsx';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
+import { createCustomChartTooltip } from '@/shared/utils/createChartTooltip.ts';
 
 interface SourceCoverageSentimentChartProps {
   sourceCoverage?: SourceCoverage[];
@@ -24,10 +29,9 @@ const SourceCoverageSentimentChart = ({
     }
 
     const sources = [...new Set(sourceCoverage.map((item) => item.source))];
-
     const topics = [...new Set(sourceCoverage.map((item) => item.topic))];
 
-    // Sort topics by total article volume
+    // Sort topics by total article volume across all sources
     const sortedTopics = topics.sort((a, b) => {
       const totalA = sourceCoverage
         .filter((item) => item.topic === a)
@@ -47,62 +51,110 @@ const SourceCoverageSentimentChart = ({
     const getCoverage = (source: string, topic: string) =>
       coverageMap.get(`${source}__${topic}`);
 
+    // Map heatmap data: [sourceIndex, topicIndex, avgSentiment, volume, positiveVolume, negativeVolume]
     const heatmapData = sources.flatMap((source, sourceIndex) =>
       sortedTopics.map((topic, topicIndex) => {
         const item = getCoverage(source, topic);
-
-        return [sourceIndex, topicIndex, item?.volume ?? 0];
+        if (!item || item.volume === 0) {
+          return [sourceIndex, topicIndex, null, 0, 0, 0];
+        }
+        return [
+          sourceIndex,
+          topicIndex,
+          item.avgSentiment,
+          item.volume,
+          item.positiveVolume,
+          item.negativeVolume,
+        ];
       }),
     );
-
-    const maxVolume = Math.max(...heatmapData.map((item) => item[2]));
 
     return {
       animationDuration: 500,
 
       grid: {
-        left: 100,
+        left: 110,
         right: 40,
-        top: 10,
-        bottom: 80,
+        top: 30,
+        bottom: 85,
       },
 
       tooltip: {
         position: 'top',
-
+        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-radius: 8px;',
         formatter: (params: any) => {
-          const [sourceIndex, topicIndex, volume] = params.value;
+          const [sourceIndex, topicIndex, sentiment, volume, posVol, negVol] =
+            params.value;
+
+          if (volume === 0 || sentiment === null) {
+            return `<div style="font-size: 12px; color: #64748B;">No coverage</div>`;
+          }
 
           const source = sources[sourceIndex];
           const topic = sortedTopics[topicIndex];
+          const formattedTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
 
-          const item = getCoverage(source, topic);
-          const sentiment = item?.avgSentiment ?? null;
+          const posPct = Math.round((posVol / volume) * 100);
+          const negPct = Math.round((negVol / volume) * 100);
 
-          return `
-            <div style="min-width: 180px">
-              <strong>
-                ${topic.charAt(0).toUpperCase() + topic.slice(1)}
-              </strong>
+          const sentimentLabel =
+            sentiment > 0.15
+              ? 'Positive Lean'
+              : sentiment < -0.15
+                ? 'Negative Lean'
+                : 'Balanced / Split';
 
-              <div style="margin-top: 8px">
-                ${params.marker}
-                ${source}:
-                <strong>${volume}</strong> articles
-              </div>
+          const badgeColor =
+            sentiment > 0
+              ? NEWS_SENTIMENT_COLORS['positive']
+              :  NEWS_SENTIMENT_COLORS['negative'];
 
-              ${
-                sentiment !== null
-                  ? `
-                    <div style="margin-top: 4px; color: #868e96">
-                      Average sentiment:
-                      <strong>${sentiment.toFixed(2)}</strong>
-                    </div>
-                  `
-                  : ''
-              }
-            </div>
-          `;
+          return createCustomChartTooltip({
+            title: formattedTopic,
+            subtitle: NEWS_SOURCES_FULL_NAMES[source],
+            badge: String(source).toUpperCase(),
+            badgeBgColor: NEWS_SOURCES_COLORS[source],
+            metrics: [
+              {
+                label: 'Positive Articles',
+                value: `${posVol}`,
+                color: NEWS_SENTIMENT_COLORS['positive'],
+              },
+              {
+                label: 'Negative Articles',
+                value: `${negVol}`,
+                color: NEWS_SENTIMENT_COLORS['negative'],
+              },
+              {
+                label: 'Total Volume',
+                value: `${volume}`,
+              },
+              {
+                label: 'Avg. Sentiment',
+                color: badgeColor,
+                value: `${sentiment.toFixed(2)} (${sentimentLabel})`,
+              },
+            ],
+            distribution: {
+              segments: [
+                {
+                  label: 'Pos',
+                  percentage: posPct,
+                  color: NEWS_SENTIMENT_COLORS['positive'],
+                },
+                {
+                  label: 'Conflict',
+                  percentage: negPct,
+                  color: NEWS_SENTIMENT_COLORS['negative'],
+                },
+              ],
+            },
+          });
         },
       },
 
@@ -110,17 +162,15 @@ const SourceCoverageSentimentChart = ({
         type: 'category',
         data: sources,
         position: 'top',
-        axisTick: {
-          show: false,
-        },
-        axisLine: {
-          show: false,
-        },
+        axisTick: { show: false },
+        axisLine: { show: false },
         axisLabel: {
           interval: 0,
+          rotate: -45,
           color: '#475569',
           fontSize: 11,
-          fontWeight: 500,
+          fontWeight: 600,
+          hideOverlap: true,
         },
       },
 
@@ -130,12 +180,8 @@ const SourceCoverageSentimentChart = ({
           (topic) => topic.charAt(0).toUpperCase() + topic.slice(1),
         ),
         inverse: true,
-        axisTick: {
-          show: false,
-        },
-        axisLine: {
-          show: false,
-        },
+        axisTick: { show: false },
+        axisLine: { show: false },
         axisLabel: {
           color: '#475569',
           fontSize: 12,
@@ -143,29 +189,29 @@ const SourceCoverageSentimentChart = ({
       },
 
       visualMap: {
-        min: 0,
-        max: maxVolume || 1,
+        type: 'continuous',
+        dimension: 2,
+        min: -1.0,
+        max: 1.0,
         calculable: false,
         orient: 'horizontal',
         left: 'center',
         bottom: 0,
-
-        itemWidth: 14,
-        itemHeight: 120,
+        itemWidth: 16,
+        itemHeight: 180,
+        precision: 2,
 
         inRange: {
           color: [
-            '#EFF6FF',
-            '#DBEAFE',
-            '#BFDBFE',
-            '#93C5FD',
-            '#60A5FA',
-            '#3B82F6',
-            '#1D4ED8',
+            '#DC2626',
+            '#FCA5A5',
+            '#F8FAFC',
+            '#86EFAC',
+            '#16A34A',
           ],
         },
 
-        text: ['High', 'Low'],
+        text: ['+1.0 Positive', '-1.0 Negative'],
         textStyle: {
           color: '#64748B',
           fontSize: 11,
@@ -179,22 +225,33 @@ const SourceCoverageSentimentChart = ({
 
           label: {
             show: true,
-            color: '#334155',
             fontSize: 11,
             fontWeight: 600,
             formatter: (params: any) => {
-              const value = params.value[2];
-
-              return value > 0 ? String(value) : '';
+              const volume = params.value[3];
+              return volume > 0 ? String(volume) : '';
             },
+            color: (params: any) => {
+              const sentiment = params.value[2];
+              if (sentiment !== null && (sentiment > 0.5 || sentiment < -0.5)) {
+                return '#FFFFFF';
+              }
+              return '#1E293B';
+            },
+          },
+
+          itemStyle: {
+            borderColor: '#FFFFFF',
+            borderWidth: 1.5,
+            borderRadius: 3,
           },
 
           emphasis: {
             itemStyle: {
-              shadowBlur: 8,
-              shadowColor: 'rgba(15, 23, 42, 0.15)',
-              borderColor: '#334155',
-              borderWidth: 1,
+              shadowBlur: 6,
+              shadowColor: 'rgba(0, 0, 0, 0.2)',
+              borderColor: '#0F172A',
+              borderWidth: 1.5,
             },
           },
         },

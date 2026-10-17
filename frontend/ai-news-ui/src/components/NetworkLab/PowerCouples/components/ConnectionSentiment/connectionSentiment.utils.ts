@@ -1,4 +1,9 @@
 import type { PowerCouple } from '@/shared/types/analysis/network_lab/PowerCouple.ts';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
+import {
+  escapeHtml,
+  createCustomChartTooltip,
+} from '@/shared/utils/createChartTooltip.ts';
 
 export const TOP_N_OPTIONS = [
   { value: '5', label: 'Top 5' },
@@ -6,10 +11,8 @@ export const TOP_N_OPTIONS = [
   { value: '20', label: 'Top 20' },
 ];
 
-interface ConnectionSentimentData {
-  person: string;
-  organization: string;
-  value: number;
+export interface ConnectionSentimentData extends PowerCouple {
+  label: string;
 }
 
 export const getConnectionSentimentData = (
@@ -18,59 +21,84 @@ export const getConnectionSentimentData = (
 ): ConnectionSentimentData[] => {
   return data
     .slice()
-    .sort((a, b) => b.avgSentiment - a.avgSentiment)
+    .sort((a, b) => Math.abs(b.avgSentiment) - Math.abs(a.avgSentiment))
     .slice(0, limit)
-    .map((d) => ({
-      person: d.person,
-      organization: d.organization,
-      value: d.avgSentiment,
+    .map((item) => ({
+      ...item,
+      label: `${item.person} - ${item.organization}`,
     }));
 };
 
-export const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+export const buildConnectionSentimentChartTooltip = (
+  data: ConnectionSentimentData,
+) => {
+  if (!data) return '';
 
-export const buildChartTooltip = (data) => {
-  if (!data) {
-    return '';
-  }
+  const posVol = data.positiveCoOccurrences ?? 0;
+  const negVol = data.negativeCoOccurrences ?? 0;
+  const totalVol = posVol + negVol || 1;
 
-  const sentiment = data.value.toFixed(2);
+  const posPct = Math.round((posVol / totalVol) * 100);
+  const negPct = Math.round((negVol / totalVol) * 100);
 
-  return `
-            <div style="
-              min-width: 220px;
-              line-height: 1.5;
-            ">
-              <div style="
-                font-weight: 600;
-                margin-bottom: 3px;
-              ">
-                ${escapeHtml(data.person)}
-              </div>
+  const sentiment = data.avgSentiment ?? 0;
+  const sentimentColor =
+    sentiment > 0
+      ? NEWS_SENTIMENT_COLORS['positive']
+      : NEWS_SENTIMENT_COLORS['negative'];
 
-              <div style="
-                color: #6B7280;
-                margin-bottom: 10px;
-              ">
-                ${escapeHtml(data.organization)}
-              </div>
+  const sentimentLabel =
+    sentiment > 0.15
+      ? 'Positive Lean'
+      : sentiment < -0.15
+        ? 'Negative Lean'
+        : 'Balanced';
 
-              <div style="
-                border-top: 1px solid #E5E7EB;
-                padding-top: 8px;
-                display: flex;
-                justify-content: space-between;
-                gap: 20px;
-              ">
-                <span>Joint sentiment</span>
-                <strong> ${sentiment}</strong>
-              </div>
-            </div>
-          `;
-}
+  const title = `${escapeHtml(data.person)} ↔ ${escapeHtml(data.organization)}`;
+  return createCustomChartTooltip({
+    title: title,
+    metrics: [
+      {
+        label: 'Positive Articles',
+        value: `${posVol}`,
+        color: NEWS_SENTIMENT_COLORS['positive'],
+      },
+      {
+        label: 'Negative Articles',
+        value: `${negVol}`,
+        color: NEWS_SENTIMENT_COLORS['negative'],
+      },
+      {
+        label: 'Total Articles',
+        value: `${totalVol}`,
+      },
+      {
+        label: 'Avg. Sentiment',
+        color: sentimentColor,
+        value: `${sentiment.toFixed(2)} (${sentimentLabel})`,
+      },
+      {
+        label: 'Strength',
+        value: `${data.strength}`,
+      },
+      {
+        label: 'Volatility',
+        value: `${data.volatility.toFixed(2)}`,
+      },
+    ],
+    distribution: {
+      segments: [
+        {
+          label: 'Pos',
+          percentage: posPct,
+          color: NEWS_SENTIMENT_COLORS['positive'],
+        },
+        {
+          label: 'Conflict',
+          percentage: negPct,
+          color: NEWS_SENTIMENT_COLORS['negative'],
+        },
+      ],
+    },
+  });
+};

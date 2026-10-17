@@ -6,11 +6,21 @@ import EChartContainer from '@/components/generic/EChartContainer';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
 import type { EChartsOption } from 'echarts';
 import {
+  NEWS_SOURCES_COLORS,
+  NEWS_SOURCES_FULL_NAMES,
   NEWS_SOURCES_NAMES,
-  NEWS_SOURCES,
 } from '@/shared/constants/NewsSources.ts';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
-import { GRID_CONFIG } from '@/shared/utils/chartConfig.ts';
+
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
+import {
+  truncateLabel,
+} from '@/components/MediaBias/PublisherFocusChart/publisherFocusChart.utils.ts';
+import PublisherFocusLegends from '@/components/MediaBias/PublisherFocusChart/components/PublisherFocusLegends.tsx';
+import {
+  createCustomChartTooltip,
+} from '@/shared/utils/createChartTooltip.ts';
+
 
 interface PublisherFocusChartProps {
   publisherFocus?: PublisherFocus[];
@@ -21,31 +31,40 @@ const PublisherFocusChart = ({
   publisherFocus,
   height = 450,
 }: PublisherFocusChartProps) => {
-
-  const hasData = publisherFocus && publisherFocus.length > 0;
-  const [selectedPublisher, setSelectedPublisher] = useState<string>('DW');
+  const hasData = Boolean(publisherFocus && publisherFocus.length > 0);
   const TOP_N = 10;
 
-  const selectOptions = useMemo(
-    () =>
-      [...NEWS_SOURCES]
-        .sort((a, b) =>
-          NEWS_SOURCES_NAMES[a].localeCompare(NEWS_SOURCES_NAMES[b]),
-        )
-        .map((item) => ({
-          label: NEWS_SOURCES_NAMES[item],
-          value: item,
-        })),
-    [],
-  );
+  const availablePublishers = useMemo(() => {
+    if (!hasData || !publisherFocus) return [];
+    return Array.from(new Set(publisherFocus.map((item) => item.publisher)));
+  }, [hasData, publisherFocus]);
 
+  const [selectedPublisher, setSelectedPublisher] = useState<string>('UN');
+
+  useEffect(() => {
+    if (
+      availablePublishers.length > 0 &&
+      !availablePublishers.includes(selectedPublisher)
+    ) {
+      setSelectedPublisher(availablePublishers[0]);
+    }
+  }, [availablePublishers, selectedPublisher]);
+
+  const selectOptions = useMemo(() => {
+    return availablePublishers
+      .map((key) => ({
+        label: NEWS_SOURCES_NAMES[key] || key,
+        value: key,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [availablePublishers]);
 
   const onChangePublisher = (publisher: string) => {
-      setSelectedPublisher(publisher);
+    setSelectedPublisher(publisher);
   };
 
   const selectedPublisherData = useMemo(() => {
-    if (!hasData) {
+    if (!hasData || !publisherFocus) {
       return [];
     }
 
@@ -60,55 +79,117 @@ const PublisherFocusChart = ({
       return undefined;
     }
 
-    const organizations = selectedPublisherData.map(
-      (item) => item.organization,
+    const organizations = selectedPublisherData.map((item) =>
+      truncateLabel(item.organization),
     );
-
-    const volumes = selectedPublisherData.map((item) => item.coverageVolume);
 
     return {
       animationDuration: 500,
 
-      grid: GRID_CONFIG,
+      grid: {
+        top: 40,
+        right: 40,
+        bottom: 40,
+        left: 170,
+        containLabel: false,
+      },
 
       tooltip: {
-        trigger: 'item',
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow',
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px;',
 
-        formatter: (params: any) => {
-          const item = selectedPublisherData[params.dataIndex];
+        formatter: (params: any[]) => {
+          if (!params || params.length === 0) return '';
+          const dataIndex = params[0].dataIndex;
+          const item = selectedPublisherData[dataIndex];
 
-          return `
-            <strong>${item.organization}</strong>
-            <div style="margin-top: 6px">
-              Publisher:
-              ${NEWS_SOURCES_NAMES[item.publisher]}
-            </div>
-            <div>
-              Coverage volume:
-              <strong>${item.coverageVolume}</strong>
-            </div>
-          `;
+          const posRatio =
+            item.coverageVolume > 0
+              ? Math.round((item.positiveVolume / item.coverageVolume) * 100)
+              : 0;
+
+          const negRatio =
+            item.coverageVolume > 0
+              ? Math.round((item.negativeVolume / item.coverageVolume) * 100)
+              : 0;
+
+          const sentimentColor =
+            item.avgSentiment > 0
+              ? NEWS_SENTIMENT_COLORS['positive']
+              : NEWS_SENTIMENT_COLORS['negative']
+
+          const formattedSentiment =
+            item.avgSentiment > 0
+              ? `+${item.avgSentiment.toFixed(2)}`
+              : item.avgSentiment.toFixed(2);
+
+          return createCustomChartTooltip({
+            title: item.organization,
+            subtitle: `Publisher: ${NEWS_SOURCES_FULL_NAMES[item.publisher]}`,
+            badge: String(item.publisher).toUpperCase(),
+            badgeBgColor: NEWS_SOURCES_COLORS[item.publisher],
+            metrics: [
+              {
+                label: 'Positive Articles',
+                value: `${item.positiveVolume}`,
+                color: NEWS_SENTIMENT_COLORS['positive'],
+              },
+              {
+                label: 'Negative Articles',
+                value: `${item.negativeVolume}`,
+                color: NEWS_SENTIMENT_COLORS['negative'],
+              },
+              {
+                label: 'Total Coverage',
+                value: `${item.coverageVolume}`,
+              },
+              {
+                label: 'Avg. Sentiment',
+                value: `${item.avgSentiment.toFixed(2)}`,
+                color: sentimentColor,
+              },
+            ],
+            distribution: {
+              segments: [
+                {
+                  label: 'Positive',
+                  percentage: posRatio,
+                  color: NEWS_SENTIMENT_COLORS['positive'],
+                },
+                {
+                  label: 'Conflict',
+                  percentage: negRatio,
+                  color: NEWS_SENTIMENT_COLORS['negative'],
+                },
+              ],
+            },
+          });
         },
       },
 
       xAxis: {
         type: 'value',
-
-        name: 'Articles',
+        name: 'Articles Count',
         nameLocation: 'middle',
-        nameGap: 30,
-
+        nameGap: 28,
         min: 0,
         minInterval: 1,
-
         axisLabel: {
           color: '#64748B',
+          fontSize: 11,
         },
-
         splitLine: {
           lineStyle: {
             type: 'dashed',
-            opacity: 0.35,
+            color: '#E2E8F0',
           },
         },
       },
@@ -117,38 +198,35 @@ const PublisherFocusChart = ({
         type: 'category',
         inverse: true,
         data: organizations,
-
-        axisTick: {
-          show: false,
-        },
-
-        axisLine: {
-          show: false,
-        },
-
+        axisTick: { show: false },
+        axisLine: { show: false },
         axisLabel: {
-          color: '#475569',
+          color: '#334155',
           fontSize: 12,
+          fontWeight: 500,
         },
       },
 
       series: [
         {
-          name: 'Coverage',
+          name: 'Positive Volume',
           type: 'bar',
-          data: volumes,
-          barMaxWidth: 30,
+          stack: 'volume',
+          data: selectedPublisherData.map((item) => item.positiveVolume),
+          barMaxWidth: 24,
           itemStyle: {
+            color: NEWS_SENTIMENT_COLORS['positive'],
+          },
+        },
+        {
+          name: 'Negative Volume',
+          type: 'bar',
+          stack: 'volume',
+          data: selectedPublisherData.map((item) => item.negativeVolume),
+          barMaxWidth: 24,
+          itemStyle: {
+            color: NEWS_SENTIMENT_COLORS['negative'],
             borderRadius: [0, 4, 4, 0],
-          },
-          emphasis: {
-            focus: 'series',
-          },
-          label: {
-            show: true,
-            position: 'right',
-            fontWeight: 600,
-            formatter: '{c}',
           },
         },
       ],
@@ -176,16 +254,19 @@ const PublisherFocusChart = ({
         </Group>
       }
     >
-      <Box style={{ flex: 1, minHeight: 0 }}>
-        {hasData && chartOption ? (
-          <EChartContainer option={chartOption} height={height} />
-        ) : (
-          <EmptyDataCard
-            title='No data available'
-            description='No publisher coverage data were found for this publisher.'
-          />
-        )}
-      </Box>
+      <Flex direction='column' h='100%' gap='sm'>
+        <Box style={{ flex: 1, minHeight: 0 }}>
+          {hasData && chartOption ? (
+            <EChartContainer option={chartOption} height={height} />
+          ) : (
+            <EmptyDataCard
+              title='No data available'
+              description='No publisher coverage data were found for this publisher.'
+            />
+          )}
+        </Box>
+        <PublisherFocusLegends />
+      </Flex>
     </DashboardCard>
   );
 };

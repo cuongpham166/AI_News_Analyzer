@@ -1,4 +1,3 @@
-import CustomChartLegend from '@/components/generic/CustomChart/CustomChartLegend';
 import {
   ColorSwatch,
   Group,
@@ -7,29 +6,29 @@ import {
   Stack,
   Box,
 } from '@mantine/core';
-import {
-  NEWS_TOPIC_COLORS,
-  NEWS_TOPICS,
-} from '@/shared/constants/NewsTopics.ts';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
 const TrendingKeywordClustersLegends = () => {
   return (
     <Box
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateColumns: 'repeat(5, max-content)',
         gap: '8px 12px',
       }}
     >
-      {NEWS_TOPICS.map((item) => (
-        <Group key={item} gap={6} wrap='nowrap'>
-          <ColorSwatch color={NEWS_TOPIC_COLORS[item]} size={10} />
-
-          <Text size='sm' c={ThemeColors.text}>
-            {item.charAt(0).toUpperCase() + item.slice(1)}
-          </Text>
-        </Group>
-      ))}
+      <Group key={1} gap={6} wrap='nowrap'>
+        <ColorSwatch color={NEWS_SENTIMENT_COLORS['positive']} size={10} />
+        <Text size='sm' c={ThemeColors.text} style={{ whiteSpace: 'nowrap' }}>
+          Positive Co-occurrence
+        </Text>
+      </Group>
+      <Group key={2} gap={6} wrap='nowrap'>
+        <ColorSwatch color={NEWS_SENTIMENT_COLORS['negative']} size={10} />
+        <Text size='sm' c={ThemeColors.text} style={{ whiteSpace: 'nowrap' }}>
+          Negative Co-occurrence
+        </Text>
+      </Group>
     </Box>
   );
 };

@@ -1,7 +1,10 @@
 export interface CountryRisk {
   country: string;
   countryCode: string;
-  articleCount: number;
+  frequency: number;
+  positiveVolume: number;
+  negativeVolume: number;
   avgSentiment: number;
+  riskScore: number;
   coveragePercent: number;
 }

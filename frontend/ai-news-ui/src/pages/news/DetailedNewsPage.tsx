@@ -9,7 +9,7 @@ import {
   DetailedNewsInsights,
 } from '@/components/News/DetailedNews';
 import { useNavigate, useParams } from 'react-router-dom';
-import {useDetailNews, useSimilarNews } from '@/hooks/queries/news.query.ts';
+import {useDetailNews, useSimilarNews, useDetailNewsByContentHash, useSimilarNewsByContentHash } from '@/hooks/queries/news.query.ts';
 import React, { useEffect, useRef } from 'react';
 import { notifications } from '@mantine/notifications';
 import PageLoader from '@/components/generic/PageLoader';
@@ -17,17 +17,34 @@ import { SimilarNewsListItem } from '@/components/News/SimilarNewsList';
 
 function DetailedNewsPage() {
   const navigate = useNavigate();
-  const { Id } = useParams();
+  const { Id, hash } = useParams();
 
-  const detailedNewsQuery = useDetailNews(Id);
-  const similarNewsQuery = useSimilarNews(Id,10);
+  const hasId = !!Id;
+  const hasHash = !hasId && !!hash;
+
+  const newsByIdQuery = useDetailNews(Id ?? '', hasId);
+
+  const similarByIdQuery = useSimilarNews(Id ?? '', 10, hasId);
+
+  const newsByHashQuery = useDetailNewsByContentHash(hash ?? '', hasHash);
+
+  const similarByHashQuery = useSimilarNewsByContentHash(
+    hash ?? '',
+    10,
+    hasHash,
+  );
+
+  const detailedNewsQuery = hasId ? newsByIdQuery : newsByHashQuery;
+
+  const similarNewsQuery = hasId ? similarByIdQuery : similarByHashQuery;
+
 
   const isFetching =detailedNewsQuery.isFetching && similarNewsQuery.isFetching;
   const isLoading = detailedNewsQuery.isLoading && similarNewsQuery.isLoading;
   const error = detailedNewsQuery.error && similarNewsQuery.error;
   const hasData = detailedNewsQuery.data && similarNewsQuery.data;
 
-  const hasSimilarNewsData = similarNewsQuery.data && similarNewsQuery.data.length > 0;
+  const hasSimilarNewsData = (similarNewsQuery.data?.data?.length ?? 0) > 0;
   const wasFetching = useRef(false);
 
   useEffect(() => {
@@ -59,7 +76,7 @@ function DetailedNewsPage() {
   return (
     <Stack>
       <Taskbar taskbarTitle='Detailed News' />
-      {detailedNewsQuery.data ? (
+      {detailedNewsQuery && detailedNewsQuery.data ? (
         <>
           <Grid gap='md'>
             <Grid.Col span={12}>
@@ -128,7 +145,7 @@ function DetailedNewsPage() {
                 </div>
 
                 <Stack gap='xs'>
-                  {similarNewsQuery.data.map((article, index) => (
+                  {similarNewsQuery.data.data.map((article, index) => (
                     <Box key={article.id}>
                       <SimilarNewsListItem
                         key={article.id}
@@ -137,7 +154,9 @@ function DetailedNewsPage() {
                           navigate(`/news/${newsId}`);
                         }}
                       />
-                      {index < similarNewsQuery.data.length - 1 && <Divider />}
+                      {index < similarNewsQuery.data.data.length - 1 && (
+                        <Divider />
+                      )}
                     </Box>
                   ))}
                 </Stack>

@@ -7,6 +7,13 @@ import type { EChartsOption } from 'echarts';
 import { NEWS_ENTITY_COLORS } from '@/shared/constants/NewsEntities.ts';
 import { ThemeColors } from '@/shared/constants/Colors.ts';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import {
+  getSentimentColor,
+  getSentimentLabel,
+} from '@/components/NetworkLab/OrganizationConnections/components/OrganizationNetwork/organizationNetwork.utils.ts';
+import {
+  buildTooltipChart
+} from '@/components/NetworkLab/OrganizationConnections/components/OrganizationNetwork/organizationNetwork.utils.ts';
 
 interface OrganizationNetworkProps {
   allianceNetwork?: AllianceNetwork[];
@@ -39,12 +46,13 @@ const OrganizationNetwork = ({
   allianceNetwork, height = 450,
 }: OrganizationNetworkProps) => {
   const [limit, setLimit] = useState('10');
-  const hasData = allianceNetwork && allianceNetwork.length > 0;
+  const hasData = Boolean(allianceNetwork && allianceNetwork.length > 0);
 
-  const chartOption = useMemo<EChartsOption|undefined>(() => {
-    if(!hasData) {
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData || !allianceNetwork) {
       return undefined;
     }
+
     const relationships = allianceNetwork
       .slice()
       .sort((a, b) => b.sharedArticles - a.sharedArticles)
@@ -54,30 +62,59 @@ const OrganizationNetwork = ({
       return undefined;
     }
 
+    // Node Metric Maps
     const organizationStrength = new Map<string, number>();
-
     const connections = new Map<string, number>();
+    const nodePositiveCount = new Map<string, number>();
+    const nodeConflictCount = new Map<string, number>();
 
-    for (const relationship of relationships) {
-      const { orgA, orgB, sharedArticles } = relationship;
+    for (const rel of relationships) {
+      const {
+        orgA,
+        orgB,
+        sharedArticles,
+        positiveArticles = 0,
+        conflictArticles = 0,
+      } = rel;
 
       organizationStrength.set(
         orgA,
         (organizationStrength.get(orgA) ?? 0) + sharedArticles,
       );
-
       organizationStrength.set(
         orgB,
         (organizationStrength.get(orgB) ?? 0) + sharedArticles,
       );
 
       connections.set(orgA, (connections.get(orgA) ?? 0) + 1);
-
       connections.set(orgB, (connections.get(orgB) ?? 0) + 1);
+
+      nodePositiveCount.set(
+        orgA,
+        (nodePositiveCount.get(orgA) ?? 0) + positiveArticles,
+      );
+      nodePositiveCount.set(
+        orgB,
+        (nodePositiveCount.get(orgB) ?? 0) + positiveArticles,
+      );
+
+      nodeConflictCount.set(
+        orgA,
+        (nodeConflictCount.get(orgA) ?? 0) + conflictArticles,
+      );
+      nodeConflictCount.set(
+        orgB,
+        (nodeConflictCount.get(orgB) ?? 0) + conflictArticles,
+      );
     }
 
     const maxOrganizationStrength = Math.max(
       ...organizationStrength.values(),
+      1,
+    );
+
+    const maxSharedArticles = Math.max(
+      ...relationships.map((item) => item.sharedArticles),
       1,
     );
 
@@ -86,39 +123,44 @@ const OrganizationNetwork = ({
     ];
 
     const nodes = organizations.map((organization) => {
-      const normalizedStrength =
-        (organizationStrength.get(organization) ?? 0) / maxOrganizationStrength;
+      const strength = organizationStrength.get(organization) ?? 0;
+      const normalizedStrength = strength / maxOrganizationStrength;
 
       return {
         id: organization,
         name: organization,
-        symbolSize: 20 + normalizedStrength * 30,
+        symbolSize: 22 + normalizedStrength * 32,
         itemStyle: {
-          color: NEWS_ENTITY_COLORS['organization'],
-          borderColor: '#fff',
+          color: NEWS_ENTITY_COLORS.organization,
+          borderColor: '#FFFFFF',
           borderWidth: 2,
+          shadowBlur: 4,
+          shadowColor: 'rgba(0,0,0,0.1)',
         },
+        connectionsCount: connections.get(organization) ?? 0,
+        sharedArticlesTotal: strength,
+        positiveTotal: nodePositiveCount.get(organization) ?? 0,
+        conflictTotal: nodeConflictCount.get(organization) ?? 0,
       };
     });
-
-    const maxSharedArticles = Math.max(
-      ...relationships.map((item) => item.sharedArticles),
-      1,
-    );
 
     const links = relationships.map((relationship) => {
       const normalizedStrength =
         relationship.sharedArticles / maxSharedArticles;
+      const sentiment = relationship.avgSentiment ?? 0;
+      const strokeColor = getSentimentColor(sentiment);
 
       return {
         source: relationship.orgA,
         target: relationship.orgB,
         value: relationship.sharedArticles,
-        avgSentiment: relationship.avgSentiment,
+        avgSentiment: sentiment,
         relationship,
         lineStyle: {
-          width: 1 + normalizedStrength * 5,
-          opacity: 0.7,
+          color: strokeColor,
+          width: 1.5 + normalizedStrength * 5.5,
+          opacity: 0.75,
+          curveness: 0.08,
         },
       };
     });
@@ -129,112 +171,18 @@ const OrganizationNetwork = ({
       tooltip: {
         trigger: 'item',
         confine: true,
-
-        formatter: (params: any) => {
-          if (params.dataType === 'node') {
-            const name = params.data.name;
-
-            return `
-              <div style="
-                min-width: 190px;
-                line-height: 1.5;
-              ">
-                <div style="
-                  font-weight: 600;
-                  margin-bottom: 6px;
-                ">
-                  ${escapeHtml(name)}
-                </div>
-
-                <div>
-                  Connections:
-                  <strong>
-                    ${connections.get(name) ?? 0}
-                  </strong>
-                </div>
-
-                <div>
-                  Shared articles:
-                  <strong>
-                    ${organizationStrength.get(name) ?? 0}
-                  </strong>
-                </div>
-              </div>
-            `;
-          }
-
-          if (params.dataType === 'edge') {
-            const relationship = params.data.relationship as AllianceNetwork;
-
-            if (!relationship) {
-              return '';
-            }
-
-            return `
-              <div style="
-                min-width: 230px;
-                line-height: 1.5;
-              ">
-                <div style="
-                  font-weight: 600;
-                  margin-bottom: 4px;
-                ">
-                  ${escapeHtml(relationship.orgA)}
-                </div>
-
-                <div style="
-                  color: #6B7280;
-                  margin-bottom: 10px;
-                ">
-                  ↕
-                  ${escapeHtml(relationship.orgB)}
-                </div>
-
-                <div style="
-                  border-top:
-                    1px solid #E5E7EB;
-                  padding-top: 8px;
-                ">
-                  <div style="
-                    display: flex;
-                    justify-content:
-                      space-between;
-                    gap: 24px;
-                  ">
-                    <span>
-                      Shared articles
-                    </span>
-
-                    <strong>
-                      ${relationship.sharedArticles}
-                    </strong>
-                  </div>
-
-                  <div style="
-                    display: flex;
-                    justify-content:
-                      space-between;
-                    gap: 24px;
-                  ">
-                    <span>
-                      Avg. sentiment
-                    </span>
-
-                    <strong>${relationship.avgSentiment.toFixed(2)}</strong>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-
-          return '';
-        },
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-radius: 8px;',
+        formatter: (params: any) => buildTooltipChart(params),
       },
 
       series: [
         {
           type: 'graph',
-
           layout: 'force',
 
           data: nodes,
@@ -246,39 +194,28 @@ const OrganizationNetwork = ({
           force: {
             repulsion:
               Number(limit) >= 20 ? 450 : Number(limit) >= 10 ? 350 : 300,
-
             edgeLength: Number(limit) >= 20 ? [120, 200] : [100, 180],
-
             gravity: 0.1,
-
             layoutAnimation: true,
           },
 
           label: {
             show: true,
             position: 'right',
-
+            distance: 6,
             formatter: (params: any) =>
               truncateLabel(params.data.name, Number(limit) >= 20 ? 20 : 28),
-
             fontSize: Number(limit) >= 20 ? 10 : 11,
-
-            color: '#374151',
-          },
-
-          lineStyle: {
-            opacity: 0.7,
-            curveness: 0.08,
+            color: '#334155',
+            fontWeight: 500,
           },
 
           emphasis: {
             focus: 'adjacency',
-
             lineStyle: {
-              width: 4,
+              width: 5,
               opacity: 1,
             },
-
             label: {
               show: true,
               position: 'right',

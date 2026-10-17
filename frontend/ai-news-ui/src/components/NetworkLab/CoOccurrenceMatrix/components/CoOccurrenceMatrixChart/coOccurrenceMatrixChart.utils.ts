@@ -1,5 +1,9 @@
 import type { CoOccurrence } from '@/shared/types/analysis/network_lab/CoOccurrence.ts';
-
+import {
+  createCustomChartTooltip,
+  escapeHtml,
+} from '@/shared/utils/createChartTooltip.ts';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
 interface HeatmapEntity {
   name: string;
   type: string;
@@ -21,15 +25,10 @@ export const relationshipKey = (typeA: string, typeB: string) => {
   return [normalizeType(typeA), normalizeType(typeB)].sort().join(':');
 };
 
-export const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
-export const buildCoOccurrenceHeatmap = (data: CoOccurrence[], topN: number) => {
+export const buildCoOccurrenceHeatmap = (
+  data: CoOccurrence[],
+  topN: number,
+) => {
   const relationships = new Map<string, CoOccurrence>();
 
   for (const item of data) {
@@ -109,78 +108,32 @@ export const buildCoOccurrenceHeatmap = (data: CoOccurrence[], topN: number) => 
   };
 };
 
+export const buildCoOccurrenceMatrixChartTooltip = (params: any) => {
+  const data = params.data as HeatmapCell | undefined;
 
-export const buildTooltipChart = (params: any) => {
-    const data = params.data as HeatmapCell | undefined;
-
-    if (!data?.entityA || !data?.entityB) {
-      return '';
-    }
-
-    const sentiment = data.avgSentiment;
-    const sentimentText = sentiment.toFixed(2)
-
-    return `
-            <div style="
-              min-width: 220px;
-              line-height: 1.5;
-            ">
-              <div style="margin-bottom: 8px;">
-                <strong>
-                  ${escapeHtml(data.entityA)}
-                </strong>
-                <span style="
-                  color: #999;
-                  margin-left: 4px;
-                ">
-                  ${escapeHtml(data.typeA)}
-                </span>
-              </div>
-
-              <div style="
-                color: #999;
-                text-align: center;
-                margin: 2px 0;
-              ">
-                ↕
-              </div>
-
-              <div style="margin-bottom: 10px;">
-                <strong>
-                  ${escapeHtml(data.entityB)}
-                </strong>
-                <span style="
-                  color: #999;
-                  margin-left: 4px;
-                ">
-                  ${escapeHtml(data.typeB)}
-                </span>
-              </div>
-
-              <div style="
-                border-top: 1px solid #eee;
-                padding-top: 8px;
-              ">
-                <div style="
-                  display: flex;
-                  justify-content: space-between;
-                  gap: 20px;
-                ">
-                  <span>Shared coverage</span>
-                  <strong>
-                    ${data.sharedCount.toLocaleString()}
-                  </strong>
-                </div>
-
-                <div style="
-                  display: flex;
-                  justify-content: space-between;
-                  gap: 20px;
-                ">
-                  <span>Joint sentiment</span>
-                  <strong>${sentimentText}</strong>
-                </div>
-              </div>
-            </div>
-          `;
+  if (!data?.entityA || !data?.entityB) {
+    return '';
   }
+
+  const sentiment = data.avgSentiment;
+  const sentimentText = sentiment.toFixed(2);
+  const sentimentColor =
+    sentiment > 0
+      ? NEWS_SENTIMENT_COLORS['positive']
+      : NEWS_SENTIMENT_COLORS['negative'];
+  const title = `${escapeHtml(data.entityA)} ↔ ${escapeHtml(data.entityB)}`;
+  const customContent = `
+    <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:5px;">
+        <span style="color:#475569;">Shared coverage</span>
+        <strong style="text-align:right;white-space:nowrap;">${data.sharedCount.toLocaleString()}</strong>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:5px;">
+        <span style="color:#475569;">Joint sentiment</span>
+        <strong style="text-align:right;white-space:nowrap; color:${sentimentColor}">${sentimentText}</strong>
+    </div>
+  `;
+  return createCustomChartTooltip({
+    title: title,
+    customContent: customContent,
+  });
+};

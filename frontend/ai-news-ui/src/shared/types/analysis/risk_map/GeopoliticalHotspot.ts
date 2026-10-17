@@ -1,4 +1,4 @@
-interface GeopoliticalTopic {
+export interface GeopoliticalTopic {
   name: string;
   articleCount: number;
 }
@@ -8,6 +8,7 @@ export interface GeopoliticalHotspot {
   topics: GeopoliticalTopic[];
   articleCount: number;
   avgSentiment: number;
+  riskScore: number;
   aliases: string[];
   latitude: number;
   longitude: number;

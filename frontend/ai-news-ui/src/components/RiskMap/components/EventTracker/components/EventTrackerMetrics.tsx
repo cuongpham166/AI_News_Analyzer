@@ -1,51 +1,91 @@
 import { SimpleGrid } from '@mantine/core';
 import MapMetricsCard from '@/components/RiskMap/components/MapMetricsCard.tsx';
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { EventTrackerMetrics } from '@/shared/types/analysis/risk_map/EventTrackerMetrics.ts';
-import type { EventTracker } from '@/shared/types/analysis/risk_map/EventTracker.ts';
-
 
 interface EventTrackerMetricsProps {
-  event?: EventTracker[];
-  eventMetrics?: EventTrackerMetrics;
+  metrics?: EventTrackerMetrics;
 }
-const EventTrackerMetrics = (props: EventTrackerMetricsProps) => {
-  const { event, eventMetrics } = props;
 
-  const eventLocations = event
-    ? new Set(event.map((item) => item.location)).size
-    : 0;
+const EventTrackerMetrics = ({ metrics }: EventTrackerMetricsProps) => {
+  const formattedData = useMemo(() => {
+    if (!metrics) {
+      return {
+        eventsTracked: '0',
+        totalMentions: '0',
+        avgSentimentDisplay: '0.00',
+        avgVolatilityDisplay: '0.00',
+        highRiskEvents: '0',
+        overallRiskDisplay: '0%',
+      };
+    }
 
-  const cardData = [
+    const {
+      eventsTracked = 0,
+      totalMentions = 0,
+      positiveVolume = 0,
+      negativeVolume = 0,
+      avgSentiment = 0,
+      avgVolatility = 0,
+      highRiskEvents = 0,
+    } = metrics;
+
+    const riskIndex =
+      totalMentions > 0 ? (negativeVolume / totalMentions) * 100 : 0;
+
+    return {
+      eventsTracked: eventsTracked.toLocaleString(),
+      totalMentions: totalMentions.toLocaleString(),
+      avgSentimentDisplay:
+        avgSentiment > 0
+          ? `+${avgSentiment.toFixed(2)}`
+          : avgSentiment.toFixed(2),
+      avgVolatilityDisplay: avgVolatility.toFixed(2),
+      highRiskEvents: highRiskEvents.toLocaleString(),
+      overallRiskDisplay: `${Math.round(riskIndex)}%`,
+    };
+  }, [metrics]);
+
+  const cards = [
     {
       title: 'Events Tracked',
-      value: eventMetrics ? eventMetrics.eventsTracked : 0,
+      value: formattedData.eventsTracked,
       tooltip:
-        'Total number of distinct events mentioned in news coverage during the selected period.',
+        'Total distinct events identified across geographic news coverage.',
     },
     {
-      title: 'Total Event Coverage',
-      value: eventMetrics ? eventMetrics.totalEventCoverage : 0,
-      tooltip:
-        'Total number of unique news articles mentioning at least one tracked event during the selected period.',
+      title: 'Total Mentions',
+      value: formattedData.totalMentions,
+      tooltip: 'Volume of news articles associated with tracked events.',
     },
     {
       title: 'Avg. Sentiment',
-      value: eventMetrics ? eventMetrics.avgSentiment : 0,
-      tooltip:
-        'Average sentiment across news articles mentioning tracked events during the selected period.',
+      value: formattedData.avgSentimentDisplay,
+      tooltip: 'Average sentiment score across all tracked event coverage.',
     },
     {
-      title: 'Event Locations',
-      value: eventLocations,
+      title: 'Avg. Volatility',
+      value: formattedData.avgVolatilityDisplay,
       tooltip:
-        'Number of distinct locations associated with tracked events during the selected period.',
+        'Average sentiment standard deviation indicating coverage stability.',
+    },
+    {
+      title: 'High Risk Events',
+      value: formattedData.highRiskEvents,
+      tooltip: 'Number of events with risk index (negative share) ≥ 50%.',
+    },
+    {
+      title: 'Overall Risk Index',
+      value: formattedData.overallRiskDisplay,
+      tooltip: 'Share of overall event coverage driven by negative news.',
     },
   ];
+
   return (
-    <SimpleGrid cols={{ base: 2, sm: 4 }} spacing='md'>
-      {cardData.map((item, index) => (
+    <SimpleGrid cols={{ base: 2, sm: 3, md: 3 }} spacing='md'>
+      {cards.map((item, index) => (
         <MapMetricsCard
+          key={item.title}
           title={item.title}
           value={item.value}
           tooltip={item.tooltip}

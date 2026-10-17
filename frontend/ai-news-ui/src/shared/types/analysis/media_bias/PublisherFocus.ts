@@ -2,5 +2,7 @@ export interface PublisherFocus {
   publisher: string;
   organization: string;
   coverageVolume: number;
-  volatility: number;
+  avgSentiment: number;
+  positiveVolume: number;
+  negativeVolume: number;
 }

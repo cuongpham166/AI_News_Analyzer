@@ -1,6 +1,8 @@
 interface EventMomentumTimeline {
-  date: string,
-  volume: number
+  date: string;
+  volume: number;
+  positiveVolume: number;
+  negativeVolume: number;
 }
 
 export interface EventMomentum {

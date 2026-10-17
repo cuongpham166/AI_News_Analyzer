@@ -2,105 +2,153 @@ import * as echarts from 'echarts';
 import worldGeoJson from '@/assets/maps/world.json';
 import EChartContainer from '@/components/generic/EChartContainer';
 import type { EChartsOption } from 'echarts';
-import React, { useMemo } from 'react';
-
+import React, { useCallback, useMemo } from 'react';
 import type { EventTracker } from '@/shared/types/analysis/risk_map/EventTracker.ts';
+import { GEO_MAP_CONFIG } from '@/components/RiskMap/riskMap.utils.ts';
+import {
+  getRiskColor,
+  buildEventTrackerChartTooltip,
+} from './eventTrackerChart.utils.ts';
+import { Box, Flex } from '@mantine/core';
+import EventTrackerLegend from '@/components/RiskMap/components/EventTracker/components/EventTrackerLegend.tsx';
 
 interface EventTrackerChartProps {
-  event?: EventTracker[];
+  events?: EventTracker[];
   height?: number | string;
+  onLocationClick?: (location: EventTracker) => void;
 }
-const EventTrackerChart = (props: EventTrackerChartProps) => {
-  const {event, height = 500 } = props;
 
-  const chartOption = useMemo<EChartsOption>(() => {
-    return {
-      geo: {
-        map: 'world',
-        roam: true,
+const EventTrackerChart = ({
+  events,
+  height = 500,
+  onLocationClick,
+}: EventTrackerChartProps) => {
+  const hasData = Boolean(events && events.length > 0);
 
-        itemStyle: {
-          areaColor: '#e5e5e5',
-          borderColor: '#334155',
-          borderWidth: 0.5,
-        },
+  const handleChartClick = useCallback(
+    (params: any) => {
+      if (
+        params.componentType === 'series' &&
+        params.seriesType === 'scatter'
+      ) {
+        const clickedHotspot = params.data as EventTracker;
+        if (onLocationClick && clickedHotspot) {
+          onLocationClick(clickedHotspot);
+        }
+      }
+    },
+    [onLocationClick],
+  );
 
-        emphasis: {
-          itemStyle: {
-            areaColor: '#243047',
-          },
+  const onEvents = useMemo(
+    () => ({
+      click: handleChartClick,
+    }),
+    [handleChartClick],
+  );
 
-          label: {
-            show: true,
-            color: '#ffffff',
-            fontWeight: 'bold',
-          },
-        },
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData || !events) {
+      return undefined;
+    }
+
+    const validEvents = events.filter(
+      (item) =>
+        Number.isFinite(item.latitude) &&
+        Number.isFinite(item.longitude) &&
+        item.latitude !== 0 &&
+        item.longitude !== 0 &&
+        item.frequency > 0,
+    );
+
+    const maxFreq = Math.max(...validEvents.map((e) => e.frequency), 1);
+
+    const scatterData = validEvents.map((item) => ({
+      name: item.event,
+      value: [item.longitude, item.latitude, item.frequency],
+      rawItem: item,
+      itemStyle: {
+        color: getRiskColor(item.riskScore),
+        opacity: 0.85,
+        borderColor: '#FFFFFF',
+        borderWidth: 1.5,
+        shadowBlur: 4,
+        shadowColor: 'rgba(0,0,0,0.15)',
       },
+    }));
+
+    return {
+      animationDuration: 500,
+
+      geo: GEO_MAP_CONFIG,
 
       tooltip: {
         trigger: 'item',
-        formatter: (params: any) => {
-          const item = params.data;
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px;',
 
-          if (!item) {
-            return params.name;
-          }
-
-          return `
-            <div>
-              <strong>${item.event}</strong>
-              <br />
-              Location: ${item.location}
-              <br />
-              Country: ${item.country || 'Unknown'}
-              <br />
-              Articles: ${item.strength.toLocaleString()}
-              <br />
-              Sentiment: ${item.avgSentiment.toFixed(2)}
-              <br />
-              Volatility: ${item.volatility.toFixed(2)}
-            </div>
-          `;
-        },
+        formatter: (params: any) => buildEventTrackerChartTooltip(params),
       },
 
       series: [
         {
-          name: 'Events',
+          name: 'Low Risk (< 20%)',
           type: 'scatter',
           coordinateSystem: 'geo',
+          data: [],
+        },
+        {
+          name: 'Medium Risk (20-50%)',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: [],
+        },
+        {
+          name: 'High Risk (≥ 50%)',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: [],
+        },
 
-          data: event ? event.map((item) => ({
-            name: item.event,
-            value: [item.longitude, item.latitude, item.strength],
-            ...item,
-          })): [],
+        {
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: scatterData,
 
-          symbolSize: (value: any) => {
-            const strength = value[2];
-
-            return Math.max(8, Math.sqrt(strength) * 8);
-          },
-
-          itemStyle: {
-            color: '#f97316',
-            opacity: 0.85,
+          symbolSize: (val) => {
+            const count = val[2];
+            const normalized = count / maxFreq;
+            return Math.max(9, Math.round(9 + Math.sqrt(normalized) * 22));
           },
 
           emphasis: {
-            scale: true,
-
+            scale: 1.25,
             itemStyle: {
-              borderColor: '#ffffff',
-              borderWidth: 2,
+              shadowBlur: 10,
+              shadowColor: 'rgba(0, 0, 0, 0.3)',
             },
           },
         },
       ],
     };
-  }, [event]);
-  return <EChartContainer option={chartOption} height={height} />;
+  }, [hasData, events]);
+
+  return (
+    <Flex direction='column' h='100%'>
+      <Box style={{ flex: 1, minHeight: 0 }}>
+        <EChartContainer
+          option={chartOption}
+          height={height}
+          onEvents={onEvents}
+        />
+      </Box>
+      <EventTrackerLegend />
+    </Flex>
+  );
 };
 
 export default EventTrackerChart;

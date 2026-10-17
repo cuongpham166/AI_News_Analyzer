@@ -12,7 +12,7 @@ interface EntityTypeBreakdownCardProps {
 
 const EntityTypeBreakdownCard = ({
   data,
-  height = 300,
+  height = 350,
 }: EntityTypeBreakdownCardProps) => {
   const totalValue = data.reduce(
     (total, source) => total + source.entityCount,
@@ -24,13 +24,20 @@ const EntityTypeBreakdownCard = ({
 
   const chartOption = useMemo<EChartsOption>(() => {
     return {
-      xAxis: {
+      grid: {
+        left: 50,
+        right: 30,
+        top: 10,
+        bottom: 20,
+      },
+
+      yAxis: {
         type: 'category',
         data: names,
+        inverse: true,
         axisLabel: {
           interval: 0,
-          rotate: 35,
-          fontSize: 10,
+          fontSize: 11,
           formatter: (value: string) =>
             value.charAt(0).toUpperCase() + value.slice(1),
         },
@@ -39,7 +46,7 @@ const EntityTypeBreakdownCard = ({
         },
       },
 
-      yAxis: {
+      xAxis: {
         type: 'value',
         name: 'Articles',
       },
@@ -56,7 +63,7 @@ const EntityTypeBreakdownCard = ({
           type: 'bar',
           label: {
             show: true,
-            position: 'top',
+            position: 'right',
             formatter: (params) => params.value,
             color: '#495057',
             fontWeight: 600,

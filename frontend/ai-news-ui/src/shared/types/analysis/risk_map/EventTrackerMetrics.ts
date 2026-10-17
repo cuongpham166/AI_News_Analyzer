@@ -1,5 +1,9 @@
 export interface EventTrackerMetrics {
   eventsTracked: number;
-  totalEventCoverage: number;
+  totalMentions: number;
+  positiveVolume: number;
+  negativeVolume: number;
   avgSentiment: number;
+  avgVolatility: number;
+  highRiskEvents: number;
 }

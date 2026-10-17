@@ -15,7 +15,6 @@ import {
   Box,
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
-import { MagnifyingGlassIcon } from '@phosphor-icons/react';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
 
 interface NarrativeBridgeProps {

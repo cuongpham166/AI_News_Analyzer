@@ -1,11 +1,8 @@
 import DashboardSection from '@/components/generic/DashboardSection';
 import type { PowerCouple } from '@/shared/types/analysis/network_lab/PowerCouple.ts';
 import {
-  buildTooltipChart,
-  escapeHtml,
+  buildConnectionNetworkTooltipChart,
   getConnectionNetworkData,
-  type NetworkLink,
-  type NetworkNode,
 } from './connectionNetwork.utils.tsx';
 import { Box, Flex, Group, Select, Text } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
@@ -26,8 +23,7 @@ const ConnectionNetwork = ({
 }: ConnectionNetworkProps) => {
   const [limit, setLimit] = useState('10');
 
-
-  const { people, organizations, relationships, nodes, links } = useMemo(
+  const { nodes, links } = useMemo(
     () => getConnectionNetworkData(powerCouple ?? [], Number(limit)),
     [powerCouple, limit],
   );
@@ -36,7 +32,6 @@ const ConnectionNetwork = ({
     if (value.length <= maxLength) {
       return value;
     }
-
     return `${value.slice(0, maxLength - 1)}…`;
   };
 
@@ -51,10 +46,13 @@ const ConnectionNetwork = ({
       tooltip: {
         trigger: 'item',
         confine: true,
-
-        formatter: (params: any) => {
-          return buildTooltipChart(params);
-        },
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-radius: 8px;',
+        formatter: (params: any) => buildConnectionNetworkTooltipChart(params),
       },
 
       grid: {
@@ -75,44 +73,34 @@ const ConnectionNetwork = ({
           categories: [
             {
               name: 'Person',
-              itemStyle: {
-                color: NEWS_ENTITY_COLORS['person'],
-              },
+              itemStyle: { color: NEWS_ENTITY_COLORS.person },
             },
             {
               name: 'Organization',
-              itemStyle: {
-                color: NEWS_ENTITY_COLORS['organization'],
-              },
+              itemStyle: { color: NEWS_ENTITY_COLORS.organization },
             },
           ],
 
           force: {
-            repulsion: 350,
-
-            edgeLength: [100, 180],
-
-            gravity: 0.12,
-
+            repulsion: 380,
+            edgeLength: [110, 200],
+            gravity: 0.1,
             layoutAnimation: true,
           },
 
           lineStyle: {
-            opacity: 0.65,
+            opacity: 0.75,
             curveness: 0.08,
           },
 
           label: {
             show: true,
             position: 'right',
-            formatter: (params: any) => {
-              return truncateLabel(
-                params.data.name,
-                Number(limit) >= 20 ? 20 : 28,
-              );
-            },
+            formatter: (params: any) =>
+              truncateLabel(params.data.name, Number(limit) >= 20 ? 18 : 26),
             fontSize: Number(limit) >= 20 ? 10 : 11,
-            color: '#374151',
+            color: '#334155',
+            fontWeight: 500,
           },
 
           emphasis: {
@@ -124,9 +112,8 @@ const ConnectionNetwork = ({
               fontSize: 12,
               fontWeight: 600,
             },
-
             lineStyle: {
-              width: 4,
+              width: 5,
               opacity: 1,
             },
           },

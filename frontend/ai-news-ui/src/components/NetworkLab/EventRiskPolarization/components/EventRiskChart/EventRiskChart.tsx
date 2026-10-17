@@ -4,100 +4,118 @@ import { Box, Flex } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
 import React, { useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
-import {getVolatilityColor} from './eventRisk.utils.ts';
 import EventRiskLegend from '@/components/NetworkLab/EventRiskPolarization/components/EventRiskChart/components';
-import { GRID_CONFIG } from '@/shared/utils/chartConfig.ts';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
+import {
+  truncateLabel,
+  buildEventRiskChartTooltip,
+} from '@/components/NetworkLab/EventRiskPolarization/components/EventRiskChart/eventRisk.utils.ts';
 
 interface EventRiskChartProps {
   eventRisk?: EventRisk[];
   height?: number | string;
   limit:string;
 }
+
 const EventRiskChart = ({
   limit,
   eventRisk,
   height = 500,
 }: EventRiskChartProps) => {
-  const hasData = eventRisk && eventRisk.length > 0;
+  const hasData = Boolean(eventRisk && eventRisk.length > 0);
 
   const chartOption = useMemo<EChartsOption | undefined>(() => {
-    if (!hasData) {
+    if (!hasData || !eventRisk) {
       return undefined;
     }
-    const chartData = eventRisk
-      .sort((a, b) => b.frequency - a.frequency || b.volatility - a.volatility)
-      .slice(0,Number(limit))
 
-    const maxVolatility = Math.max(...chartData.map((d) => d.volatility), 0.01);
+    const parsedLimit = parseInt(limit, 10) || 10;
+
+    const chartData = [...eventRisk]
+      .sort((a, b) => b.frequency - a.frequency || b.riskScore - a.riskScore)
+      .slice(0, parsedLimit);
+
+    const eventLabels = chartData.map((d) => truncateLabel(d.event));
 
     return {
-      tooltip: {
-        trigger: 'item',
-        formatter: (params) => {
-          const item = chartData[params.dataIndex];
+      animationDuration: 500,
 
-          return `
-        <strong>${item.event}</strong><br/>
-        Coverage: ${item.frequency}<br/>
-        Avg. sentiment: ${item.avgSentiment.toFixed(2)}<br/>
-        Volatility: ${item.volatility.toFixed(2)}
-      `;
-        },
+      grid: {
+        top: 0,
+        right: 40,
+        bottom: 0,
+        left: 170,
+        containLabel: false,
       },
-      grid: GRID_CONFIG,
+
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow',
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px;',
+        formatter: (params: any[]) => buildEventRiskChartTooltip(chartData,params)
+      },
 
       xAxis: {
         type: 'value',
+        name: 'Articles Count',
+        nameLocation: 'middle',
+        nameGap: 28,
         min: 0,
-        max: Math.max(...chartData.map((d) => d.frequency)) + 0.5,
-        name: 'Coverage',
+        minInterval: 1,
+        axisLabel: {
+          color: '#64748B',
+          fontSize: 11,
+        },
         splitLine: {
           lineStyle: {
-            color: '#e5e7eb',
+            type: 'dashed',
+            color: '#E2E8F0',
           },
         },
       },
 
       yAxis: {
         type: 'category',
-        data: chartData.map((d) => d.event),
         inverse: true,
-        axisLine: { show: false },
+        data: eventLabels,
         axisTick: { show: false },
+        axisLine: { show: false },
+        axisLabel: {
+          color: '#334155',
+          fontSize: 12,
+          fontWeight: 500,
+        },
       },
 
       series: [
         {
+          name: 'Positive Volume',
           type: 'bar',
-          data: chartData.map((d) => d.frequency),
-          barWidth: 2,
+          stack: 'volume',
+          data: chartData.map((d) => d.positiveVolume),
+          barMaxWidth: 24,
           itemStyle: {
-            color: '#cbd5e1',
+            color: NEWS_SENTIMENT_COLORS['positive'],
           },
-          silent: true,
-          z: 1,
         },
-
         {
-          type: 'scatter',
-          data: chartData.map((d, index) => ({
-            value: [d.frequency, index],
-            event: d.event,
-            frequency: d.frequency,
-            avgSentiment: d.avgSentiment,
-            volatility: d.volatility,
-          })),
-          symbolSize: (params: any) => {
-            const volatility = params.data?.volatility ?? 0;
-            return 12 + (volatility / maxVolatility) * 10;
-          },
-
+          name: 'Negative Volume',
+          type: 'bar',
+          stack: 'volume',
+          data: chartData.map((d) => d.negativeVolume),
+          barMaxWidth: 24,
           itemStyle: {
-            color: (params: any) =>
-              getVolatilityColor(params.data?.volatility ?? 0),
+            color: NEWS_SENTIMENT_COLORS["negative"],
+            borderRadius: [0, 4, 4, 0],
           },
-          z: 3,
         },
       ],
     };

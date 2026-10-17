@@ -10,6 +10,10 @@ import {
   TOP_N_OPTIONS,
   truncateLabel,
 } from '@/components/NetworkLab/PowerCouples/components/powerCouples.utils.ts';
+import {
+  buildCoverageTooltip
+} from '@/components/NetworkLab/OrganizationConnections/components/OrganizationCoverage/organizationCoverage.utils.ts';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
 
 interface OrganizationCoverageProps {
   allianceNetwork?: AllianceNetwork[];
@@ -21,28 +25,33 @@ const OrganizationCoverage = ({
   height = 450,
 }: OrganizationCoverageProps) => {
 
-  const hasData = allianceNetwork && allianceNetwork.length > 0;
   const [limit, setLimit] = useState('10');
+  const hasData = Boolean(allianceNetwork && allianceNetwork.length > 0);
+
+  const sortedData = useMemo(() => {
+    if (!hasData || !allianceNetwork) return [];
+    return [...allianceNetwork]
+      .sort((a, b) => b.sharedArticles - a.sharedArticles)
+      .slice(0, Number(limit));
+  }, [allianceNetwork, hasData, limit]);
+
   const chartOption = useMemo<EChartsOption | undefined>(() => {
-    if (!hasData) {
+    if (!hasData || !sortedData.length) {
       return undefined;
     }
 
-    const sorted = [...allianceNetwork]
-      .sort((a, b) => b.sharedArticles - a.sharedArticles)
-      .slice(0, Number(limit));
-
     const getPairLabel = (item: AllianceNetwork) =>
-      truncateLabel(item.orgA, 28);
+      `${item.orgA} - ${item.orgB}`;
 
     return {
       animationDuration: 500,
 
       grid: {
-        left: 0,
-        right: 40,
         top: 20,
+        right: 50, // Dedicated margin on right for volume numbers
         bottom: 40,
+        left: 20,
+        containLabel: true,
       },
 
       tooltip: {
@@ -50,59 +59,108 @@ const OrganizationCoverage = ({
         axisPointer: {
           type: 'shadow',
         },
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-radius: 8px;',
         formatter: (params: any) => {
-          const index = params[0].dataIndex;
-          const item = sorted[index];
-
-          return `
-          <strong>${item.orgA}</strong><br/>
-          ${item.orgB}<br/>
-          <br/>
-          Shared articles: <strong>${item.sharedArticles}</strong><br/>
-          Avg. sentiment: ${item.avgSentiment.toFixed(2)}
-        `;
+          const index = params[0]?.dataIndex;
+          const item = sortedData[index];
+          return buildCoverageTooltip(item);
         },
       },
 
       xAxis: {
         type: 'value',
         min: 0,
-        name: 'Shared articles',
+        name: 'Shared Articles',
         nameLocation: 'middle',
         nameGap: 30,
         minInterval: 1,
+        nameTextStyle: {
+          color: '#64748B',
+          fontSize: 12,
+          fontWeight: 500,
+        },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 11,
+        },
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: '#CBD5E1',
+          },
+        },
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: '#F1F5F9',
+          },
+        },
       },
 
       yAxis: {
         type: 'category',
         inverse: true,
-        data: sorted.map(getPairLabel),
-
+        data: sortedData.map(getPairLabel),
+        axisTick: { show: false },
+        axisLine: { show: false },
         axisLabel: {
-          width: 260,
+          width: 180,
           overflow: 'truncate',
+          ellipsis: '…',
+          color: '#334155',
+          fontSize: 12,
+          fontWeight: 500,
         },
       },
 
       series: [
         {
           type: 'bar',
-          data: sorted.map((item) => item.sharedArticles),
-          barMaxWidth: 24,
+          data: sortedData.map((item) => {
+            const sentiment = item.avgSentiment ?? 0;
+            const barColor =
+              sentiment > 0.15
+                ? NEWS_SENTIMENT_COLORS['positive']
+                : sentiment < -0.15
+                  ? NEWS_SENTIMENT_COLORS['negative']
+                  : '#475569';
 
-          itemStyle: {
-            borderRadius: [0, 4, 4, 0],
-          },
+            return {
+              value: item.sharedArticles,
+              itemStyle: {
+                color: barColor,
+                borderRadius: [0, 4, 4, 0],
+              },
+            };
+          }),
+          barMaxWidth: 20,
 
           label: {
             show: true,
             position: 'right',
+            distance: 8,
             formatter: '{c}',
+            color: '#334155',
+            fontSize: 11,
+            fontWeight: 600,
+          },
+
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 6,
+              shadowColor: 'rgba(0, 0, 0, 0.15)',
+            },
           },
         },
       ],
     };
-  }, [allianceNetwork, hasData, limit]);
+  }, [sortedData, hasData]);
   return (
     <DashboardSection
       title='Shared coverage'

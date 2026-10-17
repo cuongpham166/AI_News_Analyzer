@@ -10,7 +10,9 @@ const CoOccurrenceMatrixLegend = () => {
   return (
     <CustomChartLegend legendName='Entity'>
       <Group gap='md' wrap='wrap'>
-        {NEWS_ENTITIES.map((item) => {
+        {NEWS_ENTITIES
+          .filter((item)=> item != "keyphrase")
+          .map((item) => {
           return (
             <Group gap='xs' wrap='nowrap'>
               <ColorSwatch color={NEWS_ENTITY_COLORS[item]} size={12} />

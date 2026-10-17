@@ -2,79 +2,85 @@ import * as echarts from 'echarts';
 import worldGeoJson from '@/assets/maps/world.json';
 import EChartContainer from '@/components/generic/EChartContainer';
 import type { EChartsOption } from 'echarts';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { CountryRisk } from '@/shared/types/analysis/risk_map/CountryRisk.ts';
+import {buildCountryRiskChartTooltip, } from './countryRiskChart.utils.ts';
 
 
 interface CountryRiskChartProps {
   countryRisk?: CountryRisk[];
   height?: number | string;
+  onLocationClick?: (location: CountryRisk) => void;
 }
 
-const CountryRiskChart = (props: CountryRiskChartProps) => {
-  const {countryRisk, height=500 } = props;
+const CountryRiskChart = ({
+  countryRisk,
+  height = 500,
+  onLocationClick,
+}: CountryRiskChartProps) => {
+  const hasData = Boolean(countryRisk && countryRisk.length > 0);
 
-  let mapData = []
-  let maxArticleCount = 0;
+  const handleChartClick = useCallback(
+    (params: any) => {
+      if (params.componentType === 'series' && params.seriesType === 'map') {
+        const clickedCountry = params.data.rawItem as CountryRisk;
+        if (onLocationClick && clickedCountry) {
+          onLocationClick(clickedCountry);
+        }
+      }
+    },
+    [onLocationClick],
+  );
 
-  if (countryRisk) {
-    mapData = countryRisk
-      .filter(
-        (country) =>
-          Number.isFinite(country.articleCount) && country.articleCount > 0,
-      )
-      .map((country) => ({
-        name: country.country,
-        value: country.articleCount,
-        articleCount: country.articleCount,
-        coveragePercent: Number.isFinite(country.coveragePercent)
-          ? country.coveragePercent
-          : 0,
-        avgSentiment: Number.isFinite(country.avgSentiment)
-          ? country.avgSentiment
-          : 0,
-        countryCode: country.countryCode,
+  const onEvents = useMemo(
+    () => ({
+      click: handleChartClick,
+    }),
+    [handleChartClick],
+  );
+
+  const chartOption = useMemo<EChartsOption | undefined>(() => {
+    if (!hasData || !countryRisk) {
+      return undefined;
+    }
+
+    const mapData = countryRisk
+      .filter((item) => Number.isFinite(item.frequency) && item.frequency > 0)
+      .map((item) => ({
+        name: item.country,
+        value: Number.isFinite(item.riskScore) ? item.riskScore : 0,
+        rawItem: item,
       }));
 
-    const values = mapData.map((item) => item.value);
-    maxArticleCount = Math.max(...values, 1);
-  }
-
-  const chartOption = useMemo<EChartsOption>(() => {
     return {
-      tooltip: {
-        trigger: 'item',
-        formatter: (params: any) => {
-          const data = params.data;
-
-          if (!data) {
-            return params.name;
-          }
-
-          return `
-        <div>
-          <strong>${params.name}</strong>
-          <br />
-          Articles: ${data.articleCount.toLocaleString()}
-          <br />
-          Coverage: ${data.coveragePercent.toFixed(1)}%
-          <br />
-          Sentiment: ${data.avgSentiment.toFixed(2)}
-        </div>
-      `;
+      animationDuration: 500,
+      visualMap: {
+        min: 0,
+        max: 1.0,
+        calculable: true,
+        orient: 'vertical',
+        top: 'center',
+        left: 10,
+        text: ['High Risk (100%)', 'Low Risk (0%)'],
+        textStyle: {
+          color: '#64748B',
+          fontSize: 11,
+        },
+        inRange: {
+          color: ['#10B981', '#34D399', '#FBBF24', '#F87171', '#EF4444'],
         },
       },
 
-      visualMap: {
-        min: 0,
-        max: maxArticleCount,
-        calculable: true,
-        left: 'left',
-        bottom: 20,
-        text: ['High coverage', 'Low coverage'],
-        inRange: {
-          color: ['#dbeafe', '#93c5fd', '#60a5fa', '#3b82f6', '#1d4ed8'],
-        },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px;',
+
+        formatter: (params: any) => buildCountryRiskChartTooltip(params),
       },
 
       series: [
@@ -82,29 +88,34 @@ const CountryRiskChart = (props: CountryRiskChartProps) => {
           type: 'map',
           map: 'world',
           roam: true,
+          zoom: 1.2,
+          center: [15, 20],
 
           data: mapData,
 
           itemStyle: {
-            areaColor: '#172033', // countries with no data
-            borderColor: '#475569',
-            borderWidth: 0.5,
+            areaColor: '#F1F5F9',
+            borderColor: '#CBD5E1',
+            borderWidth: 0.6,
           },
 
           emphasis: {
             itemStyle: {
-              areaColor: '#243047',
+              areaColor: '#38BDF8',
             },
             label: {
               show: true,
-              color: '#ffffff',
+              color: '#0F172A',
+              fontWeight: 600,
             },
           },
         },
       ],
     };
-  }, [mapData, maxArticleCount]);
-  return <EChartContainer option={chartOption} height={height} />;
+  }, [hasData, countryRisk]);
+  return (
+    <EChartContainer option={chartOption} height={height} onEvents={onEvents} />
+  );
 };
 
 export default CountryRiskChart;

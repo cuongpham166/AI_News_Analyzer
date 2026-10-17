@@ -3,39 +3,61 @@ import React from 'react';
 import type { GeopoliticalMetrics } from '@/shared/types/analysis/risk_map/GeopoliticalMetrics.ts';
 
 import MapMetricsCard from '@/components/RiskMap/components/MapMetricsCard.tsx';
+
 interface GeopoliticalHotspotsMetricsProps {
   geoMetrics?: GeopoliticalMetrics;
 }
+
+const formatSentiment = (val?: number) => {
+  if (val === undefined || val === null || isNaN(val)) return 'N/A';
+  const formatted = val.toFixed(2);
+  return val > 0 ? `+${formatted}` : `${formatted}`;
+};
+
+const formatRiskScore = (val?: number) => {
+  if (val === undefined || val === null || isNaN(val)) return 'N/A';
+  return `${Math.round(val * 100)}%`;
+};
+
 const GeopoliticalHotspotsMetrics = ({
   geoMetrics,
 }: GeopoliticalHotspotsMetricsProps) => {
-  console.log('GeopoliticalHotspotsMetrics', geoMetrics);
   const metricsData = [
     {
-      title: 'Articles',
-      value: geoMetrics ? geoMetrics.totalArticles : 'N/A',
-      tooltip: '',
+      title: 'Total Articles',
+      value: geoMetrics ? geoMetrics.totalArticles.toLocaleString() : 'N/A',
+      tooltip: 'Total volume of news coverage across all tracked hotspots.',
     },
     {
       title: 'Hotspots',
       value: geoMetrics ? geoMetrics.hotspots : 'N/A',
-      tooltip:
-        'A hotspot represents a unique geographic point within a country, regardless of which alias was used in the news article.',
+      tooltip: 'Unique geographic locations identified across news coverage.',
     },
     {
-      title: 'Avg. Sentiment Score.',
-      value: geoMetrics ? geoMetrics.avgSentiment : 'N/A',
-      tooltip: '',
+      title: 'Avg. Risk Score',
+      value: formatRiskScore(geoMetrics?.avgRiskScore),
+      tooltip:
+        'Aggregate ratio of negative risk coverage across all active hotspots.',
+      statusColor:
+        geoMetrics?.avgRiskScore && geoMetrics.avgRiskScore >= 0.6
+          ? '#EF4444'
+          : undefined,
+    },
+    {
+      title: 'Avg. Sentiment',
+      value: formatSentiment(geoMetrics?.avgSentiment),
+      tooltip:
+        'Average sentiment score ranging from -1.0 (Negative) to +1.0 (Positive).',
     },
     {
       title: 'Countries',
       value: geoMetrics ? geoMetrics.countries : 'N/A',
-      tooltip: '',
+      tooltip: 'Total distinct sovereign countries covered.',
     },
   ];
 
   return (
-    <SimpleGrid cols={{ base: 2, sm: 4 }} spacing='md'>
+    <SimpleGrid cols={{ base: 2, sm: 5 }} spacing='md'>
       {metricsData.map((item, index) => (
         <MapMetricsCard
           title={item.title}

@@ -6,7 +6,6 @@ import DeepVelocityLegend from '@/components/Overview/DeepVelocity/components/De
 import { Stack } from '@mantine/core';
 import {
   buildScatterData,
-  buildTooltip,
   calculateChartMetrics,
   createMarkArea,
   createMarkLine,
@@ -15,6 +14,7 @@ import {
   DATA_ZOOM,
   GRID,
 } from '@/components/Overview/DeepVelocity/components/DeepVelocityChart/deepVelocity.config.ts';
+import {buildDeepVelocityTooltip} from '@/components/Overview/DeepVelocity/components/DeepVelocityChart/deepVelocity.utils.ts';
 
 interface DeepVelocityChartProps {
   data: DeepVelocityType[];
@@ -29,10 +29,7 @@ const DeepVelocityChart = ({ data,height=420 }:DeepVelocityChartProps) => {
       dataZoom: DATA_ZOOM,
       tooltip: {
         trigger: 'item',
-        formatter: (params: any) => {
-          const item = params.data as DeepVelocityType;
-          return buildTooltip(item);
-        },
+        formatter: (params: any) => buildDeepVelocityTooltip(params),
       },
       grid: GRID,
       xAxis: {

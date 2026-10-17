@@ -32,6 +32,7 @@ const App = () => {
             <Route path='/detailed_news' element={<DetailedNewsPage />} />
             <Route path='/news' element={<NewsPage />} />
             <Route path='/news/:Id' element={<DetailedNewsPage />} />
+            <Route path='/news/hash/:hash' element={<DetailedNewsPage />} />
             <Route path='*' element={<NotFoundPage />} />
           </Routes>
         </Layout>

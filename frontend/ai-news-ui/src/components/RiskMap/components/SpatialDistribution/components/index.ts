@@ -1,4 +1,8 @@
 import SpatialDistributionChart from './SpatialDistributionChart.tsx';
 import SpatialDistributionMetrics from './SpatialDistributionMetrics.tsx';
-
-export {SpatialDistributionChart, SpatialDistributionMetrics};
+import SpatialDistributionNewsSidebar from './SpatialDistributionNewsSidebar.tsx';
+export {
+  SpatialDistributionChart,
+  SpatialDistributionMetrics,
+  SpatialDistributionNewsSidebar,
+};

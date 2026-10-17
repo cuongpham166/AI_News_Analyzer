@@ -20,14 +20,15 @@ const SignificantTermsLegend = () => {
       }}
     >
       {NEWS_ENTITIES.map((item) => {
-        return (
-          <Group key={item} gap={6} wrap='nowrap'>
-            <ColorSwatch color={NEWS_ENTITY_COLORS[item]} size={10} />
-            <Text size='sm' c={ThemeColors.text}>
-              {item.charAt(0).toUpperCase() + item.slice(1)}
-            </Text>
-          </Group>
-        );
+        if (item != 'keyphrase')
+          return (
+            <Group key={item} gap={6} wrap='nowrap'>
+              <ColorSwatch color={NEWS_ENTITY_COLORS[item]} size={10} />
+              <Text size='sm' c={ThemeColors.text}>
+                {item.charAt(0).toUpperCase() + item.slice(1)}
+              </Text>
+            </Group>
+          );
       })}
     </Box>
   );

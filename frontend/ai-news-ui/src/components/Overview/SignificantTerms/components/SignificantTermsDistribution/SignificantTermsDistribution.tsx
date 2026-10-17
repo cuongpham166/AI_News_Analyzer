@@ -23,6 +23,7 @@ import {
 import SignificantTermsLegend from '@/components/Overview/SignificantTerms/components/SignificantTermsLegend.tsx';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
 import { GRID_CONFIG } from '@/shared/utils/chartConfig.ts';
+import { createCustomChartTooltip } from '@/shared/utils/createChartTooltip.ts';
 
 interface SignificantTermsDistributionProps {
   data?: SignificantTerms[];
@@ -116,14 +117,51 @@ const SignificantTermsDistribution = ({
           const item = params.data
             .originalData as SignificantTermsDistributionType;
 
-          return `
-            <strong>${item.term}</strong><br/>
-            Mentions: ${item.docCount}<br/>
-            Score: ${item.score.toFixed(3)}<br/>
-            Size: ${item.size.toFixed(3)}<br/>
-            Type: ${item.type.charAt(0).toUpperCase()}${item.type.slice(1)}<br/>
-            Historical Share: ${item.historicalSharePercentage}%
+          const customContent = `
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:12px;
+              margin-bottom:5px;
+            ">
+              <span style="color:#475569;">Mentions</span>
+              <strong style="text-align:right;white-space:nowrap;">${item.docCount}</strong>
+            </div>
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:12px;
+              margin-bottom:5px;
+            ">
+              <span style="color:#475569;">Score</span>
+              <strong style="text-align:right;white-space:nowrap;">${item.score.toFixed(3)}</strong>
+            </div>
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:12px;
+              margin-bottom:5px;
+            ">
+              <span style="color:#475569;">Size</span>
+              <strong style="text-align:right;white-space:nowrap;">${item.size.toFixed(3)}</strong>
+            </div>
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:12px;
+              margin-bottom:5px;
+            ">
+              <span style="color:#475569;">Historical Share</span>
+              <strong style="text-align:right;white-space:nowrap;">${item.historicalSharePercentage}%</strong>
+            </div>
           `;
+          return createCustomChartTooltip({
+            title: item.term,
+            minWidth: 260,
+            badge: String(item.type).toUpperCase(),
+            badgeBgColor: NEWS_ENTITY_COLORS[item.type],
+            customContent: customContent,
+          });
         },
       },
 

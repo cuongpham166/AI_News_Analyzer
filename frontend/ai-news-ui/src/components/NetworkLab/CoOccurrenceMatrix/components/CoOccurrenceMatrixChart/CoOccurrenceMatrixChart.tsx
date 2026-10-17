@@ -4,8 +4,8 @@ import EChartContainer from '@/components/generic/EChartContainer';
 
 import type { CoOccurrence } from '@/shared/types/analysis/network_lab/CoOccurrence.ts';
 import {
-  buildCoOccurrenceHeatmap, buildTooltipChart,
-  escapeHtml,
+  buildCoOccurrenceHeatmap,
+  buildCoOccurrenceMatrixChartTooltip,
   type HeatmapCell,
   normalizeType,
   relationshipKey,
@@ -79,7 +79,7 @@ const CoOccurrenceMatrixChart = ({
       tooltip: {
         position: 'bottom',
         formatter: (params: any) => {
-          return buildTooltipChart(params)
+          return buildCoOccurrenceMatrixChartTooltip(params);
         },
       },
 

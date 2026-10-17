@@ -5,19 +5,22 @@ import DashboardSection from '@/components/generic/DashboardSection';
 import { Flex, Box } from '@mantine/core';
 import EChartContainer from '@/components/generic/EChartContainer';
 import TrendingKeywordClustersLegends from './components/TrendingKeywordClustersLegends.tsx';
-import {NEWS_TOPIC_COLORS} from '@/shared/constants/NewsTopics.ts';
 import EmptyDataCard from '@/components/generic/EmptyDataCard';
-import { GRID_CONFIG } from '@/shared/utils/chartConfig.ts';
+import { NEWS_SENTIMENT_COLORS } from '@/shared/constants/NewsSentiments.ts';
+import {
+  buildTrendingKeywordClustersTooltip,
+} from '@/components/MediaBias/TrendingKeywordClusters/TrendingKeywordClustersChart/trendingKeywordClustersChart.utils.ts';
 
 interface TrendingKeywordClustersChartProps {
   trendingKeyword?: TrendingKeywords[];
   height?: number;
 }
+
 const TrendingKeywordClustersChart = ({ trendingKeyword, height = 450 }:TrendingKeywordClustersChartProps) => {
-  const hasData = trendingKeyword && trendingKeyword.length > 0;
+  const hasData = Boolean(trendingKeyword && trendingKeyword.length > 0);
 
   const chartOption = useMemo<EChartsOption | undefined>(() => {
-    if (!hasData) {
+    if (!hasData || !trendingKeyword) {
       return undefined;
     }
 
@@ -28,98 +31,89 @@ const TrendingKeywordClustersChart = ({ trendingKeyword, height = 450 }:Trending
     return {
       animationDuration: 500,
 
-      grid: GRID_CONFIG,
+      grid: {
+        top: 40,
+        right: 40,
+        bottom: 40,
+        left: 170,
+        containLabel: false,
+      },
 
       tooltip: {
         trigger: 'axis',
         axisPointer: {
           type: 'shadow',
         },
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        borderColor: '#E2E8F0',
+        borderWidth: 1,
+        padding: [10, 12],
+        extraCssText:
+          'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px;',
 
-        formatter: (params: any[]) => {
-          const item = sorted[params[0].dataIndex];
-
-          return `
-            <strong>${item.keyPhrase}</strong>
-             <div style="margin-top: 6px">
-              Topic:
-              ${item.topic.charAt(0).toUpperCase() + item.topic.slice(1)}
-            </div>
-            <div>
-              Co-occurrence:
-              <strong>${item.coOccurrence}</strong>
-            </div>
-            <div>
-              Avg. sentiment:
-              <strong>${item.avgSentiment.toFixed(2)}</strong>
-            </div>
-          `;
-        },
+        formatter: (params: any[]) =>
+          buildTrendingKeywordClustersTooltip(sorted, params),
       },
 
       xAxis: {
         type: 'value',
-
-        name: 'Co-occurrence',
+        name: 'Co-occurrence Volume',
         nameLocation: 'middle',
-        nameGap: 30,
-
+        nameGap: 28,
         min: 0,
         minInterval: 1,
-
         splitLine: {
           lineStyle: {
             type: 'dashed',
-            opacity: 0.35,
+            color: '#E2E8F0',
           },
+        },
+        axisLabel: {
+          color: '#64748B',
+          fontSize: 11,
         },
       },
 
       yAxis: {
         type: 'category',
         inverse: true,
-
         data: sorted.map((item) => item.keyPhrase),
-
-        axisTick: {
-          show: false,
-        },
-
-        axisLine: {
-          show: false,
-        },
-
+        axisTick: { show: false },
+        axisLine: { show: false },
         axisLabel: {
-          width: 160,
+          width: 150,
           overflow: 'truncate',
-          color: '#475569',
+          color: '#334155',
+          fontSize: 12,
+          fontWeight: 500,
         },
       },
 
       series: [
         {
+          name: 'Positive Co-occurrence',
           type: 'bar',
-          data: sorted.map((item) => ({
-            value: item.coOccurrence,
-            itemStyle: {
-              color: NEWS_TOPIC_COLORS[item.topic],
-            },
-          })),
-          barMaxWidth: 28,
-          label: {
-            show: true,
-            position: 'right',
-            formatter: '{c}',
-            color: '#495057',
-            fontWeight: 600,
+          stack: 'coOccurrence',
+          data: sorted.map((item) => item.positiveCoOccurrence),
+          itemStyle: {
+            color: NEWS_SENTIMENT_COLORS['positive'],
           },
-          emphasis: {
-            focus: 'series',
+          barMaxWidth: 24,
+        },
+        {
+          name: 'Negative Co-occurrence',
+          type: 'bar',
+          stack: 'coOccurrence',
+          data: sorted.map((item) => item.negativeCoOccurrence),
+          itemStyle: {
+            color: NEWS_SENTIMENT_COLORS['negative'],
           },
+          barMaxWidth: 24,
         },
       ],
     };
   }, [hasData, trendingKeyword]);
+
   return (
     <DashboardSection
       children={

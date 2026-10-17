@@ -3,6 +3,8 @@ import {
   DEFAULT_TRENDS_COLORS,
   TRENDS_COLORS,
 } from '@/components/Overview/DeepVelocity/components/DeepVelocityChart/deepVelocity.config.ts';
+import { RISK_LEVEL_COLORS } from '@/shared/constants/RiskLevel.ts';
+import { createCustomChartTooltip } from '@/shared/utils/createChartTooltip.ts';
 
 export function calculateChartMetrics(data: DeepVelocityType[]) {
   const isEmpty = data.length === 0;
@@ -61,18 +63,82 @@ export function buildScatterData(data: DeepVelocityType[]) {
   });
 }
 
-export function buildTooltip(item: DeepVelocityType) {
-  return `
-     <div style="font-weight: 600; margin-bottom: 4px;">${item.entity}</div>
-     <div style="font-size: 12px;">
-        • <strong>Current Mentions:</strong> ${item.currentMentions}<br/>
-        • <strong>Previous Mentions:</strong> ${item.previousMentions}<br/>
-        • <strong>Velocity Percentage:</strong> ${item.velocityPercentage}<br/>
-        • <strong>Momentum Score:</strong> ${item.momentumScore}<br/>
-        • <strong>Trend Direction:</strong> ${item.trendDirection}<br/>
-     </div>
+export const buildDeepVelocityTooltip = (params: any) => {
+  const item = params.data as DeepVelocityType;
+  const entityName = item.entity;
+  let trendDirectionColor;
+  if (item.trendDirection == 'Rising') {
+    trendDirectionColor = RISK_LEVEL_COLORS['low'];
+  } else if (item.trendDirection == 'Falling') {
+    trendDirectionColor = RISK_LEVEL_COLORS['high'];
+  } else {
+    trendDirectionColor = RISK_LEVEL_COLORS['moderate'];
+  }
+
+  const customContent = `
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:5px;
+    ">
+        <span style="color:#475569;">Current Mentions</span>
+        <strong style="text-align:right;white-space:nowrap;">${item.currentMentions}</strong>
+    </div>
+    
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:5px;
+    ">
+        <span style="color:#475569;">Previous Mentions</span>
+        <strong style="text-align:right;white-space:nowrap;">${item.previousMentions}</strong>
+    </div>
+    
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:5px;
+    ">
+        <span style="color:#475569;">Velocity Percentage</span>
+        <strong style="text-align:right;white-space:nowrap;">${item.velocityPercentage}</strong>
+    </div>
+    
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:5px;
+    ">
+        <span style="color:#475569;">Momentum Score</span>
+        <strong style="text-align:right;white-space:nowrap;">${item.momentumScore}</strong>
+    </div>
   `;
-}
+
+  return createCustomChartTooltip({
+    title: entityName,
+    minWidth: 260,
+    customContent: `
+        ${
+          customContent ||
+          '<span style="color:#64748B;">No data available</span>'
+        }
+        
+              <div style="
+                border-top:1px solid #F1F5F9;
+                margin-top:8px;
+                padding-top:6px;
+                display:flex;
+                justify-content:space-between;
+              ">
+                <strong>Trend Direction:</strong>
+                <strong style="color:${trendDirectionColor};">${item.trendDirection}</strong>
+              </div>
+            `,
+  });
+};
 
 export const createMarkLine = (
   mentionThreshold: number,

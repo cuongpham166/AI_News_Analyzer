@@ -19,7 +19,18 @@ interface MapMetricsCardProps {
   index:number;
 }
 const MapMetricsCard = ({title, value, tooltip, index}: MapMetricsCardProps) => {
-  const metricColors = ['blue', 'cyan', 'violet', 'orange'];
+  const metricColors = [
+    'blue',
+    'teal',
+    'orange',
+    'violet',
+    'pink',
+    'green',
+    'cyan',
+    'yellow',
+    'grape',
+    'lime',
+  ];
   return (
       <Paper
         key={title}

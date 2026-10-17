@@ -3,8 +3,11 @@ export interface SpatialMap {
   aliases: string[];
   latitude: number;
   longitude: number;
-  count: number;
+  frequency: number;
+  positiveVolume: number;
+  negativeVolume: number;
   avgSentiment: number;
+  riskScore: number;
   country: string;
   countryCode: string;
 }
