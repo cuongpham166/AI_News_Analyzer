@@ -3,6 +3,7 @@ package com.example.news.api.service;
 import java.io.IOException;
 import java.util.List;
 
+import com.example.news.api.dto.response.news.NewsSearchResponse;
 import com.example.news.api.repository.search.IndexSearchRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,20 +17,20 @@ public class SearchService {
         this.indexSearchRepository = indexSearchRepository;
     }
 
-    public InferenceNews getInferenceNewsById(String id) throws IOException {
-        return this.indexSearchRepository.getInferenceNewsById(id);
+    public List<NewsSearchResponse> searchNews(String searchText, int page, int size) throws IOException{
+        return indexSearchRepository.searchNews(searchText, page, size);
     }
 
-    public List<InferenceNews> getAllInferenceNews() throws IOException {
-        return this.indexSearchRepository.getAllInferenceNews();
+    public List<NewsSearchResponse> searchEntities(String searchText, int page, int size) throws IOException{
+        return indexSearchRepository.searchEntities(searchText, page, size);
     }
 
-    public List<InferenceNews> findInterfaceNewsByText (String searchText) throws IOException {
-        return this.indexSearchRepository.findInterfaceNewsByText(searchText);
+    public List<NewsSearchResponse> searchSource(String searchText, int page, int size) throws IOException{
+        return indexSearchRepository.searchSource(searchText, page, size);
     }
 
-    public List<InferenceNews> searchMultiField (String searchText) throws IOException {
-        return this.indexSearchRepository.searchMultiField(searchText);
+    public List<NewsSearchResponse> searchEverything(String searchText, int page, int size) throws IOException{
+        return indexSearchRepository.searchEverything(searchText, page, size);
     }
 
 }

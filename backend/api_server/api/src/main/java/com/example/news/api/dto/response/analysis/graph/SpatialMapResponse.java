@@ -14,8 +14,11 @@ public class SpatialMapResponse {
     private List<String> aliases;
     private double latitude;
     private double longitude;
-    private int count;
+    private int frequency;
+    private int positiveVolume;
+    private int negativeVolume;
     private Double avgSentiment;
+    private Double riskScore;
     private String country;
     private String countryCode;
 }

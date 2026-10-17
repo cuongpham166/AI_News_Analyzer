@@ -13,19 +13,26 @@ import java.util.Optional;
 
 @Repository
 public interface EntityTypeRepository extends JpaRepository<EntityTypeEntity, Long> {
+
     @Query("""
-        SELECT new com.example.news.api.dto.internal.entity.EntityTypeCount(
+        SELECT new com.example.news.api.dto.internal.news.entity.EntityTypeCount(
             et.id,
             et.name,
-            COUNT(et.id)
+            COUNT(e.id)
         )
         FROM EntityTypeEntity et
-        LEFT JOIN EntityEntity e ON e.entityType = et
+        LEFT JOIN et.entities e
         GROUP BY et.id, et.name
-        ORDER BY COUNT(et.id) DESC
+        ORDER BY COUNT(e.id) DESC
     """)
     List<EntityTypeCount> findEntityTypeCounts();
 
-    @Query("select e.id from EntityTypeEntity e where e.name = :name")
+    @Query("""
+        SELECT e.id
+        FROM EntityTypeEntity e
+        WHERE e.name = :name
+    """)
     Optional<Long> findIdByName(@Param("name") String name);
 }
+
+

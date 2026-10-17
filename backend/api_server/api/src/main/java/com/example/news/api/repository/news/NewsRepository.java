@@ -15,8 +15,6 @@ import com.example.news.api.entity.NewsEntity;
 @Repository
 public interface NewsRepository extends JpaRepository<NewsEntity, UUID> {
     Optional<NewsEntity> findById(UUID id);
+    Optional<NewsEntity> findByContentHash(String contentHash);
     List<NewsEntity> findAllBySourceId(int sourceId, Pageable pageable);
-
-
-
 }

@@ -2,6 +2,7 @@ package com.example.news.api.controller;
 
 
 import com.example.news.api.dto.response.admin.AdminEventResponse;
+import com.example.news.api.dto.response.admin.metrics.ApplicationMetricsResponse;
 import com.example.news.api.dto.response.admin.metrics.PipelineMetricsResponse;
 import com.example.news.api.dto.response.user.DetailedUserResponse;
 import com.example.news.api.dto.response.admin.UserEventResponse;
@@ -10,6 +11,7 @@ import com.example.news.api.service.admin.management.RoleService;
 import com.example.news.api.service.admin.management.AdminUserService;
 import com.example.news.api.dto.request.user.UserRoleRequest;
 import com.example.news.api.dto.request.user.UserSearchRequest;
+import com.example.news.api.service.admin.metrics.application.ApplicationMetricsService;
 import com.example.news.api.service.admin.metrics.pipeline.PipelineMetricsService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,17 +27,20 @@ public class AdminController {
     private final RoleService roleService;
     private final EventService eventService;
     private final PipelineMetricsService pipelineMetricsService;
+    private final ApplicationMetricsService applicationMetricsService;
 
     public AdminController(
             AdminUserService adminUserService,
             RoleService roleService,
             EventService eventService,
-            PipelineMetricsService pipelineMetricsService
+            PipelineMetricsService pipelineMetricsService,
+            ApplicationMetricsService applicationMetricsService
     ){
         this.adminUserService = adminUserService;
         this.roleService = roleService;
         this.eventService = eventService;
         this.pipelineMetricsService = pipelineMetricsService;
+        this.applicationMetricsService = applicationMetricsService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -83,19 +88,25 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/username")
-    public List<DetailedUserResponse> searchByUsername (@RequestBody UserSearchRequest userSearchRequest){
+    public List<DetailedUserResponse> searchByUsername (
+            @RequestBody UserSearchRequest userSearchRequest
+    ){
         return adminUserService.searchByUsername(userSearchRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/email")
-    public List<DetailedUserResponse> searchByEmail (@Valid @RequestBody UserSearchRequest userSearchRequest){
+    public List<DetailedUserResponse> searchByEmail (
+            @Valid @RequestBody UserSearchRequest userSearchRequest
+    ){
         return adminUserService.searchByEmail(userSearchRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/search/role")
-    public List<DetailedUserResponse> searchByRole (@Valid @RequestBody UserSearchRequest userSearchRequest){
+    public List<DetailedUserResponse> searchByRole (
+            @Valid @RequestBody UserSearchRequest userSearchRequest
+    ){
         return adminUserService.searchByRole(userSearchRequest);
     }
 
@@ -113,14 +124,30 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/realm-roles/assign")
-    public void assignUserRealmRole(@Valid @RequestBody UserRoleRequest userRoleRequest){
+    public void assignUserRealmRole(
+            @Valid @RequestBody UserRoleRequest userRoleRequest
+    ){
         roleService.assignUserRealmRole(userRoleRequest);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/realm-roles/remove")
-    public void removeUserRealmRole(@Valid @RequestBody UserRoleRequest userRoleRequest){
+    public void removeUserRealmRole(
+            @Valid @RequestBody UserRoleRequest userRoleRequest
+    ){
         roleService.removeUserRealmRole(userRoleRequest);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/metrics/pipeline")
+    public PipelineMetricsResponse getPipelineMetrics(){
+        return pipelineMetricsService.getPipelineMetrics();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/metrics/application")
+    public ApplicationMetricsResponse getApplicationMetrics(){
+        return applicationMetricsService.getApplicationMetrics();
     }
 
 }

@@ -5,12 +5,12 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.example.news.api.dto.internal.SimilarNewsId;
 import com.example.news.api.dto.response.news.SimilarNewsResponse;
+import com.example.news.api.entity.NewsEntity;
+import com.example.news.api.repository.news.NewsRepository;
 import com.example.news.api.repository.news.similarity.SimilarNewsRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,13 +19,30 @@ public class SimilarNewsService {
 
     private final ElasticsearchClient elasticsearchClient;
     private final SimilarNewsRepository similarNewsRepository;
+    private final NewsRepository newsRepository;
+
     public SimilarNewsService(
             ElasticsearchClient elasticsearchClient,
-            SimilarNewsRepository similarNewsRepository
+            SimilarNewsRepository similarNewsRepository,
+            NewsRepository newsRepository
     ){
         this.elasticsearchClient = elasticsearchClient;
         this.similarNewsRepository = similarNewsRepository;
+        this.newsRepository = newsRepository;
     }
+
+    public List<SimilarNewsResponse> getSimilarNewsByContentHash(
+            String contentHash,
+            int limit
+    ){
+        Optional<NewsEntity> news = newsRepository.findByContentHash(contentHash);
+        if(news.isPresent()){
+            UUID newsId = news.get().getId();
+            return getSimilarNews(newsId.toString(),limit);
+        }
+        return new ArrayList<>();
+    }
+
 
     public List<SimilarNewsResponse> getSimilarNews(
             String currentArticleId,
@@ -45,12 +62,6 @@ public class SimilarNewsService {
                 .map(SimilarNewsId::id)
                 .toList();
 
-        /*
-         * Keep Neo4j's ranking information.
-         *
-         * Merge function is only defensive protection in case
-         * duplicate IDs somehow reach this point.
-         */
         Map<String, SimilarNewsId> scoreMap =
                 similarNewsIds.stream()
                         .collect(Collectors.toMap(
@@ -85,10 +96,6 @@ public class SimilarNewsService {
                             SimilarNewsResponse.class
                     );
 
-            /*
-             * Elasticsearch documents indexed with the same ID
-             * can be accessed through hit.id().
-             */
             Map<String, SimilarNewsResponse> documentMap =
                     response.hits().hits().stream()
                             .filter(hit -> hit.id() != null)
@@ -99,11 +106,6 @@ public class SimilarNewsService {
                                     (first, second) -> first
                             ));
 
-            /*
-             * Elasticsearch does not need to preserve Neo4j's order.
-             *
-             * targetIds is already ordered by Neo4j ranking.
-             */
             return targetIds.stream()
                     .map(id -> {
                         SimilarNewsResponse document =

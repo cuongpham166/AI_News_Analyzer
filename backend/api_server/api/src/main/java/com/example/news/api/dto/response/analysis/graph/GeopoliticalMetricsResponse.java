@@ -12,4 +12,6 @@ public class GeopoliticalMetricsResponse {
     private int hotspots;
     private int countries;
     private Double avgSentiment;
+    private Double avgRiskScore;
+
 }

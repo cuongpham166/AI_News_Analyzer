@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface TopicRepository extends JpaRepository<TopicEntity, Long> {
     @Query("""
-        SELECT new com.example.news.api.dto.internal.topic.TopicNewsCount(
+        SELECT new com.example.news.api.dto.internal.news.topic.TopicNewsCount(
             t.id,
             t.name,
             COUNT(t.id)

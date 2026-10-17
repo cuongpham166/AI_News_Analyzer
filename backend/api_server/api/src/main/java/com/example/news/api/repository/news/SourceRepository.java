@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface SourceRepository extends JpaRepository<SourceEntity, Long> {
     @Query("""
-        SELECT new com.example.news.api.dto.internal.source.SourceNewsCount(
+        SELECT new com.example.news.api.dto.internal.news.source.SourceNewsCount(
             s.id,
             s.name,
             COUNT(n.id)

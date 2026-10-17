@@ -11,5 +11,7 @@ public class PublisherFocusResponse {
     private String publisher;
     private String organization;
     private int coverageVolume;
-    private Double volatility;
+    private Double avgSentiment;
+    private int positiveVolume;
+    private int negativeVolume;
 }

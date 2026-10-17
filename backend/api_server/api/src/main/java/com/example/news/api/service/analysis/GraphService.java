@@ -219,6 +219,37 @@ public class GraphService {
         );
     }
 
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getGraphNewsByLocationWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<List<GraphNewsResponse>> getGraphNewsByLocationWithRelativeInterval (String intervalUnit, int amount, String locationName){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getGraphNewsByLocationWithRelativeInterval(intervalUnit, amount, locationName),
+                ioExecutor
+        );
+    }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getGraphNewsByCountryWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<List<GraphNewsResponse>> getGraphNewsByCountryWithRelativeInterval (String intervalUnit, int amount, String countryName){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getGraphNewsByCountryWithRelativeInterval(intervalUnit, amount, countryName),
+                ioExecutor
+        );
+    }
+
+    @Cacheable(value = "analytics_long_ttl", keyGenerator = "methodKeyGenerator")
+    @CircuitBreaker(name = "Neo4jGraph", fallbackMethod = "getGraphNewsByEventWithRelativeIntervalFallback")
+    @TimeLimiter(name = "Neo4jGraph")
+    public CompletableFuture<List<GraphNewsResponse>> getGraphNewsByEventWithRelativeInterval (String intervalUnit, int amount, String eventName){
+        return CompletableFuture.supplyAsync(
+                () -> graphAnalysisRepository.getGraphNewsByEventWithRelativeInterval(intervalUnit, amount, eventName),
+                ioExecutor
+        );
+    }
+
     private void showFallbackLog(Throwable t){
         log.warn("Neo4j call failed or timed out. Reason: {}. Returning empty fallback.", t.getMessage());
     }
@@ -358,4 +389,26 @@ public class GraphService {
         showFallbackLog(t);
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
+
+    private CompletableFuture<List<GraphNewsResponse>> getGraphNewsByLocationWithRelativeIntervalFallback(
+            String intervalUnit, int amount, String locationName, Throwable t
+    ) {
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    private CompletableFuture<List<GraphNewsResponse>> getGraphNewsByCountryWithRelativeIntervalFallback(
+            String intervalUnit, int amount, String countryName , Throwable t
+    ) {
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    private CompletableFuture<List<GraphNewsResponse>> getGraphNewsByEventWithRelativeIntervalFallback(
+            String intervalUnit, int amount, String eventName , Throwable t
+    ) {
+        showFallbackLog(t);
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
 }

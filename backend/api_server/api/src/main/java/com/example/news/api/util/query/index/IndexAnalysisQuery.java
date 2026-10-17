@@ -2,12 +2,14 @@ package com.example.news.api.util.query.index;
 
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.json.JsonData;
 import com.example.news.api.util.etc.AggregationData;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class IndexAnalysisQuery {
@@ -78,6 +80,58 @@ public class IndexAnalysisQuery {
                 )
         );
     }
+
+    public SearchRequest getGlobalEntitiesTrendsRequestNew (long startEpoch,long endEpoch, CalendarInterval calendarInterval) throws IOException {
+        return SearchRequest.of(s -> s
+                .index("news")
+                .size(0)
+                .query(q -> q
+                        .bool(b -> b
+                                .filter(f -> f.range(r -> r
+                                        .field("publish_date")
+                                        .format("epoch_second")
+                                        .gte(JsonData.of(startEpoch))
+                                        .lte(JsonData.of(endEpoch))
+                                ))
+                        )
+                )
+                .aggregations("trends_over_time", a -> a
+                        .dateHistogram(d -> d
+                                .field("publish_date")
+                                .calendarInterval(calendarInterval)
+                        )
+                        .aggregations("entities", nested -> nested
+                                .nested(n -> n.path("entities"))
+                                .aggregations("top_entities", terms -> terms
+                                        .terms(t -> t
+                                                .field("entities.value.keyword")
+                                                .size(20)
+                                        )
+                                        .aggregations("entity_type", typeTerms -> typeTerms
+                                                .terms(tt -> tt
+                                                        .field("entities.entity_type")
+                                                        .size(1)
+                                                )
+                                        )
+                                        .aggregations("to_news", reverse -> reverse
+                                                .reverseNested(r -> r)
+                                                .aggregations("avg_sentiment", avg -> avg
+                                                        .avg(av -> av.field("sentiment"))
+                                                )
+                                                // Explicit filter sub-aggregations
+                                                .aggregations("positive_volume", filter -> filter
+                                                        .filter(q -> q.term(t -> t.field("sentiment_label").value("positive")))
+                                                )
+                                                .aggregations("negative_volume", filter -> filter
+                                                        .filter(q -> q.term(t -> t.field("sentiment_label").value("negative")))
+                                                )
+                                        )
+                                )
+                        )
+                )
+        );
+    }
+
 
     public SearchRequest getImpactArticlesRequest (long startEpoch,long endEpoch, int topN, boolean isPositive) throws IOException {
         String sentimentLabel = isPositive ? "positive" : "negative";
@@ -317,8 +371,6 @@ public class IndexAnalysisQuery {
 
 
     public SearchRequest getSentimentVolumeTimelineRequest(long startEpoch, long endEpoch, CalendarInterval calendarInterval) throws IOException {
-        //Area Chart with Dual Axes: Plot Article Volume on the left Y-axis and Average Sentiment on the right Y-axis over time.
-        //user can change calenderInterval (day, week, month, year)
         return SearchRequest.of(s -> s
                 .index("news")
                 .size(0)
@@ -335,11 +387,18 @@ public class IndexAnalysisQuery {
                         .dateHistogram(d -> d
                                 .field("publish_date")
                                 .format("epoch_second")
-                                .calendarInterval(calendarInterval) //day, week, month, year
-                                //.minDocCount(1)
+                                .calendarInterval(calendarInterval)
+
                         )
                         .aggregations("avg_sentiment", as -> as
-                                .avg(a -> a.field("sentiment"))
+                                .avg(a -> a.script(sc -> sc
+                                        .inline(i -> i.source(
+                                                "if (doc['sentiment_label'].size() == 0 || doc['sentiment'].size() == 0) return 0.0; " +
+                                                        "double val = doc['sentiment'].value; " +
+                                                        "String label = doc['sentiment_label'].value; " +
+                                                        "return label.equalsIgnoreCase('negative') ? -Math.abs(val) : Math.abs(val);"
+                                        ))
+                                ))
                         )
                         .aggregations("sentiment_breakdown", sb -> sb
                                 .terms(t->t.field("sentiment_label"))

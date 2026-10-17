@@ -38,7 +38,7 @@ public class RiskMapController {
     }
 
     @Operation(summary = "Renders a country-level choropleth map that highlights regional risk, conflict exposure, and country-specific coverage volume.\n")
-    @GetMapping("/geopolitical_hotspot")
+    @GetMapping("/geopolitical-hotspot")
     public ResponseEntity<ApiResponse<List<GeopoliticalHotspotResponse>>> getGeopoliticalHotspotWithRelativeInterval (
             @RequestParam String intervalUnit,
             @RequestParam int amount
@@ -47,7 +47,7 @@ public class RiskMapController {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
-    @GetMapping("/geopolitical_metrics")
+    @GetMapping("/geopolitical-metrics")
     public ResponseEntity<ApiResponse<GeopoliticalMetricsResponse>> getGeopoliticalMetricsWithRelativeInterval(
             @RequestParam String intervalUnit,
             @RequestParam int amount
@@ -56,7 +56,7 @@ public class RiskMapController {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
-    @GetMapping("/country_risk")
+    @GetMapping("/country-risk")
     public ResponseEntity<ApiResponse<List<CountryRiskResponse>>> getCountryRiskWithRelativeInterval (
             @RequestParam String intervalUnit,
             @RequestParam int amount
@@ -104,4 +104,35 @@ public class RiskMapController {
         List<CrisisAndRiskRadarResponse> data = graphService.getCrisisAndRiskRadarWithRelativeInterval(intervalUnit, amount).join();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
+
+    @GetMapping("/location-graph-news")
+    public ResponseEntity<ApiResponse<List<GraphNewsResponse>>> getLocationGraphNewsWithRelativeInterval (
+            @RequestParam String intervalUnit,
+            @RequestParam int amount,
+            @RequestParam String locationName
+    ){
+        List<GraphNewsResponse> data = graphService.getGraphNewsByLocationWithRelativeInterval(intervalUnit, amount, locationName).join();
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @GetMapping("/country-graph-news")
+    public ResponseEntity<ApiResponse<List<GraphNewsResponse>>> getCountryGraphNewsWithRelativeInterval (
+            @RequestParam String intervalUnit,
+            @RequestParam int amount,
+            @RequestParam String countryName
+    ){
+        List<GraphNewsResponse> data = graphService.getGraphNewsByCountryWithRelativeInterval(intervalUnit, amount, countryName).join();
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @GetMapping("/event-graph-news")
+    public ResponseEntity<ApiResponse<List<GraphNewsResponse>>> getEventGraphNewsWithRelativeInterval (
+            @RequestParam String intervalUnit,
+            @RequestParam int amount,
+            @RequestParam String eventName
+    ){
+        List<GraphNewsResponse> data = graphService.getGraphNewsByEventWithRelativeInterval(intervalUnit, amount, eventName).join();
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
 }

@@ -43,7 +43,7 @@ public class IndexAnalysisRepository {
 
     private SearchResponse<Void> executeGlobalEntityTrendsSearch (long startEpoch,long endEpoch,  CalendarInterval calendarInterval) throws IOException {
         //CalendarInterval intervalEnum = this.aggInterval.mapInterval(intervalUnit);
-        SearchRequest searchRequest = indexAnalysisQuery.getGlobalEntitiesTrendsRequest(startEpoch,endEpoch,calendarInterval);
+        SearchRequest searchRequest = indexAnalysisQuery.getGlobalEntitiesTrendsRequestNew(startEpoch,endEpoch,calendarInterval);
         return esClient.search(searchRequest, Void.class);
     }
 
@@ -117,7 +117,7 @@ public class IndexAnalysisRepository {
         long endEpoch   = result[1];
         CalendarInterval interval = parseCalendarInterval(calendarInterval);
         SearchResponse<Void> response = executeGlobalEntityTrendsSearch(startEpoch,endEpoch,interval);
-        return indexAnalysisMapper.mapEntityAnalysis(response);
+        return indexAnalysisMapper.mapEntityAnalysisNew(response);
     }
 
     public List<InferenceNews> getImpactArticlesWithRelativeInterval(String intervalUnit, int amount, int topN, boolean isPositive) throws IOException {

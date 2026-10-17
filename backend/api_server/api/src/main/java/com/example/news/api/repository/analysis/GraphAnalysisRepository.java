@@ -72,15 +72,17 @@ public class GraphAnalysisRepository {
                 .mappedBy((typeSystem, record) -> new EventTrackerResponse(
                         record.get("event").asString(),
                         record.get("location").asString(),
-                        record.get("strength").asInt(),
+                        record.get("aliases").asList(Value::asString),
+                        record.get("frequency").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
                         record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble(),
-
+                        record.get("riskScore").isNull() ? 0.0 : record.get("riskScore").asDouble(),
                         record.get("countryCode").asString(),
                         record.get("country").asString(),
                         record.get("latitude").asDouble(),
-                        record.get("longitude").asDouble(),
-                        record.get("aliases").asList(Value::asString)
+                        record.get("longitude").asDouble()
                 ))
                 .all()
                 .stream()
@@ -153,13 +155,17 @@ public class GraphAnalysisRepository {
                         record.get("countries").asInt(),
                         record.get("avgSentiment").isNull()
                                 ? 0.0
-                                : record.get("avgSentiment").asDouble()
+                                : record.get("avgSentiment").asDouble(),
+                        record.get("avgRiskScore").isNull()
+                                ? 0.0
+                                : record.get("avgRiskScore").asDouble()
                 ))
                 .one()
                 .orElse(new GeopoliticalMetricsResponse(
                         0,
                         0,
                         0,
+                        0.0,
                         0.0
                 ));
     }
@@ -174,16 +180,22 @@ public class GraphAnalysisRepository {
                 .fetchAs(EventTrackerMetricsResponse.class)
                 .mappedBy((typeSystem, record) -> new EventTrackerMetricsResponse(
                         record.get("eventsTracked").asInt(),
-                        record.get("totalEventCoverage").asInt(),
-                        record.get("avgSentiment").isNull()
-                                ? 0.0
-                                : record.get("avgSentiment").asDouble()
+                        record.get("totalMentions").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
+                        record.get("avgSentiment").isNull()? 0.0: record.get("avgSentiment").asDouble(),
+                        record.get("avgVolatility").isNull()? 0.0: record.get("avgVolatility").asDouble(),
+                        record.get("highRiskEvents").asInt()
                 ))
                 .one()
                 .orElse(new EventTrackerMetricsResponse(
                         0,
                         0,
-                        0.0
+                        0,
+                        0,
+                        0.0,
+                        0.0,
+                        0
                 ));
     }
 
@@ -201,8 +213,11 @@ public class GraphAnalysisRepository {
                         record.get("person").asString(),
                         record.get("keyPhrase").asString(),
                         record.get("frequency").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
-                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble()
+                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble(),
+                        record.get("stabilityScore").isNull() ? 0.0 : record.get("stabilityScore").asDouble()
                 ))
                 .all()
                 .stream()
@@ -222,7 +237,9 @@ public class GraphAnalysisRepository {
                         record.get("publisher").asString(),
                         record.get("organization").asString(),
                         record.get("coverageVolume").asInt(),
-                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble()
+                        record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt()
                 ))
                 .all()
                 .stream()
@@ -264,8 +281,11 @@ public class GraphAnalysisRepository {
                         record.get("aliases").asList(Value::asString),
                         record.get("latitude").asDouble(),
                         record.get("longitude").asDouble(),
-                        record.get("count").asInt(),
+                        record.get("frequency").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("riskScore").isNull() ? 0.0 : record.get("riskScore").asDouble(),
                         record.get("country").asString(),
                         record.get("countryCode").asString()
                 ))
@@ -460,8 +480,11 @@ public class GraphAnalysisRepository {
                 .mappedBy((typeSystem, record) -> new CountryRiskResponse(
                         record.get("country").asString(),
                         record.get("countryCode").asString(),
-                        record.get("articleCount").asInt(),
+                        record.get("frequency").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
+                        record.get("riskScore").isNull() ? 0.0 : record.get("riskScore").asDouble(),
                         record.get("coveragePercent").isNull() ? 0.0 : record.get("coveragePercent").asDouble()
                 ))
                 .all()
@@ -482,8 +505,12 @@ public class GraphAnalysisRepository {
                 .mappedBy((typeSystem, record) -> new EventRiskRadarResponse(
                         record.get("event").asString(),
                         record.get("frequency").asInt(),
+                        record.get("positiveVolume").asInt(),
+                        record.get("negativeVolume").asInt(),
                         record.get("avgSentiment").isNull() ? 0.0 : record.get("avgSentiment").asDouble(),
-                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble()
+                        record.get("volatility").isNull() ? 0.0 : record.get("volatility").asDouble(),
+                        record.get("riskScore").isNull() ? 0.0 : record.get("riskScore").asDouble(),
+                        record.get("polarizationScore").isNull() ? 0.0 : record.get("polarizationScore").asDouble()
                 ))
                 .all()
                 .stream()
@@ -510,6 +537,72 @@ public class GraphAnalysisRepository {
                                 )
                         ),
                         record.get("totalVolume").asInt()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+    public List<GraphNewsResponse> getGraphNewsByLocationWithRelativeInterval (String intervalUnit, int amount, String locationName){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getNewsByLocationName())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .bind(locationName).to("locationName")
+                .fetchAs(GraphNewsResponse.class)
+                .mappedBy((typeSystem, record) -> new GraphNewsResponse(
+                        record.get("title").asString(),
+                        record.get("sentiment").isNull() ? 0.0 : record.get("sentiment").asDouble(),
+                        record.get("date").asString(),
+                        record.get("source").asString(),
+                        record.get("contentHash").asString()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+    public List<GraphNewsResponse> getGraphNewsByCountryWithRelativeInterval (String intervalUnit, int amount, String countryName){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getNewsByCountryName())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .bind(countryName).to("countryName")
+                .fetchAs(GraphNewsResponse.class)
+                .mappedBy((typeSystem, record) -> new GraphNewsResponse(
+                        record.get("title").asString(),
+                        record.get("sentiment").isNull() ? 0.0 : record.get("sentiment").asDouble(),
+                        record.get("date").asString(),
+                        record.get("source").asString(),
+                        record.get("contentHash").asString()
+                ))
+                .all()
+                .stream()
+                .toList();
+    }
+
+    public List<GraphNewsResponse> getGraphNewsByEventWithRelativeInterval (String intervalUnit, int amount, String eventName){
+        long[] rangeResult = this.aggInterval.computeEpochRangeRelativeForNeo4j(intervalUnit, amount);
+        long startEpoch = rangeResult[0];
+        long endEpoch = rangeResult[1];
+
+        return neo4jClient.query(graphAnalysisQuery.getNewsByEventName())
+                .bind(startEpoch).to("startEpoch")
+                .bind(endEpoch).to("endEpoch")
+                .bind(eventName).to("eventName")
+                .fetchAs(GraphNewsResponse.class)
+                .mappedBy((typeSystem, record) -> new GraphNewsResponse(
+                        record.get("title").asString(),
+                        record.get("sentiment").isNull() ? 0.0 : record.get("sentiment").asDouble(),
+                        record.get("date").asString(),
+                        record.get("source").asString(),
+                        record.get("contentHash").asString()
                 ))
                 .all()
                 .stream()

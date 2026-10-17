@@ -21,10 +21,17 @@ public class SyncDataController {
         this.syncDataService = syncDataService;
     }
 
-    @GetMapping("/location")
-    public ResponseEntity<String> syncLocationCoordinatesEntity(){
-        //locationService.syncLocationCoordinatesEntity();
-        locationService.syncCoordinationDataFromPostgres();
+
+    @GetMapping("/location-postgres-to-neo4j")
+    public ResponseEntity<String> syncCoordinationDataFromPostgresToNeo4j(){
+        locationService.syncCoordinationDataFromPostgresToNeo4j();
+        return ResponseEntity.accepted()
+                .body("Location synchronization started.");
+    }
+
+    @GetMapping("/sync-locations-with-zero-coordinates-in-postgresql")
+    public ResponseEntity<String> syncLocationsWithZeroCoordinates(){
+        locationService.syncLocationsWithZeroCoordinates();
         return ResponseEntity.accepted()
                 .body("Location synchronization started.");
     }

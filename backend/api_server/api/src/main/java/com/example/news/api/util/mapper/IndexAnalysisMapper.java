@@ -99,6 +99,105 @@ public class IndexAnalysisMapper {
         return dto;
     }
 
+    public GlobalEntityTrendsResponse mapEntityAnalysisNew(SearchResponse<Void> response) {
+        GlobalEntityTrendsResponse result = new GlobalEntityTrendsResponse();
+        Map<String, List<EntityCount>> timeline = new LinkedHashMap<>();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        Aggregate trendsAgg = response.aggregations().get("trends_over_time");
+        if (trendsAgg == null || !trendsAgg.isDateHistogram()) {
+            result.setTimeline(timeline);
+            return result;
+        }
+
+        List<DateHistogramBucket> timeBuckets = trendsAgg.dateHistogram().buckets().array();
+
+        for (DateHistogramBucket timeBucket : timeBuckets) {
+
+            String dateKey = sdf.format(new Date(timeBucket.key()));
+            List<EntityCount> entitiesForThisDate = new ArrayList<>();
+
+            Aggregate nestedAgg = timeBucket.aggregations().get("entities");
+            if (nestedAgg == null || !nestedAgg.isNested()) {
+                timeline.put(dateKey, entitiesForThisDate);
+                continue;
+            }
+
+            List<StringTermsBucket> entityBuckets = nestedAgg.nested()
+                    .aggregations()
+                    .get("top_entities")
+                    .sterms()
+                    .buckets()
+                    .array();
+
+            for (StringTermsBucket entityBucket : entityBuckets) {
+                EntityCount entityDTO = new EntityCount();
+
+                entityDTO.setName(entityBucket.key().stringValue());
+
+                String type = "UNKNOWN";
+                Aggregate typeAgg = entityBucket.aggregations().get("entity_type");
+                if (typeAgg != null && typeAgg.isSterms()) {
+                    List<StringTermsBucket> typeBuckets = typeAgg.sterms().buckets().array();
+                    if (!typeBuckets.isEmpty()) {
+                        type = typeBuckets.get(0).key().stringValue();
+                    }
+                }
+                entityDTO.setType(type);
+
+                Aggregate reverseNestedAgg = entityBucket.aggregations().get("to_news");
+
+                if (reverseNestedAgg != null && reverseNestedAgg.isReverseNested()) {
+                    var newsAggs = reverseNestedAgg.reverseNested().aggregations();
+
+                    long totalCount = reverseNestedAgg.reverseNested().docCount();
+                    entityDTO.setCount(totalCount);
+
+                    long posVol = newsAggs.containsKey("positive_volume") && newsAggs.get("positive_volume").isFilter()
+                            ? newsAggs.get("positive_volume").filter().docCount() : 0L;
+
+                    long negVol = newsAggs.containsKey("negative_volume") && newsAggs.get("negative_volume").isFilter()
+                            ? newsAggs.get("negative_volume").filter().docCount() : 0L;
+
+                    entityDTO.setPositiveVolume(posVol);
+                    entityDTO.setNegativeVolume(negVol);
+
+                    if (newsAggs.containsKey("avg_sentiment") && newsAggs.get("avg_sentiment").isAvg()) {
+                        double avg = newsAggs.get("avg_sentiment").avg().value();
+                        entityDTO.setAverageSentiment(Double.isNaN(avg) ? 0.0 : avg);
+                    } else {
+                        entityDTO.setAverageSentiment(0.0);
+                    }
+
+                    double avgSentiment = 0.0;
+                    if (newsAggs.containsKey("avg_sentiment") && newsAggs.get("avg_sentiment").isAvg()) {
+                        double rawAvg = newsAggs.get("avg_sentiment").avg().value();
+                        avgSentiment = Double.isNaN(rawAvg) ? 0.0 : rawAvg;
+                    }
+
+                    if (negVol > posVol && avgSentiment > 0) {
+                        avgSentiment = -Math.abs(avgSentiment);
+                    }
+
+                    entityDTO.setAverageSentiment(avgSentiment);
+
+                    double riskScore = totalCount > 0 ? (double) negVol / totalCount : 0.0;
+                    entityDTO.setRiskScore(riskScore);
+                }
+
+                entitiesForThisDate.add(entityDTO);
+            }
+
+            timeline.put(dateKey, entitiesForThisDate);
+        }
+
+        result.setTimeline(timeline);
+        return result;
+    }
+
+
     public GlobalEntityTrendsResponse mapEntityAnalysis(SearchResponse<Void> response) {
 
         GlobalEntityTrendsResponse result = new GlobalEntityTrendsResponse();
@@ -137,7 +236,6 @@ public class IndexAnalysisMapper {
                 entityDTO.setName(entityBucket.key().stringValue());
                 entityDTO.setCount(entityBucket.docCount());
 
-                // Read avg sentiment from reverse_nested -> avg_sentiment
                 Aggregate reverseNestedAgg = entityBucket.aggregations()
                         .get("to_news");
 

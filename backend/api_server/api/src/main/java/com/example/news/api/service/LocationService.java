@@ -45,7 +45,7 @@ public class LocationService {
         this.syncGraphDataRepository = syncGraphDataRepository;
     }
 
-    public void syncCoordinationDataFromPostgres(){
+    public void syncCoordinationDataFromPostgresToNeo4j(){
         List<LocationCoordinatesEntity> locations = locationRepository.findAll();
         for (LocationCoordinatesEntity location : locations) {
             syncGraphDataRepository.syncCoordinationDataFromPostgres(
@@ -65,6 +65,102 @@ public class LocationService {
             );
         }
     }
+
+    @Async
+    public void syncLocationsWithZeroCoordinates() {
+        List<LocationCoordinatesEntity> locations =
+                locationRepository.findLocationsWithZeroCoordinates();
+
+        boolean firstRequest = true;
+
+        for (LocationCoordinatesEntity location : locations) {
+
+            if (!firstRequest) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Location synchronization interrupted");
+                    return;
+                }
+            }
+
+            firstRequest = false;
+
+            String locationName = location.getLocationName();
+
+            Optional<LocationCoordinatesEntity> coordinates =
+                    fetchCoordinatesFromExternalGeocodingApi(locationName);
+
+            coordinates.ifPresent(result -> locationRepository.updateCoordinatesByLocationName(
+                    locationName,
+                    result.getLatitude(),
+                    result.getLongitude(),
+                    result.getCountry(),
+                    result.getCountryCode()
+            ));
+        }
+    }
+
+    private Optional<LocationCoordinatesEntity> fetchCoordinatesFromExternalGeocodingApi(String searchLocationName) {
+        try {
+
+            String url = "https://nominatim.openstreetmap.org/search?q="+ URLEncoder.encode(searchLocationName,StandardCharsets.UTF_8)
+                    + "&format=json"
+                    + "&limit=1"
+                    + "&addressdetails=1";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.USER_AGENT,"MyNewsAnalyticsApp/1.0");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "en");
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            var response = restTemplate.exchange(url,HttpMethod.GET,entity,JsonNode.class);
+            JsonNode body = response.getBody();
+
+            if (body == null|| !body.isArray() || body.isEmpty()) {
+                log.warn("No geocoding result for: {}",searchLocationName);
+                return Optional.empty();
+            }
+
+            JsonNode firstMatch = body.get(0);
+            JsonNode latNode = firstMatch.path("lat");
+            JsonNode lonNode = firstMatch.path("lon");
+
+            if (latNode.isMissingNode()|| lonNode.isMissingNode()) {
+                log.warn("Geocoding result has no coordinates: {}",searchLocationName);
+                return Optional.empty();
+            }
+
+            double latitude = latNode.asDouble();
+            double longitude = lonNode.asDouble();
+
+
+            JsonNode address = firstMatch.path("address");
+            String country = address.path("country").asText("UNKNOWN");
+            String countryCode = address.path("country_code").asText("XX").toUpperCase();
+
+            return Optional.of(new LocationCoordinatesEntity(
+                    searchLocationName,
+                    latitude,
+                    longitude,
+                    country,
+                    countryCode
+                    )
+            );
+
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            log.warn("Nominatim rate limit reached for: {}",searchLocationName);
+            return Optional.empty();
+
+        } catch (Exception e) {
+            log.error("Failed to fetch geocode for location: {}",searchLocationName,e);
+            return Optional.empty();
+        }
+    }
+
+
     public void syncLocationToLocationCoordinatesTable(){
         List<String> locationNames = getAllLocationEntity();
         List<LocationCoordinatesEntity> locationCoordinatesList = new ArrayList<>();
@@ -226,7 +322,7 @@ public class LocationService {
                             + "&addressdetails=1";
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.USER_AGENT,"MyNewsAnalyticsApp/1.0 (contact: cuongpham@gmail.com)");
+            headers.set(HttpHeaders.USER_AGENT,"MyNewsAnalyticsApp/1.0");
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -259,7 +355,7 @@ public class LocationService {
 
 
             JsonNode address = firstMatch.path("address");
-            String country = address.path("country").asText("Unknown");
+            String country = address.path("country").asText("UNKNOWN");
             String countryCode = address.path("country_code").asText("XX").toUpperCase();
 
             return Optional.of(new LocationCoordinatesEntity(
