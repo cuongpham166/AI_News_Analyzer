@@ -31,6 +31,86 @@ class InferenceConsumer:
             news_id=str(article.newsId)
         )
 
+    async def process_message(self, msg: Msg) -> None:
+        start = time.perf_counter()
+        news_id = None
+        try:
+            processed_article = json.loads(
+                msg.data.decode("utf-8")
+            )
+
+            news_id = str(
+                processed_article.get("newsId", "unknown")
+            )
+
+            self.logger.info(
+                "Starting news inference",
+                news_id=news_id,
+            )
+
+            inference_data: InferenceResponse = await asyncio.to_thread(
+                self.inference_processor.analyze,
+                [processed_article],
+            )
+
+            duration_ms = round(
+                (time.perf_counter() - start) * 1000,
+                2,
+            )
+
+            if duration_ms > 5000:
+                self.logger.warning(
+                    "Slow inference detected",
+                    news_id=news_id,
+                    duration_ms=duration_ms,
+                )
+            else:
+                self.logger.info(
+                    "News inference completed",
+                    news_id=news_id,
+                    duration_ms=duration_ms,
+                )
+
+            for result in inference_data.results:
+                await self.publish_article(result)
+
+            await msg.ack()
+
+            self.logger.debug(
+                "Inference message acknowledged",
+                news_id=news_id,
+                duration_ms=duration_ms,
+            )
+
+        except json.JSONDecodeError:
+            self.logger.exception(
+                "Invalid JSON in inference message",
+                news_id=news_id,
+            )
+            await msg.term()
+
+        except Exception:
+            duration_ms = round(
+                (time.perf_counter() - start) * 1000,
+                2,
+            )
+
+            self.logger.exception(
+                "Analyzing enriched news failed",
+                news_id=news_id,
+                duration_ms=duration_ms,
+            )
+
+            try:
+                await msg.nak(delay=5)
+            except Exception:
+                self.logger.exception(
+                    "Failed to NAK inference message",
+                    news_id=news_id,
+                )
+
+
+    """
     async def process_message(self, msg:Msg):
         async with semaphore:
             processed_article = json.loads(msg.data.decode())
@@ -68,6 +148,7 @@ class InferenceConsumer:
                     news_id=str(processed_article["newsId"])
                 )
                 await msg.term()
+    """
 
     async def run(self):
         self.logger.info("Inference consumer started")
@@ -83,9 +164,14 @@ class InferenceConsumer:
         self.logger.info(f"Subscribed to {SAVED_SUBJECT}.")
 
         async for msg in sub.messages:
+            await self.process_message(msg)
+
+        """
+        async for msg in sub.messages:
             asyncio.create_task(
                 self.process_message(msg)
             )
+        """
 
 
 async def main(inference_processor):

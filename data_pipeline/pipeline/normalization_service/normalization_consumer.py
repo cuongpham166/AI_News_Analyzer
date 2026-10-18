@@ -57,6 +57,7 @@ class NormalizationConsumer:
     async def run(self):
         self.logger.info("Normalization consumer started")
 
+        """
         semaphore = asyncio.Semaphore(2)
 
         sub = await self.js.subscribe(
@@ -75,6 +76,27 @@ class NormalizationConsumer:
 
         async for msg in sub.messages:
             asyncio.create_task(worker(msg))
+        """
+
+        sub = await self.js.subscribe(
+            subject=RAW_SUBJECT,
+            stream=STREAM_NAME,
+            durable="normalization-consumer",
+            deliver_policy="all",
+            manual_ack=True,
+        )
+
+        self.logger.info(
+            "Subscribed to normalization input",
+            subject=RAW_SUBJECT,
+            stream=STREAM_NAME,
+            durable="normalization-consumer",
+        )
+
+        async for msg in sub.messages:
+            await self.handle(msg)
+
+
 
 
 

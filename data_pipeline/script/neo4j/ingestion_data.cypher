@@ -17,8 +17,8 @@ MERGE (n)-[:COVERS]->(t)
 
 WITH n, $keyphrases as keyphrases
 UNWIND keyphrases AS phrase
-
 MERGE (k:Keyphrase {name: phrase})
+
 MERGE (n)-[:TAGGED_WITH]->(k)
 
 WITH n, $entities AS entities

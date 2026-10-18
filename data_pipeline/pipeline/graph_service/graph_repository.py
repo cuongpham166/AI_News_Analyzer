@@ -59,6 +59,15 @@ class GraphRepository:
         return response["embedding"]
 
 
+    def get_sentiment_score(self, score, label):
+        sentiment_label = label.str.lower()
+        if sentiment_label == "positive":
+            return abs(score)
+        elif sentiment_label == "negative":
+            return -abs(score)
+        else:
+            return 0.0
+
     def process_article(self, inference_result:dict):
         result_obj = SavedInferenceResponse.model_validate(inference_result)
         source = Source(name=result_obj.source)
@@ -71,8 +80,7 @@ class GraphRepository:
             link=result_obj.link,
             title=result_obj.title,
             publish_date=publish_date,
-            sentiment=result_obj.sentiment.score if result_obj.sentiment else 0.0,
-            sentiment_label=result_obj.sentiment.label if result_obj.sentiment else 'N/A',
+            sentiment=self.get_sentiment_score(result_obj.sentiment.score, result_obj.sentiment.label),
             language=result_obj.language,
             summary=result_obj.summarization
         )
@@ -114,7 +122,6 @@ class GraphRepository:
             "news_title": data_dict["news"]["title"],
             "news_publish_date": news_publish_date,
             "news_sentiment": data_dict["news"]["sentiment"],
-            "news_sentiment_label": data_dict["news"]["sentiment_label"],
             "news_summary": data_dict["news"]["summary"],
             "news_language": data_dict["news"]["language"],
             "news_embedding": news_embedding,

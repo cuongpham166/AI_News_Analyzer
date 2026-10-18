@@ -21,6 +21,11 @@ from data_pipeline.logger.logger_names import LoggerName
 
 class InferenceProcessor:
     def __init__(self):
+        torch.set_num_threads(4)
+        torch.set_num_interop_threads(1)
+
+        self.device = torch.device("cpu")
+
         self.entity_classifier = EntityClassifier()
         self.topic_classifier = TopicClassifier()
         self.sentiment_classifier = SentimentClassifier()
@@ -39,8 +44,6 @@ class InferenceProcessor:
             entity_deduplicator=self.entity_deduplicator
         )
 
-        self.device = torch.device("cpu")
-        torch.set_num_threads(4)
         self.logger = LoggerFactory.get_logger(LoggerName.Inference.CONSUMER)
 
     def get_summary_text(self, summary):
@@ -111,5 +114,3 @@ class InferenceProcessor:
             )
 
         return InferenceResponse(results=results)
-
-

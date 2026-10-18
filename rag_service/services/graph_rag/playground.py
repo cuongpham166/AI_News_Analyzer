@@ -2,7 +2,7 @@ from neo4j import GraphDatabase
 from sentence_transformers import CrossEncoder
 
 from data_pipeline.config.graph_config import get_neo4j_config
-from rag_service.graph_rag.graph_rag import GrapRAG
+from rag_service.services.graph_rag.graph_rag import GrapRAG
 
 graph_config = get_neo4j_config()
 driver = GraphDatabase.driver(

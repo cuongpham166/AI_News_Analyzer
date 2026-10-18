@@ -31,6 +31,14 @@ class IngestionProcessor:
             #self.logger.exception("RSS fetch failed")
             return None
 
+    def get_summary(self, entry) -> str:
+        content = getattr(entry, "content", None)
+        if content:
+            value = content[0].get("value", "")
+            if value:
+                return value
+        return getattr(entry, "summary", "")
+
     async def scrape(self) -> list[ArticleCandidate]:
         results: list[ArticleCandidate] = []
         seen_links: set[str] = set()
@@ -68,7 +76,7 @@ class IngestionProcessor:
                     ArticleCandidate(
                         title=getattr(entry,"title",""),
                         link=link,
-                        summary=getattr(entry,"summary",""),
+                        summary=getattr(entry, "summary", ""),
                         rss_pub_date=getattr(entry,"published",""),
                     )
                 )

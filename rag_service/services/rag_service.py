@@ -5,11 +5,6 @@ from elasticsearch import Elasticsearch
 from neo4j import GraphDatabase
 from sentence_transformers import CrossEncoder
 
-from data_pipeline.config.graph_config import get_neo4j_config
-from data_pipeline.config.indexing_config import get_elasticsearch_config
-from rag_service.graph_rag.graph_rag import GrapRAG
-from rag_service.search_rag.search_rag import SearchRAG
-
 
 class RAGService:
     def __init__(self,graph_rag,search_rag,reranker):
@@ -76,11 +71,23 @@ class RAGService:
         rerank_pairs = []
         for item in fused_items:
             doc = item["data"]
+
+            people = doc.get("people") or []
+            organizations = doc.get("organizations") or []
+            locations = doc.get("locations") or []
+            events = doc.get("events") or []
+
+            entities = people + organizations + locations + events
+
             dossier_text = (
-                f"Title: {doc['title']} | Topic: {doc['topic']} | Source: {doc['source']} | "
-                f"Summary: {doc['summary']} | Full Text: {doc.get('full_text', '')} | "
-                f"Entities: {', '.join(doc['people'] + doc['organizations'] + doc['locations'] + doc['events'])}"
+                f"Title: {doc.get('title', '')} | "
+                f"Topic: {doc.get('topic', '')} | "
+                f"Source: {doc.get('source', '')} | "
+                f"Summary: {doc.get('summary', '')} | "
+                f"Full Text: {doc.get('full_text', '')} | "
+                f"Entities: {', '.join(entities)}"
             )
+
             rerank_pairs.append([user_query, dossier_text])
 
         print(f"Reranking {len(rerank_pairs)} integrated candidates...")
@@ -125,9 +132,8 @@ class RAGService:
         user_prompt = f"CONTEXT DOSSIERS:\n{fused_context_string}\n\nUSER ANALYSIS REQUEST: {user_query}"
 
         # 6. Run Inference locally via Ollama
-        print(f"Generating final analysis using Llama 3.2 3B...")
         response = ollama.generate(
-            model="llama3.2:3b",
+            model="ministral-3:3b-instruct-2512-q4_K_M",
             prompt=user_prompt,
             system=system_instruction,
             options={"temperature": 0.15}
@@ -236,23 +242,3 @@ class RAGService:
         print(f"--- [ MODEL 6: Granite4:3b ] (Gen Time: {granite4_time:.2f}s) ---")
         print(granite4_response['response'])
         print("="*102)
-
-if __name__ == "__main__":
-    graph_config = get_neo4j_config()
-    driver = GraphDatabase.driver(
-        graph_config["uri"],
-        auth=(graph_config["username"], graph_config["password"])
-    )
-
-    reranker = CrossEncoder("BAAI/bge-reranker-large")
-
-    elastic_config = get_elasticsearch_config()
-    es_client = Elasticsearch(elastic_config["elastic_url"])
-
-    graph_rag = GrapRAG(driver,reranker)
-    search_rag = SearchRAG(es_client)
-
-    test_query = "Analyze the security implications regarding the UNRWA compound incident in East Jerusalem over the last 24 hours. Who are the key organizations and people tied to this development?"
-
-    rag_service = RAGService(graph_rag,search_rag,reranker)
-    rag_service.compare_rag_models(user_query=test_query)
