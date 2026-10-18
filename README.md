@@ -540,7 +540,14 @@ engagement from various actors to address these concerns within a complex geopol
 where sovereignty, international law, and humanitarian needs intersect.
 ```
 ## Examples
-![Page_1](/images/Page_1.png)
-![Page_2](/images/Page_2.png)
-![Page_3](/images/Page_3.png)
-![Page_4](/images/Page_4.png)
+
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+  <img src="images/Page_1.png" width="100%" />
+  <img src="images/Page_2.png" width="100%" />
+  <img src="images/Page_3.png" width="100%" />
+  <img src="images/Page_4.png" width="100%" />
+  <img src="images/Page_5.png" width="100%" />
+  <img src="images/Page_6.png" width="100%" />
+  <img src="images/Page_7.png" width="100%" />
+  <img src="images/Page_8.png" width="100%" />
+</div>
